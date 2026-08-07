@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+:root {
+  --brand-blue: #5385c0;
+  --brand-blue-deep: #2e527d;
+  --brand-blue-pale: #eaf0fa;
+  --brand-turquoise: #48b9c7;
+  --brand-turquoise-deep: #256f78;
+  --brand-turquoise-soft: #e1f6f4;
+  --brand-ink: #1b2733;
+  --brand-ink-soft: #4b5b6b;
+  --brand-paper: #fafbfc;
+  --brand-surface: #ffffff;
+  --brand-line: rgb(27 39 51 / 0.12);
+  --brand-urgency: #e2574c;
+  --brand-urgency-soft: #fdeae8;
+  --brand-shadow-card: 0 20px 40px -24px rgb(27 39 51 / 0.28);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --brand-blue: #8badd5;
+    --brand-blue-deep: #17233a;
+    --brand-blue-pale: rgb(140 169 230 / 0.12);
+    --brand-turquoise: #4ed4cc;
+    --brand-turquoise-deep: #7fe6df;
+    --brand-turquoise-soft: rgb(46 179 172 / 0.14);
+    --brand-ink: #ecf2f6;
+    --brand-ink-soft: #a9b9c6;
+    --brand-paper: #0e1721;
+    --brand-surface: #15212e;
+    --brand-line: rgb(236 242 246 / 0.12);
+    --brand-urgency: #ff8377;
+    --brand-urgency-soft: rgb(255 131 119 / 0.14);
+    --brand-shadow-card: 0 20px 40px -20px rgb(0 0 0 / 0.55);
+    color-scheme: dark;
+  }
+}
+
+/*
+ * @theme inline exposes the brand tokens above under Tailwind's own
+ * `--color-*` / `--shadow-*` / `--ease-*` namespaces, so utilities like
+ * bg-blue, text-turquoise-deep, shadow-card, ease-out/ease-in-out read
+ * from the live (theme-aware) custom properties instead of a value
+ * frozen at build time. `ease-out`/`ease-in-out` intentionally override
+ * Tailwind's built-in (weak) easings with stronger, more intentional curves.
+ */
+@theme inline {
+  --color-blue: var(--brand-blue);
+  --color-blue-deep: var(--brand-blue-deep);
+  --color-blue-pale: var(--brand-blue-pale);
+  --color-turquoise: var(--brand-turquoise);
+  --color-turquoise-deep: var(--brand-turquoise-deep);
+  --color-turquoise-soft: var(--brand-turquoise-soft);
+  --color-ink: var(--brand-ink);
+  --color-ink-soft: var(--brand-ink-soft);
+  --color-paper: var(--brand-paper);
+  --color-surface: var(--brand-surface);
+  --color-line: var(--brand-line);
+  --color-urgency: var(--brand-urgency);
+  --color-urgency-soft: var(--brand-urgency-soft);
+  --shadow-card: var(--brand-shadow-card);
+  --font-display: var(--font-bricolage), "Segoe UI", sans-serif;
+  --font-body: var(--font-lexend), "Segoe UI", sans-serif;
+  --font-data: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-blob-1: blob-drift-1 16s ease-in-out infinite;
+  --animate-blob-2: blob-drift-2 19s ease-in-out infinite;
+  --animate-badge-pulse: badge-pulse 2.4s ease-out 3;
+  --animate-wa-pulse: wa-pulse 2.8s ease-out 4;
+  --animate-radar-ping: radar-ping 2.2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+* {
+  border-color: var(--color-line);
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blob-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-22px, 18px) scale(1.08); }
+}
+
+@keyframes blob-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(18px, -14px) scale(1.06); }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(226 87 76 / 0.55); }
+  70% { box-shadow: 0 0 0 8px rgb(226 87 76 / 0); }
+}
+
+@keyframes wa-pulse {
+  0%, 100% { box-shadow: 0 14px 30px -8px rgb(46 179 172 / 0.6), 0 0 0 0 rgb(72 185 199 / 0.5); }
+  70% { box-shadow: 0 14px 30px -8px rgb(46 179 172 / 0.6), 0 0 0 14px rgb(72 185 199 / 0); }
+}
+
+@keyframes radar-ping {
+  0% { transform: scale(0.4); opacity: 0.6; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+/*
+ * The hidden (opacity: 0) starting state only exists for users who haven't
+ * asked for reduced motion — under prefers-reduced-motion: reduce, .reveal
+ * elements are simply never hidden, full stop. That means Reveal.tsx never
+ * has to know about the user's motion preference (no window-dependent
+ * initial state, so no server/client hydration mismatch), and content can
+ * never get stuck invisible if JS is slow, blocked, or absent.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Stagger: individual product cards fade in one after another once their
+     shelf (the .reveal ancestor) scrolls into view, instead of all at once. */
+  .promo-row .promo-card {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.45s var(--ease-out), transform 0.45s var(--ease-out);
+  }
+  .reveal.is-visible .promo-row .promo-card {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .promo-row .promo-card:nth-child(1) { transition-delay: 0.05s; }
+  .promo-row .promo-card:nth-child(2) { transition-delay: 0.1s; }
+  .promo-row .promo-card:nth-child(3) { transition-delay: 0.15s; }
+  .promo-row .promo-card:nth-child(4) { transition-delay: 0.2s; }
+  .promo-row .promo-card:nth-child(5) { transition-delay: 0.25s; }
+  .promo-row .promo-card:nth-child(6) { transition-delay: 0.3s; }
+  .promo-row .promo-card:nth-child(7) { transition-delay: 0.35s; }
+}
