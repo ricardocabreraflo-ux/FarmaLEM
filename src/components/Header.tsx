@@ -46,6 +46,20 @@ export function Header() {
         </a>
 
         <div className="order-2 ml-auto flex shrink-0 items-center gap-2.5 lg:order-3">
+          <a
+            href={site.tiendaEnLineaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-full bg-blue-strong px-3.5 py-2.5 text-[0.86rem] font-semibold whitespace-nowrap text-white transition-transform duration-150 ease-out active:scale-[0.97] lg:px-[18px]"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 shrink-0">
+              <path d="M4 4h16l-1.5 9h-13L4 4Z" />
+              <path d="M4 4 3 1" />
+              <circle cx="9" cy="20" r="1.4" />
+              <circle cx="17" cy="20" r="1.4" />
+            </svg>
+            <span className="hidden sm:inline">Comprar en línea</span>
+          </a>
           <CartButton />
           <a
             href={site.whatsappUrl}
