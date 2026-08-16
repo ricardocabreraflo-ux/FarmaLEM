@@ -36,6 +36,10 @@ Copia `.env.example` a `.env.local` y llena:
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → tu proyecto → Settings → API → `service_role` (secreta) |
 | `MERCADOPAGO_ACCESS_TOKEN` | Mercado Pago → Tus integraciones → tu app → Credenciales de producción |
 | `MERCADOPAGO_WEBHOOK_SECRET` | Mercado Pago → Tus integraciones → tu app → Webhooks → Firma secreta |
+| `WHATSAPP_ACCESS_TOKEN` | Meta for Developers → tu app → WhatsApp → API Setup |
+| `WHATSAPP_PHONE_NUMBER_ID` | Misma pantalla, junto al número de prueba/producción |
+| `WHATSAPP_NOTIFY_NUMBER` | Tu número (a donde llega el aviso), formato `521XXXXXXXXXX` sin "+" |
+| `WHATSAPP_TEMPLATE_NAME` | Nombre de tu plantilla aprobada (ver abajo). Vacío = `nuevo_pedido_farmalem` |
 | `ADMIN_PASSWORD` | La eliges tú — es la contraseña para entrar a `/admin` |
 | `ADMIN_SESSION_SECRET` | Cadena aleatoria: `openssl rand -hex 32` |
 | `NEXT_PUBLIC_SITE_URL` | Tu dominio real una vez desplegado (ej. `https://farmalem.mx`). Vacío en local. |
@@ -46,6 +50,43 @@ pública — no funciona con `localhost` mientras desarrollas local; para
 probar pagos de principio a fin necesitas tenerlo ya desplegado, o usar
 un túnel como `ngrok`).
 
+### Configurar el aviso por WhatsApp (paso a paso en Meta)
+
+Con tu acceso a Facebook Business / WhatsApp Business:
+
+1. Entra a [developers.facebook.com](https://developers.facebook.com/) →
+   **Mis apps** → crea una app tipo "Negocio" (o usa una que ya tengas) →
+   agrégale el producto **WhatsApp**.
+2. En **WhatsApp → Configuración de la API** verás un número de prueba (o
+   tu número real si ya lo migraste). Copia:
+   - **Token de acceso temporal** (dura 24h — sirve para probar) o mejor,
+     genera uno **permanente**: Configuración del negocio → Usuarios del
+     sistema → crea uno → Generar token → marca el permiso
+     `whatsapp_business_messaging` → ese va en `WHATSAPP_ACCESS_TOKEN`.
+   - **Phone number ID** → `WHATSAPP_PHONE_NUMBER_ID`.
+3. En **WhatsApp Manager → Plantillas de mensaje**, crea una nueva:
+   - Nombre: `nuevo_pedido_farmalem`
+   - Categoría: **Utilidad** (utility — aprueba más rápido que Marketing)
+   - Idioma: Español (MX)
+   - Cuerpo del mensaje, con 4 variables en este orden exacto:
+     ```
+     Nuevo pedido pagado en FarmaLEM
+
+     Cliente: {{1}}
+     Teléfono: {{2}}
+     Total: ${{3}} MXN
+     Folio: #{{4}}
+
+     Revísalo en tu panel de pedidos.
+     ```
+   - Envíala a revisión — Meta suele aprobarla en minutos a un día.
+4. Llena `WHATSAPP_NOTIFY_NUMBER` con tu número (el que debe recibir el
+   aviso, no el del cliente).
+
+Mientras la plantilla no esté aprobada o falten estas variables, los
+pedidos se marcan como pagados normalmente — el aviso simplemente no se
+manda (queda un registro en los logs del servidor), nunca bloquea el pago.
+
 ## Cómo funciona la tienda
 
 1. El cliente arma su carrito (vive en `localStorage`, componente
@@ -55,7 +96,8 @@ un túnel como `ngrok`).
    se genera una preferencia de Mercado Pago (Checkout Pro) — el cliente
    paga en Mercado Pago, no en este sitio.
 3. Mercado Pago llama a `/api/webhooks/mercadopago` cuando el pago se
-   confirma; el pedido pasa a `pagado`.
+   confirma; el pedido pasa a `pagado` y te llega un WhatsApp automático
+   (una sola vez por pedido, aunque Mercado Pago reenvíe el webhook).
 4. Tú ves y gestionas los pedidos en `/admin` (marcar "listo para
    recoger" / "entregado"), protegido con `ADMIN_PASSWORD`.
 5. El cliente pasa a la sucursal a recoger — no hay envío ni control de
@@ -126,7 +168,6 @@ Tailwind vía `@theme inline`. El logo real está en `public/logo.png`.
   esto el carrito funciona pero el pago y el panel de pedidos no.
 - Registrar el webhook en Mercado Pago una vez que el sitio tenga dominio
   público.
-- Aviso por WhatsApp Business automático por cada pedido pagado (fase 2 —
-  requiere configurar la app de WhatsApp Business Cloud API de Meta, con
-  número verificado y plantilla de mensaje aprobada; por ahora los pedidos
-  se ven en `/admin`).
+- Configurar WhatsApp Business Cloud API en Meta y crear/aprobar la
+  plantilla `nuevo_pedido_farmalem` (guía arriba) — el código ya está
+  listo, solo falta esa configuración de tu lado.

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { WebhookSignatureValidator, InvalidWebhookSignatureError } from "mercadopago";
 import { getPayment } from "@/lib/mercadopago";
 import { getOrderById, markOrderPaid } from "@/lib/orders";
+import { sendOrderWhatsAppNotification } from "@/lib/whatsapp";
 
 /**
  * Mercado Pago llama esta ruta cada vez que cambia el estado de un pago.
@@ -60,7 +61,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
+    const wasAlreadyPaid = order.status !== "pendiente_pago";
     await markOrderPaid(order.id, String(payment.id), payment.status ?? "unknown");
+
+    // Solo avisamos la primera vez que un pedido pasa a pagado — evita
+    // duplicar el WhatsApp si Mercado Pago reenvía el mismo webhook.
+    if (payment.status === "approved" && !wasAlreadyPaid) {
+      await sendOrderWhatsAppNotification({
+        orderId: order.id,
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone,
+        total: order.total,
+      });
+    }
+
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error("[webhook mp] error procesando el pago", err);
