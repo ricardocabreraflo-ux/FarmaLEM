@@ -1,5 +1,6 @@
 import type { Producto } from "@/lib/productos";
 import { ProductArt } from "./ProductArt";
+import { AddToCartButton } from "./AddToCartButton";
 
 const PROMO_LABEL: Record<string, string> = {
   "3x2": "3X2",
@@ -44,6 +45,7 @@ export function PromoCard({ producto }: { producto: Producto }) {
         </span>
         <span className="text-[0.68rem] text-ink-soft">c/u</span>
       </div>
+      <AddToCartButton producto={producto} />
     </article>
   );
 }

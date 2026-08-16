@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Lexend } from "next/font/google";
 import { site } from "@/lib/site";
+import { CartProvider } from "@/lib/cart-context";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -41,7 +42,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es-MX" className={`${bricolage.variable} ${lexend.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-paper text-ink">{children}</body>
+      <body className="min-h-full flex flex-col bg-paper text-ink">
+        <CartProvider>{children}</CartProvider>
+      </body>
     </html>
   );
 }
