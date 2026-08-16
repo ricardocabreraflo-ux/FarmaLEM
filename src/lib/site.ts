@@ -3,6 +3,10 @@
  * que un solo cambio (ej. nuevo horario o número) se propague a todo el sitio.
  */
 export const site = {
+  // Una vez que el sitio tenga dominio propio, define NEXT_PUBLIC_SITE_URL
+  // en el hosting (ej. https://farmalem.mx) — todo lo que use esta URL
+  // (metadata, Open Graph, sitemap, robots.txt) lo toma de aquí.
+  url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   nombre: "FarmaLEM",
   slogan: "Siéntete bien con nosotros",
   telefono: "5567996736",

@@ -38,7 +38,7 @@ export function Header() {
           <Image src="/logo.png" alt={site.nombre} width={40} height={40} className="h-10 w-10 object-contain" priority />
           <span className="flex flex-col">
             <span className="font-display text-[1.36rem] font-extrabold leading-none tracking-tight text-blue">
-              Farma<span className="text-turquoise">LEM</span>
+              Farma<span className="text-turquoise-deep">LEM</span>
             </span>
             <span className="text-[0.66rem] text-ink-soft">{site.slogan}</span>
           </span>
@@ -49,7 +49,7 @@ export function Header() {
             href={site.tiendaEnLineaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-full bg-blue px-3.5 py-2.5 text-[0.86rem] font-semibold whitespace-nowrap text-white transition-transform duration-150 ease-out active:scale-[0.97] lg:px-[18px]"
+            className="flex items-center gap-2 rounded-full bg-blue-strong px-3.5 py-2.5 text-[0.86rem] font-semibold whitespace-nowrap text-white transition-transform duration-150 ease-out active:scale-[0.97] lg:px-[18px]"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4 shrink-0">
               <path d="M4 4h16l-1.5 9h-13L4 4Z" />

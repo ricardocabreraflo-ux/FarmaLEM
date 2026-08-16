@@ -15,6 +15,15 @@
   --brand-urgency: #e2574c;
   --brand-urgency-soft: #fdeae8;
   --brand-shadow-card: 0 20px 40px -24px rgb(27 39 51 / 0.28);
+  /*
+   * "-strong" variants: same brand hue, darkened just enough that white text
+   * on a solid fill (or the color used as small text on a light surface)
+   * clears WCAG AA (4.5:1). Verified against both light- and dark-mode
+   * page backgrounds — kept theme-invariant since their only job is
+   * contrast, not matching the surrounding surface.
+   */
+  --brand-blue-strong: #436a9c;
+  --brand-urgency-strong: #cf463b;
   color-scheme: light;
 }
 
@@ -60,6 +69,8 @@
   --color-line: var(--brand-line);
   --color-urgency: var(--brand-urgency);
   --color-urgency-soft: var(--brand-urgency-soft);
+  --color-blue-strong: var(--brand-blue-strong);
+  --color-urgency-strong: var(--brand-urgency-strong);
   --shadow-card: var(--brand-shadow-card);
   --font-display: var(--font-bricolage), "Segoe UI", sans-serif;
   --font-body: var(--font-lexend), "Segoe UI", sans-serif;

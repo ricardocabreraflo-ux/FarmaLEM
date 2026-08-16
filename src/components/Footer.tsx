@@ -16,14 +16,14 @@ export function Footer() {
                 Farma<span className="text-turquoise">LEM</span>
               </span>
             </div>
-            <p className="mt-2.5 max-w-[30ch] text-[0.86rem] text-[#AFC1E6]">{site.slogan}.</p>
+            <p className="mt-2.5 max-w-[30ch] text-[0.86rem] text-[#C9D6EF]">{site.slogan}.</p>
           </div>
 
           <FooterList title="Categorías" items={categoriasA} />
           <FooterList title="Más categorías" items={categoriasB} />
 
           <div>
-            <h5 className="mb-3.5 text-[0.82rem] font-medium uppercase tracking-wide text-white">Farmacia</h5>
+            <h3 className="mb-3.5 text-[0.82rem] font-medium uppercase tracking-wide text-white">Farmacia</h3>
             <ul className="flex flex-col gap-2.5">
               <li>
                 <a
@@ -88,7 +88,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 py-5.5">
-          <p className="max-w-[62ch] text-[0.72rem] leading-relaxed text-[#90A4CE]">{site.avisoLegal}</p>
+          <p className="max-w-[62ch] text-[0.72rem] leading-relaxed text-[#C9D6EF]">{site.avisoLegal}</p>
           <span className="font-data text-xs text-[#7FE6DF]">&copy; {new Date().getFullYear()} FarmaLEM</span>
         </div>
       </div>
@@ -99,7 +99,7 @@ export function Footer() {
 function FooterList({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
-      <h5 className="mb-3.5 text-[0.82rem] font-medium uppercase tracking-wide text-white">{title}</h5>
+      <h3 className="mb-3.5 text-[0.82rem] font-medium uppercase tracking-wide text-white">{title}</h3>
       <ul className="flex flex-col gap-2.5">
         {items.map((item) => (
           <li key={item}>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Lexend } from "next/font/google";
+import { site } from "@/lib/site";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -14,10 +15,8 @@ const lexend = Lexend({
   weight: ["400", "500", "600", "700"],
 });
 
-const siteUrl = "https://farmalem.example.mx";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(site.url),
   title: {
     default: "FarmaLEM — Siéntete bien con nosotros",
     template: "%s · FarmaLEM",
@@ -28,7 +27,7 @@ export const metadata: Metadata = {
     title: "FarmaLEM — Siéntete bien con nosotros",
     description:
       "Promociones 3X2 y 5X4, precios claros y atención cercana. Tu farmacia de barrio en Iztapalapa, CDMX.",
-    url: siteUrl,
+    url: site.url,
     siteName: "FarmaLEM",
     locale: "es_MX",
     type: "website",

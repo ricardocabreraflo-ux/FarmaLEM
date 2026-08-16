@@ -15,7 +15,7 @@ const SWATCH_BG: Record<string, string> = {
 const CHIP_STYLE: Record<string, string> = {
   "3x2": "bg-turquoise-soft text-turquoise-deep",
   "5x4": "bg-turquoise-soft text-turquoise-deep",
-  liquidacion: "bg-urgency text-white",
+  liquidacion: "bg-urgency-strong text-white",
 };
 
 export function PromoCard({ producto }: { producto: Producto }) {

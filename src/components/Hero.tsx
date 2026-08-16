@@ -67,10 +67,10 @@ export function Hero() {
           className="motion-safe:animate-fade-up rounded-3xl border border-white/22 bg-white/8 p-7 shadow-[0_30px_60px_-24px_rgba(0,0,0,0.45)] backdrop-blur-md"
           style={{ animationDelay: "0.14s", animationFillMode: "both" }}
         >
-          <span className="motion-safe:animate-badge-pulse inline-block rounded-md bg-urgency px-2.5 py-1.25 font-data text-[0.7rem] font-bold tracking-wide text-white">
+          <span className="motion-safe:animate-badge-pulse inline-block rounded-md bg-urgency-strong px-2.5 py-1.25 font-data text-[0.7rem] font-bold tracking-wide text-white">
             ¡Últimas piezas!
           </span>
-          <h3 className="mt-3.5 font-display text-2xl text-white">Liquidación por caducidad</h3>
+          <h2 className="mt-3.5 font-display text-2xl text-white">Liquidación por caducidad</h2>
           <div className="mt-3.5 flex items-baseline gap-2.5">
             <span className="font-data text-[2rem] font-bold tabular-nums text-turquoise">$18.00</span>
             <span className="font-data text-base text-white/55 line-through">$36.00</span>

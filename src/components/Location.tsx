@@ -91,7 +91,7 @@ function InfoRow({
         </svg>
       </div>
       <div>
-        <h5 className="text-[0.92rem] font-semibold text-ink">{label}</h5>
+        <h3 className="text-[0.92rem] font-semibold text-ink">{label}</h3>
         {href ? (
           <a href={href} className={valueClassName}>
             {value}

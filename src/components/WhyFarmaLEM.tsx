@@ -40,7 +40,7 @@ export function WhyFarmaLEM() {
           {diferenciadores.map((d, i) => (
             <Reveal key={d.n} style={{ transitionDelay: `${i * 0.06}s` }}>
               <span className="font-data text-[0.78rem] text-turquoise">{d.n}</span>
-              <h4 className="mt-2.5 font-display text-[1.12rem] text-white">{d.titulo}</h4>
+              <h3 className="mt-2.5 font-display text-[1.12rem] text-white">{d.titulo}</h3>
               <p className="mt-2 text-[0.88rem] text-[#C9D6EF]">{d.texto}</p>
             </Reveal>
           ))}

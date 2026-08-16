@@ -112,7 +112,7 @@ export function CategoryGrid() {
                   {cat.icon}
                 </svg>
               </div>
-              <h4 className="font-body text-[0.92rem] font-semibold text-ink">{cat.nombre}</h4>
+              <h3 className="font-body text-[0.92rem] font-semibold text-ink">{cat.nombre}</h3>
               <span className="text-[0.78rem] text-ink-soft">{cat.desc}</span>
             </Reveal>
           ))}

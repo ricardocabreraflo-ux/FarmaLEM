@@ -12,7 +12,7 @@ const SHELF_HEADER_BG: Record<Gondola["tipo"], string> = {
 const SHELF_BADGE_STYLE: Record<Gondola["tipo"], string> = {
   "3x2": "bg-turquoise text-[#06322F]",
   "5x4": "bg-[#06322F] text-turquoise",
-  liquidacion: "bg-white text-urgency",
+  liquidacion: "bg-white text-urgency-strong",
 };
 
 const SHELF_BADGE_LABEL: Record<Gondola["tipo"], string> = {
