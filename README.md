@@ -32,7 +32,7 @@ Copia `.env.example` a `.env.local` y llena:
 
 | Variable | De dónde sale |
 |---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Ya está en `.env.example` (proyecto compartido, schema `farmalem` aislado) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Ya está en `.env.example` (proyecto compartido "lemus-store", schema `farmalem` aislado) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → tu proyecto → Settings → API → `service_role` (secreta) |
 | `MERCADOPAGO_ACCESS_TOKEN` | Mercado Pago → Tus integraciones → tu app → Credenciales de producción |
 | `MERCADOPAGO_WEBHOOK_SECRET` | Mercado Pago → Tus integraciones → tu app → Webhooks → Firma secreta |
