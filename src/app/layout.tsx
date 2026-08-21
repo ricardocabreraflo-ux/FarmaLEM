@@ -24,6 +24,12 @@ export const metadata: Metadata = {
   },
   description:
     "Farmacia de barrio en Iztapalapa, CDMX. Promociones 3X2 y 5X4, precios claros y atención cercana. Consulta nuestro catálogo y compra en línea.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FarmaLEM",
+  },
   openGraph: {
     title: "FarmaLEM — Siéntete bien con nosotros",
     description:
