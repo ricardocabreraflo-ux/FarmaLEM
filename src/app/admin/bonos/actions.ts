@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { replaceBonusTiers, saveBonusWeek, computeWeekFromRecords } from "@/lib/bonuses";
+import { logAction } from "@/lib/history";
 
 export interface BonusFormState {
   error?: string;
@@ -30,6 +31,7 @@ export async function saveBonusTiersForm(_prevState: BonusFormState | undefined,
     return { error: err instanceof Error ? err.message : "No se pudieron guardar las metas." };
   }
 
+  await logAction(session.uid, "Configuró metas de bono", month);
   revalidatePath("/admin/bonos");
   redirect(`/admin/bonos?mes=${month}`);
 }
@@ -55,6 +57,7 @@ export async function saveBonusWeekForm(_prevState: BonusFormState | undefined, 
     return { error: err instanceof Error ? err.message : "No se pudo guardar la semana." };
   }
 
+  await logAction(session.uid, "Calculó bono semanal", `Semana ${week} · ${month}`);
   revalidatePath("/admin/bonos");
   redirect(`/admin/bonos?mes=${month}`);
 }

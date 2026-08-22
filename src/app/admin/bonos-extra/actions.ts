@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { saveExtraBonus, type ExtraBonusConcept, type ExtraBonusStatus } from "@/lib/extra-bonuses";
+import { logAction } from "@/lib/history";
 
 export interface ExtraBonusFormState {
   error?: string;
@@ -28,6 +29,7 @@ export async function saveExtraBonusForm(_prevState: ExtraBonusFormState | undef
     return { error: err instanceof Error ? err.message : "No se pudo guardar el bono." };
   }
 
+  await logAction(session.uid, id ? "Editó bono extraordinario" : "Registró bono extraordinario", `${concept} · $${amount.toFixed(2)}`);
   revalidatePath("/admin/bonos-extra");
   redirect("/admin/bonos-extra");
 }

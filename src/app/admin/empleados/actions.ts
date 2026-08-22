@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdminSession, type ProfileRole } from "@/lib/admin-auth";
 import { createProfile, updateProfile } from "@/lib/profiles";
 import { hashPassword } from "@/lib/password";
+import { logAction } from "@/lib/history";
 
 export interface EmployeeFormState {
   error?: string;
@@ -23,7 +24,7 @@ function readFields(formData: FormData) {
 }
 
 export async function createEmployee(_prevState: EmployeeFormState | undefined, formData: FormData): Promise<EmployeeFormState> {
-  await requireAdminSession();
+  const session = await requireAdminSession();
 
   const fields = readFields(formData);
   const password = String(formData.get("password") ?? "");
@@ -37,12 +38,13 @@ export async function createEmployee(_prevState: EmployeeFormState | undefined, 
     return { error: err instanceof Error ? err.message : "No se pudo crear el empleado." };
   }
 
+  await logAction(session.uid, "Creó empleado", `${fields.fullName} · ${fields.shift}`);
   revalidatePath("/admin/empleados");
   redirect("/admin/empleados");
 }
 
 export async function updateEmployee(id: string, _prevState: EmployeeFormState | undefined, formData: FormData): Promise<EmployeeFormState> {
-  await requireAdminSession();
+  const session = await requireAdminSession();
 
   const fields = readFields(formData);
   const password = String(formData.get("password") ?? "");
@@ -55,6 +57,7 @@ export async function updateEmployee(id: string, _prevState: EmployeeFormState |
     return { error: err instanceof Error ? err.message : "No se pudo guardar el empleado." };
   }
 
+  await logAction(session.uid, "Editó empleado", `${fields.fullName} · ${fields.shift} · ${fields.active ? "Activo" : "Inactivo"}`);
   revalidatePath("/admin/empleados");
   redirect("/admin/empleados");
 }

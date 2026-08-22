@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
 import { createWithdrawal, authorizeWithdrawal, type WithdrawalType } from "@/lib/withdrawals";
+import { logAction } from "@/lib/history";
 
 export interface WithdrawalFormState {
   error?: string;
@@ -42,6 +43,7 @@ export async function createWithdrawalForm(_prevState: WithdrawalFormState | und
     return { error: err instanceof Error ? err.message : "No se pudo registrar la salida." };
   }
 
+  await logAction(session.uid, "Registró salida", `${type} · $${amount.toFixed(2)} · ${concept}`);
   revalidatePath("/admin/salidas");
   redirect("/admin/salidas");
 }
@@ -49,5 +51,6 @@ export async function createWithdrawalForm(_prevState: WithdrawalFormState | und
 export async function authorizeWithdrawalAction(id: string) {
   const session = await requireAdminSession();
   await authorizeWithdrawal(id, session.uid);
+  await logAction(session.uid, "Autorizó salida", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/salidas");
 }

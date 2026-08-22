@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { upsertAttendance, deleteAttendance, type AttendanceStatus } from "@/lib/attendance";
+import { logAction } from "@/lib/history";
 
 export interface AttendanceFormState {
   error?: string;
@@ -28,12 +29,14 @@ export async function upsertAttendanceForm(_prevState: AttendanceFormState | und
     return { error: err instanceof Error ? err.message : "No se pudo guardar la asistencia." };
   }
 
+  await logAction(session.uid, "Registró asistencia", `${workDate} · ${shift} · ${status}`);
   revalidatePath("/admin/asistencia");
   redirect(`/admin/asistencia?mes=${month}`);
 }
 
 export async function deleteAttendanceAction(id: string) {
-  await requireAdminSession();
+  const session = await requireAdminSession();
   await deleteAttendance(id);
+  await logAction(session.uid, "Quitó asistencia", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/asistencia");
 }

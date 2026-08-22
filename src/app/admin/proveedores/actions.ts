@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { createSupplier } from "@/lib/suppliers";
+import { logAction } from "@/lib/history";
 
 export interface SupplierFormState {
   error?: string;
@@ -22,6 +23,7 @@ export async function createSupplierForm(_prevState: SupplierFormState | undefin
     return { error: err instanceof Error ? err.message : "No se pudo guardar el proveedor." };
   }
 
+  await logAction(session.uid, "Creó proveedor", name);
   revalidatePath("/admin/proveedores");
   redirect("/admin/proveedores");
 }

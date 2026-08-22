@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
 import { createCut, approveCut, uploadCutPhoto } from "@/lib/cuts";
+import { logAction } from "@/lib/history";
 
 export interface CutFormState {
   error?: string;
@@ -54,6 +55,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
     return { error: err instanceof Error ? err.message : "No se pudo guardar el corte." };
   }
 
+  await logAction(session.uid, "Creó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
   revalidatePath("/admin/cortes");
   redirect("/admin/cortes");
 }
@@ -61,5 +63,6 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
 export async function approveCutAction(id: string) {
   const session = await requireAdminSession();
   await approveCut(id, session.uid);
+  await logAction(session.uid, "Aprobó corte", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/cortes");
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { createPurchase } from "@/lib/purchases";
+import { logAction } from "@/lib/history";
 
 export interface PurchaseFormState {
   error?: string;
@@ -42,6 +43,7 @@ export async function createPurchaseForm(_prevState: PurchaseFormState | undefin
     return { error: err instanceof Error ? err.message : "No se pudo guardar el producto." };
   }
 
+  await logAction(session.uid, "Recibió mercancía", `${description} · ${quantity} piezas · $${(quantity * cost).toFixed(2)}`);
   revalidatePath("/admin/compras");
   redirect("/admin/compras");
 }
