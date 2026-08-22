@@ -1,0 +1,15 @@
+{
+  "name": "FarmaLEM Admin",
+  "short_name": "Pedidos",
+  "description": "Panel privado de pedidos de FarmaLEM.",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#fafbfc",
+  "theme_color": "#2e527d",
+  "lang": "es-MX",
+  "icons": [
+    { "src": "/icons/icon-192-admin.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512-admin.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512-admin.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
