@@ -15,6 +15,7 @@ interface NavItem {
 // solo hace falta agregar su entrada aquí para que aparezcan en el menú.
 const NAV: NavItem[] = [
   { href: "/admin", label: "Pedidos", adminOnly: true },
+  { href: "/admin/cortes", label: "Cortes" },
   { href: "/admin/empleados", label: "Empleados", adminOnly: true },
 ];
 
