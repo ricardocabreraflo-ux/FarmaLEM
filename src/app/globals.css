@@ -24,6 +24,27 @@
    */
   --brand-blue-strong: #436a9c;
   --brand-urgency-strong: #cf463b;
+
+  /*
+   * Panel de operaciones internas (/admin): identidad verde deliberadamente
+   * distinta del azul/turquesa de cara al cliente, para que el equipo note
+   * de inmediato que está en el área interna y no en la tienda.
+   */
+  --admin-primary: #176b46;
+  --admin-primary-deep: #0f4d33;
+  --admin-primary-soft: #e8f1ec;
+  --admin-bg: #f3f6f4;
+  --admin-surface: #ffffff;
+  --admin-border: rgb(23 33 27 / 0.12);
+  --admin-ink: #17211b;
+  --admin-ink-soft: #59665d;
+  --admin-ok-bg: #e7f5ed;
+  --admin-ok-text: #176b46;
+  --admin-pending-bg: #fff3d8;
+  --admin-pending-text: #8a5a00;
+  --admin-bad-bg: #ffebe9;
+  --admin-bad-text: #a6251b;
+
   color-scheme: light;
 }
 
@@ -43,6 +64,22 @@
     --brand-urgency: #ff8377;
     --brand-urgency-soft: rgb(255 131 119 / 0.14);
     --brand-shadow-card: 0 20px 40px -20px rgb(0 0 0 / 0.55);
+
+    --admin-primary: #4ade9a;
+    --admin-primary-deep: #176b46;
+    --admin-primary-soft: rgb(74 222 154 / 0.14);
+    --admin-bg: #0e1712;
+    --admin-surface: #16211b;
+    --admin-border: rgb(236 242 246 / 0.12);
+    --admin-ink: #ecf2f6;
+    --admin-ink-soft: #a9b9c6;
+    --admin-ok-bg: rgb(74 222 154 / 0.16);
+    --admin-ok-text: #4ade9a;
+    --admin-pending-bg: rgb(255 200 87 / 0.16);
+    --admin-pending-text: #ffc857;
+    --admin-bad-bg: rgb(255 131 119 / 0.16);
+    --admin-bad-text: #ff8377;
+
     color-scheme: dark;
   }
 }
@@ -72,6 +109,20 @@
   --color-blue-strong: var(--brand-blue-strong);
   --color-urgency-strong: var(--brand-urgency-strong);
   --shadow-card: var(--brand-shadow-card);
+  --color-admin-primary: var(--admin-primary);
+  --color-admin-primary-deep: var(--admin-primary-deep);
+  --color-admin-primary-soft: var(--admin-primary-soft);
+  --color-admin-bg: var(--admin-bg);
+  --color-admin-surface: var(--admin-surface);
+  --color-admin-border: var(--admin-border);
+  --color-admin-ink: var(--admin-ink);
+  --color-admin-ink-soft: var(--admin-ink-soft);
+  --color-admin-ok-bg: var(--admin-ok-bg);
+  --color-admin-ok-text: var(--admin-ok-text);
+  --color-admin-pending-bg: var(--admin-pending-bg);
+  --color-admin-pending-text: var(--admin-pending-text);
+  --color-admin-bad-bg: var(--admin-bad-bg);
+  --color-admin-bad-text: var(--admin-bad-text);
   --font-display: var(--font-bricolage), "Segoe UI", sans-serif;
   --font-body: var(--font-lexend), "Segoe UI", sans-serif;
   --font-data: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;

@@ -159,6 +159,29 @@ Los tokens de marca (azul/turquesa reales, extraídos del logo) viven en
 **`src/app/globals.css`** como variables CSS (`--brand-*`), expuestas a
 Tailwind vía `@theme inline`. El logo real está en `public/logo.png`.
 
+## Panel de operaciones (`/admin`)
+
+El panel ya no usa una sola contraseña compartida — cada persona tiene su
+propio usuario, guardado en `farmalem.profiles` (tabla nueva, aparte de
+`orders`/`order_items`, dentro del mismo schema aislado). La contraseña se
+guarda con `scrypt` (`src/lib/password.ts`), nunca en texto plano.
+
+Usuarios iniciales (cámbialos apenas puedas — el reset por interfaz llega en
+la fase de "Empleados"):
+
+| Usuario | Contraseña temporal | Rol |
+|---|---|---|
+| `administracion` | `Farma-Admin1` | admin |
+| `mariana` | `Farma-Mariana1` | employee |
+| `itzel` | `Farma-Itzel1` | employee |
+
+El panel tiene su propia identidad visual (verde, tokens `--admin-*` en
+`globals.css`) para distinguirlo de cara al cliente. Por ahora solo vive ahí
+la sección **Pedidos** (lo que ya existía) dentro de un layout con menú
+lateral (`AdminShell`) — Cortes de caja, Empleados, Asistencia, Sueldos,
+Bonos, Proveedores, Recepción de mercancía y Estado de resultados se van
+agregando como secciones nuevas del mismo menú, fase por fase.
+
 ## Pendientes
 
 - Fotos reales de producto en `public/products/`.

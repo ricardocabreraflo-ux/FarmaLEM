@@ -1,18 +1,27 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 /**
- * Sesión de administrador con contraseña única compartida (no hay tabla de
- * usuarios — es un solo panel para la farmacia). La cookie es un token
- * firmado con HMAC, verificable sin guardar sesiones en la base de datos.
+ * Sesión firmada del panel de operaciones. A diferencia del password único
+ * anterior, ahora guarda quién inició sesión (uid + rol), así cada sección
+ * puede decidir qué mostrarle a administración vs. a una empleada.
  *
  * Requiere en .env.local:
- *   ADMIN_PASSWORD=... (la contraseña que tú eliges para entrar al panel)
  *   ADMIN_SESSION_SECRET=... (cadena aleatoria larga, solo para firmar la cookie —
  *     genera una con: openssl rand -hex 32)
  */
 export const ADMIN_COOKIE_NAME = "farmalem_admin_session";
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
+
+export type ProfileRole = "admin" | "employee";
+
+export interface Session {
+  uid: string;
+  role: ProfileRole;
+  exp: number;
+}
 
 function getSecret() {
   const secret = process.env.ADMIN_SESSION_SECRET;
@@ -22,32 +31,47 @@ function getSecret() {
   return secret;
 }
 
-export function checkAdminPassword(password: string) {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) {
-    throw new Error("Falta ADMIN_PASSWORD en las variables de entorno.");
-  }
-  const a = Buffer.from(password);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
+function sign(payload: string) {
+  return createHmac("sha256", getSecret()).update(payload).digest("hex");
 }
 
-export function createSessionToken() {
-  const issuedAt = Date.now().toString();
-  const signature = createHmac("sha256", getSecret()).update(issuedAt).digest("hex");
-  return `${issuedAt}.${signature}`;
+export function createSessionToken(uid: string, role: ProfileRole): string {
+  const exp = Date.now() + SESSION_MAX_AGE_MS;
+  const encoded = Buffer.from(JSON.stringify({ uid, role, exp })).toString("base64url");
+  return `${encoded}.${sign(encoded)}`;
 }
 
-export function verifySessionToken(token: string | undefined): boolean {
-  if (!token) return false;
-  const [issuedAt, signature] = token.split(".");
-  if (!issuedAt || !signature) return false;
+export function verifySessionToken(token: string | undefined): Session | null {
+  if (!token) return null;
+  const [encoded, signature] = token.split(".");
+  if (!encoded || !signature) return null;
 
-  const expected = createHmac("sha256", getSecret()).update(issuedAt).digest("hex");
+  const expected = sign(encoded);
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return false;
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
 
-  const age = Date.now() - Number(issuedAt);
-  return age >= 0 && age <= SESSION_MAX_AGE_MS;
+  try {
+    const payload = JSON.parse(Buffer.from(encoded, "base64url").toString()) as Session;
+    if (typeof payload.exp !== "number" || Date.now() > payload.exp) return null;
+    if (payload.role !== "admin" && payload.role !== "employee") return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/** Para usar al inicio de cualquier página server-side del panel: redirige a login si no hay sesión válida. */
+export async function requireSession(): Promise<Session> {
+  const store = await cookies();
+  const session = verifySessionToken(store.get(ADMIN_COOKIE_NAME)?.value);
+  if (!session) redirect("/admin/login");
+  return session;
+}
+
+/** Igual que requireSession, pero además exige rol de administración. */
+export async function requireAdminSession(): Promise<Session> {
+  const session = await requireSession();
+  if (session.role !== "admin") redirect("/admin");
+  return session;
 }

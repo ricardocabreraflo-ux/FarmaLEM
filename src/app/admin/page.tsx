@@ -1,63 +1,55 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
+import { requireSession } from "@/lib/admin-auth";
+import { getProfileById } from "@/lib/profiles";
 import { listOrders } from "@/lib/orders";
 import { OrdersList } from "@/components/admin/OrdersList";
-import { logout } from "./login/actions";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = { title: "Pedidos" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
-  const store = await cookies();
-  if (!verifySessionToken(store.get(ADMIN_COOKIE_NAME)?.value)) {
-    redirect("/admin/login");
-  }
+  const session = await requireSession();
+  const profile = await getProfileById(session.uid);
 
-  let orders;
+  let orders: Awaited<ReturnType<typeof listOrders>> = [];
+  let loadError: string | null = null;
   try {
     orders = await listOrders();
   } catch (err) {
-    return (
-      <main className="mx-auto min-h-screen max-w-[900px] px-6 py-10">
-        <h1 className="font-display text-2xl text-ink">Pedidos</h1>
-        <p className="mt-4 rounded-2xl border border-line bg-urgency-soft p-6 text-urgency-strong">
-          No se pudieron cargar los pedidos: {err instanceof Error ? err.message : "error desconocido"}
-        </p>
-      </main>
-    );
+    loadError = err instanceof Error ? err.message : "error desconocido";
   }
 
   const pendientes = orders.filter((o) => o.status === "pagado" || o.status === "listo_para_recoger");
   const resto = orders.filter((o) => o.status !== "pagado" && o.status !== "listo_para_recoger");
 
   return (
-    <main className="mx-auto min-h-screen max-w-[900px] px-6 py-10">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl text-ink">Pedidos</h1>
-        <form action={logout}>
-          <button type="submit" className="text-[0.85rem] font-semibold text-ink-soft hover:text-blue">
-            Cerrar sesión
-          </button>
-        </form>
-      </div>
+    <AdminShell activeHref="/admin" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
+      <h1 className="font-display text-2xl text-admin-ink">Pedidos</h1>
 
-      <section className="mt-8">
-        <h2 className="font-display text-lg text-ink">Por atender</h2>
-        <div className="mt-3">
-          <OrdersList orders={pendientes} />
-        </div>
-      </section>
+      {loadError ? (
+        <p className="mt-4 rounded-2xl border border-admin-border bg-admin-bad-bg p-6 text-admin-bad-text">
+          No se pudieron cargar los pedidos: {loadError}
+        </p>
+      ) : (
+        <>
+          <section className="mt-8">
+            <h2 className="font-display text-lg text-admin-ink">Por atender</h2>
+            <div className="mt-3">
+              <OrdersList orders={pendientes} />
+            </div>
+          </section>
 
-      {resto.length > 0 && (
-        <section className="mt-10">
-          <h2 className="font-display text-lg text-ink">Historial</h2>
-          <div className="mt-3">
-            <OrdersList orders={resto} />
-          </div>
-        </section>
+          {resto.length > 0 && (
+            <section className="mt-10">
+              <h2 className="font-display text-lg text-admin-ink">Historial</h2>
+              <div className="mt-3">
+                <OrdersList orders={resto} />
+              </div>
+            </section>
+          )}
+        </>
       )}
-    </main>
+    </AdminShell>
   );
 }

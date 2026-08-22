@@ -2,23 +2,28 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ADMIN_COOKIE_NAME, checkAdminPassword, createSessionToken } from "@/lib/admin-auth";
+import { ADMIN_COOKIE_NAME, createSessionToken } from "@/lib/admin-auth";
+import { getProfileByUsername } from "@/lib/profiles";
+import { verifyPassword } from "@/lib/password";
 
 export async function login(_prevState: { error?: string } | undefined, formData: FormData) {
+  const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
 
-  let valid: boolean;
+  let profile;
   try {
-    valid = checkAdminPassword(password);
+    profile = await getProfileByUsername(username);
   } catch (err) {
     console.error("[admin login]", err);
-    return { error: "El panel no está configurado todavía (falta ADMIN_PASSWORD)." };
+    return { error: "El panel no está configurado todavía." };
   }
 
-  if (!valid) return { error: "Contraseña incorrecta." };
+  if (!profile || !profile.active || !verifyPassword(password, profile.password_hash)) {
+    return { error: "Usuario o contraseña incorrectos." };
+  }
 
   const store = await cookies();
-  store.set(ADMIN_COOKIE_NAME, createSessionToken(), {
+  store.set(ADMIN_COOKIE_NAME, createSessionToken(profile.id, profile.role), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
