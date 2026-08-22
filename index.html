@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#176b46">
+  <title>FarmaLEM · Control de cortes</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <section id="loginView" class="login-view">
+    <form id="loginForm" class="login-card">
+      <div class="brand-mark">+</div>
+      <h1>FarmaLEM</h1>
+      <p>Control de cortes y efectivo</p>
+      <label>Usuario<input id="loginUser" autocomplete="username" required placeholder="administracion"></label>
+      <label>Contraseña<input id="loginPassword" type="password" autocomplete="current-password" required placeholder="••••••••"></label>
+      <button class="primary full" type="submit">Iniciar sesión</button>
+      <div id="loginError" class="error" role="alert"></div>
+      <details><summary>Accesos de demostración</summary><small>administracion / Admin123!<br>mariana / Farma123!<br>itzel / Farma123!</small></details>
+    </form>
+  </section>
+
+  <div id="appView" class="app" hidden>
+    <header class="topbar">
+      <button id="menuBtn" class="icon-btn mobile-only" aria-label="Abrir menú">☰</button>
+      <div class="brand"><span class="brand-mark small">+</span><strong>FarmaLEM</strong></div>
+      <div class="user-area"><span id="sessionLabel"></span><button id="logoutBtn" class="ghost">Salir</button></div>
+    </header>
+    <div class="app-grid">
+      <nav id="sidebar" class="sidebar" aria-label="Navegación principal">
+        <button data-page="dashboard" class="active">Resumen</button>
+        <button data-page="cuts">Cortes</button>
+        <button data-page="withdrawals">Salidas de efectivo</button>
+        <button data-page="employees" data-admin>Empleados</button>
+        <button data-page="suppliers" data-admin>Proveedores</button>
+        <button data-page="attendance" data-admin>Asistencia</button>
+        <button data-page="payroll" data-admin>Sueldos y salarios</button>
+        <button data-page="bonuses" data-admin>Bonos semanales</button>
+        <button data-page="bonusExtra" data-admin>Bonos extraordinarios</button>
+        <button data-page="purchases" data-admin>Recepción de mercancía</button>
+        <button data-page="finances" data-admin>Estado de resultados</button>
+        <button data-page="history" data-admin>Historial</button>
+      </nav>
+      <main id="mainContent" class="content"></main>
+    </div>
+  </div>
+
+  <dialog id="modal"><div class="modal-card"><div id="modalContent"></div></div></dialog>
+  <script src="js/app.js"></script>
+</body>
+</html>
