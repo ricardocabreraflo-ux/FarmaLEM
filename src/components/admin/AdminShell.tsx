@@ -13,7 +13,10 @@ interface NavItem {
 
 // Según se vayan construyendo las demás fases (Cortes, Empleados, Sueldos...)
 // solo hace falta agregar su entrada aquí para que aparezcan en el menú.
-const NAV: NavItem[] = [{ href: "/admin", label: "Pedidos", adminOnly: true }];
+const NAV: NavItem[] = [
+  { href: "/admin", label: "Pedidos", adminOnly: true },
+  { href: "/admin/empleados", label: "Empleados", adminOnly: true },
+];
 
 export function AdminShell({
   activeHref,

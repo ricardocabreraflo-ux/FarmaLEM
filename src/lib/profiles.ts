@@ -31,3 +31,52 @@ export async function listProfiles(): Promise<Profile[]> {
   if (error) throw new Error(`No se pudieron leer los empleados: ${error.message}`);
   return data as Profile[];
 }
+
+interface ProfileInput {
+  username: string;
+  fullName: string;
+  role: ProfileRole;
+  shift: string;
+  weeklySalary: number;
+  shiftsPerWeek: number;
+  active: boolean;
+}
+
+/** Lanza un Error con mensaje claro si el usuario ya existe; cualquier otro código se relanza tal cual. */
+function throwFriendly(error: { code?: string; message: string }): never {
+  if (error.code === "23505") throw new Error("Ese usuario ya existe.");
+  throw new Error(error.message);
+}
+
+export async function createProfile(input: ProfileInput, passwordHash: string): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from("profiles")
+    .insert({
+      username: input.username.toLowerCase(),
+      password_hash: passwordHash,
+      full_name: input.fullName,
+      role: input.role,
+      shift: input.shift,
+      weekly_salary: input.weeklySalary,
+      shifts_per_week: input.shiftsPerWeek,
+      active: input.active,
+    });
+  if (error) throwFriendly(error);
+}
+
+export async function updateProfile(id: string, input: ProfileInput, passwordHash: string | null): Promise<void> {
+  const patch: Record<string, unknown> = {
+    username: input.username.toLowerCase(),
+    full_name: input.fullName,
+    role: input.role,
+    shift: input.shift,
+    weekly_salary: input.weeklySalary,
+    shifts_per_week: input.shiftsPerWeek,
+    active: input.active,
+    updated_at: new Date().toISOString(),
+  };
+  if (passwordHash) patch.password_hash = passwordHash;
+
+  const { error } = await supabaseAdmin().from("profiles").update(patch).eq("id", id);
+  if (error) throwFriendly(error);
+}
