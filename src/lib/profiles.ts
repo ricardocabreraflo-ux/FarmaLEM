@@ -9,8 +9,7 @@ export interface Profile {
   full_name: string;
   role: ProfileRole;
   shift: string;
-  weekly_salary: number;
-  shifts_per_week: number;
+  daily_rate: number;
   active: boolean;
 }
 
@@ -37,8 +36,7 @@ interface ProfileInput {
   fullName: string;
   role: ProfileRole;
   shift: string;
-  weeklySalary: number;
-  shiftsPerWeek: number;
+  dailyRate: number;
   active: boolean;
 }
 
@@ -57,8 +55,7 @@ export async function createProfile(input: ProfileInput, passwordHash: string): 
       full_name: input.fullName,
       role: input.role,
       shift: input.shift,
-      weekly_salary: input.weeklySalary,
-      shifts_per_week: input.shiftsPerWeek,
+      daily_rate: input.dailyRate,
       active: input.active,
     });
   if (error) throwFriendly(error);
@@ -70,8 +67,7 @@ export async function updateProfile(id: string, input: ProfileInput, passwordHas
     full_name: input.fullName,
     role: input.role,
     shift: input.shift,
-    weekly_salary: input.weeklySalary,
-    shifts_per_week: input.shiftsPerWeek,
+    daily_rate: input.dailyRate,
     active: input.active,
     updated_at: new Date().toISOString(),
   };

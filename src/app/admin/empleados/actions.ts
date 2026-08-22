@@ -17,8 +17,7 @@ function readFields(formData: FormData) {
     fullName: String(formData.get("fullName") ?? "").trim(),
     role: String(formData.get("role") ?? "employee") as ProfileRole,
     shift: String(formData.get("shift") ?? "Matutino"),
-    weeklySalary: Number(formData.get("weeklySalary") ?? 0),
-    shiftsPerWeek: Number(formData.get("shiftsPerWeek") ?? 7),
+    dailyRate: Number(formData.get("dailyRate") ?? 0),
     active: formData.get("active") === "true",
   };
 }
@@ -30,7 +29,7 @@ export async function createEmployee(_prevState: EmployeeFormState | undefined, 
   const password = String(formData.get("password") ?? "");
   if (!fields.username || !fields.fullName) return { error: "Usuario y nombre son obligatorios." };
   if (!password) return { error: "La contraseña es obligatoria para un empleado nuevo." };
-  if (fields.shiftsPerWeek <= 0) return { error: "Los turnos por semana deben ser mayor a 0." };
+  if (fields.dailyRate < 0) return { error: "La tarifa diaria no puede ser negativa." };
 
   try {
     await createProfile(fields, hashPassword(password));
@@ -49,7 +48,7 @@ export async function updateEmployee(id: string, _prevState: EmployeeFormState |
   const fields = readFields(formData);
   const password = String(formData.get("password") ?? "");
   if (!fields.username || !fields.fullName) return { error: "Usuario y nombre son obligatorios." };
-  if (fields.shiftsPerWeek <= 0) return { error: "Los turnos por semana deben ser mayor a 0." };
+  if (fields.dailyRate < 0) return { error: "La tarifa diaria no puede ser negativa." };
 
   try {
     await updateProfile(id, fields, password ? hashPassword(password) : null);

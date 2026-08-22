@@ -12,7 +12,7 @@ const DEFAULT_RATE = 242.86;
 
 export function AttendanceForm({ employees, month }: { employees: Profile[]; month: string }) {
   const [state, formAction, pending] = useActionState<AttendanceFormState | undefined, FormData>(upsertAttendanceForm, undefined);
-  const rateByEmployee = Object.fromEntries(employees.map((e) => [e.id, (e.weekly_salary / e.shifts_per_week).toFixed(2)]));
+  const rateByEmployee = Object.fromEntries(employees.map((e) => [e.id, e.daily_rate.toFixed(2)]));
   const [rate, setRate] = useState(employees[0] ? rateByEmployee[employees[0].id] : DEFAULT_RATE.toFixed(2));
 
   return (

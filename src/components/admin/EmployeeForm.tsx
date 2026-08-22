@@ -42,34 +42,22 @@ export function EmployeeForm({ action, profile }: { action: Action; profile?: Pr
             <option value="false">Inactivo</option>
           </select>
         </Field>
-        <Field label="Sueldo semanal" htmlFor="weeklySalary">
+        <Field label="Tarifa diaria" htmlFor="dailyRate">
           <input
-            id="weeklySalary"
-            name="weeklySalary"
+            id="dailyRate"
+            name="dailyRate"
             type="number"
             min="0"
             step="0.01"
             required
-            defaultValue={profile?.weekly_salary ?? 1700}
-            className={inputClass}
-          />
-        </Field>
-        <Field label="Turnos por semana" htmlFor="shiftsPerWeek">
-          <input
-            id="shiftsPerWeek"
-            name="shiftsPerWeek"
-            type="number"
-            min="1"
-            step="1"
-            required
-            defaultValue={profile?.shifts_per_week ?? 7}
+            defaultValue={profile?.daily_rate ?? 150}
             className={inputClass}
           />
         </Field>
       </div>
 
       <p className="rounded-lg bg-admin-primary-soft px-4 py-3 text-[0.82rem] text-admin-primary-deep">
-        Pago por turno calculado: sueldo semanal ÷ turnos por semana.
+        Se paga por turno trabajado: esta tarifa es el valor que se sugiere en Asistencia, pero se puede ajustar día por día.
       </p>
 
       {state?.error && (
