@@ -21,6 +21,7 @@ const NAV: NavItem[] = [
   { href: "/admin/asistencia", label: "Asistencia", adminOnly: true },
   { href: "/admin/sueldos", label: "Sueldos y salarios", adminOnly: true },
   { href: "/admin/bonos", label: "Bonos semanales", adminOnly: true },
+  { href: "/admin/bonos-extra", label: "Bonos extraordinarios", adminOnly: true },
   { href: "/admin/empleados", label: "Empleados", adminOnly: true },
 ];
 
