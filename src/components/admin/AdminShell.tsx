@@ -17,6 +17,7 @@ const NAV: NavItem[] = [
   { href: "/admin", label: "Pedidos", adminOnly: true },
   { href: "/admin/cortes", label: "Cortes" },
   { href: "/admin/salidas", label: "Salidas de efectivo" },
+  { href: "/admin/proveedores", label: "Proveedores", adminOnly: true },
   { href: "/admin/empleados", label: "Empleados", adminOnly: true },
 ];
 

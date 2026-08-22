@@ -12,6 +12,7 @@ export interface Withdrawal {
   concept: string;
   invoice: string | null;
   recipient: string | null;
+  supplier_id: string | null;
   created_by: string;
   authorized_by: string | null;
   authorized_at: string | null;
@@ -34,6 +35,7 @@ interface CreateWithdrawalInput {
   concept: string;
   invoice: string | null;
   recipient: string | null;
+  supplierId: string | null;
   createdBy: string;
   authorizedBy: string | null;
 }
@@ -49,6 +51,7 @@ export async function createWithdrawal(input: CreateWithdrawalInput): Promise<vo
       concept: input.concept,
       invoice: input.invoice,
       recipient: input.recipient,
+      supplier_id: input.supplierId,
       created_by: input.createdBy,
       authorized_by: input.authorizedBy,
       authorized_at: input.authorizedBy ? new Date().toISOString() : null,

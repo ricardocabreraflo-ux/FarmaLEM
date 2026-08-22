@@ -19,6 +19,7 @@ export async function createWithdrawalForm(_prevState: WithdrawalFormState | und
   const concept = String(formData.get("concept") ?? "").trim();
   const invoice = String(formData.get("invoice") ?? "").trim();
   const recipient = String(formData.get("recipient") ?? "").trim();
+  const supplierId = String(formData.get("supplierId") ?? "").trim();
 
   if (!withdrawalDate || !shift || !type) return { error: "Fecha, turno y tipo son obligatorios." };
   if (!concept) return { error: "Escribe el concepto de la salida." };
@@ -33,6 +34,7 @@ export async function createWithdrawalForm(_prevState: WithdrawalFormState | und
       concept,
       invoice: invoice || null,
       recipient: recipient || null,
+      supplierId: supplierId || null,
       createdBy: session.uid,
       authorizedBy: session.role === "admin" ? session.uid : null,
     });

@@ -3,11 +3,12 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { createWithdrawalForm, type WithdrawalFormState } from "@/app/admin/salidas/actions";
+import type { Supplier } from "@/lib/suppliers";
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
 
-export function WithdrawalForm({ isAdmin }: { isAdmin: boolean }) {
+export function WithdrawalForm({ isAdmin, suppliers }: { isAdmin: boolean; suppliers: Supplier[] }) {
   const [state, formAction, pending] = useActionState<WithdrawalFormState | undefined, FormData>(createWithdrawalForm, undefined);
 
   return (
@@ -44,6 +45,18 @@ export function WithdrawalForm({ isAdmin }: { isAdmin: boolean }) {
         <label className="block text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
           Concepto
           <input name="concept" required className={inputClass} />
+        </label>
+
+        <label className="block text-[0.85rem] font-semibold text-admin-ink">
+          Proveedor (opcional)
+          <select name="supplierId" defaultValue="" className={inputClass}>
+            <option value="">No aplica</option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
