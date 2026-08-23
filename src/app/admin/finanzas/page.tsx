@@ -58,10 +58,12 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
     0
   );
   const bonuses = weeks.reduce((sum, w) => sum + earnedBonus(w, tiers), 0);
+  const shrinkage = movements.filter((m) => m.type === "Merma").reduce((sum, m) => sum + m.amount, 0);
 
   const gross = sales + otherIncome - cogs;
   const operating = cashExpenses + manualExpenses + salaries + bonuses;
-  const net = gross - operating;
+  const netBeforeShrinkage = gross - operating;
+  const net = netBeforeShrinkage - shrinkage;
 
   return (
     <AdminShell activeHref="/admin/finanzas" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -120,6 +122,8 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
               <Row label="(−) Bonos semanales" value={bonuses} />
               <Row label="(−) Gastos desde caja" value={cashExpenses} />
               <Row label="(−) Otros gastos operativos" value={manualExpenses} />
+              <Row label="Resultado neto antes de merma" value={netBeforeShrinkage} bold />
+              <Row label="(−) Pérdidas por merma" value={shrinkage} />
               <Row label="Resultado neto" value={net} bold last />
             </tbody>
           </table>
