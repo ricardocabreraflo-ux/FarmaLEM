@@ -4,6 +4,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listAttendanceForMonth } from "@/lib/attendance";
 import { listBonusWeeks, listBonusTiers, earnedBonus } from "@/lib/bonuses";
+import { listExtraBonuses } from "@/lib/extra-bonuses";
 import { listPayrollStatus } from "@/lib/payroll";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { PayrollList, type PayrollRow } from "@/components/admin/PayrollList";
@@ -22,15 +23,17 @@ export default async function SueldosPage({ searchParams }: { searchParams: Prom
   const { mes } = await searchParams;
   const month = mes || new Date().toISOString().slice(0, 7);
 
-  const [profile, employees, attendance, weeks, tiers, payroll] = await Promise.all([
+  const [profile, employees, attendance, weeks, tiers, extraBonuses, payroll] = await Promise.all([
     getProfileById(session.uid),
     listProfiles(),
     listAttendanceForMonth(month),
     listBonusWeeks(month),
     listBonusTiers(month),
+    listExtraBonuses(),
     listPayrollStatus(month),
   ]);
 
+  const monthExtraBonuses = extraBonuses.filter((b) => b.month === month);
   const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);
   const paidByEmployee = new Map(payroll.map((p) => [p.employee_id, p.status === "Pagado"]));
 
@@ -39,7 +42,9 @@ export default async function SueldosPage({ searchParams }: { searchParams: Prom
     const daysWorked = list.filter((a) => PAID_STATUSES.has(a.status)).length;
     const misses = list.filter((a) => a.status === "Falta").length;
     const salary = list.filter((a) => PAID_STATUSES.has(a.status)).reduce((sum, a) => sum + a.rate, 0);
-    const bonus = weeks.filter((w) => w.employee_id === e.id).reduce((sum, w) => sum + earnedBonus(w, tiers), 0);
+    const weeklyBonus = weeks.filter((w) => w.employee_id === e.id).reduce((sum, w) => sum + earnedBonus(w, tiers), 0);
+    const extraBonus = monthExtraBonuses.filter((b) => b.employee_id === e.id).reduce((sum, b) => sum + b.amount, 0);
+    const bonus = weeklyBonus + extraBonus;
     return { employeeId: e.id, name: e.full_name, daysWorked, misses, salary, bonus, total: salary + bonus, paid: paidByEmployee.get(e.id) ?? false };
   });
 

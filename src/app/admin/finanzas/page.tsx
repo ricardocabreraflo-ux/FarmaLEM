@@ -8,6 +8,7 @@ import { listPurchases } from "@/lib/purchases";
 import { listFinanceMovementsForMonth } from "@/lib/finance-movements";
 import { listAttendanceForMonth } from "@/lib/attendance";
 import { listBonusWeeks, listBonusTiers, earnedBonus } from "@/lib/bonuses";
+import { listExtraBonuses } from "@/lib/extra-bonuses";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = { title: "Estado de resultados" };
@@ -29,7 +30,7 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
   const { mes } = await searchParams;
   const month = mes || new Date().toISOString().slice(0, 7);
 
-  const [profile, employees, allCuts, allWithdrawals, allPurchases, movements, attendance, weeks, tiers] = await Promise.all([
+  const [profile, employees, allCuts, allWithdrawals, allPurchases, movements, attendance, weeks, tiers, extraBonuses] = await Promise.all([
     getProfileById(session.uid),
     listProfiles(),
     listCuts(),
@@ -39,7 +40,9 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
     listAttendanceForMonth(month),
     listBonusWeeks(month),
     listBonusTiers(month),
+    listExtraBonuses(),
   ]);
+  const monthExtraBonuses = extraBonuses.filter((b) => b.month === month);
 
   const approvedCuts = allCuts.filter((c) => c.status === "Aprobado" && c.cut_date.startsWith(month));
   const authorizedWithdrawals = allWithdrawals.filter((w) => w.authorized_by && w.withdrawal_date.startsWith(month));
@@ -58,10 +61,11 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
     0
   );
   const bonuses = weeks.reduce((sum, w) => sum + earnedBonus(w, tiers), 0);
+  const extraBonusesTotal = monthExtraBonuses.reduce((sum, b) => sum + b.amount, 0);
   const shrinkage = movements.filter((m) => m.type === "Merma").reduce((sum, m) => sum + m.amount, 0);
 
   const gross = sales + otherIncome - cogs;
-  const operating = cashExpenses + manualExpenses + salaries + bonuses;
+  const operating = cashExpenses + manualExpenses + salaries + bonuses + extraBonusesTotal;
   const netBeforeShrinkage = gross - operating;
   const net = netBeforeShrinkage - shrinkage;
 
@@ -120,6 +124,7 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
               <Row label="Utilidad bruta" value={gross} bold />
               <Row label="(−) Sueldos calculados" value={salaries} />
               <Row label="(−) Bonos semanales" value={bonuses} />
+              <Row label="(−) Bonos extraordinarios" value={extraBonusesTotal} />
               <Row label="(−) Gastos desde caja" value={cashExpenses} />
               <Row label="(−) Otros gastos operativos" value={manualExpenses} />
               <Row label="Resultado neto antes de merma" value={netBeforeShrinkage} bold />
