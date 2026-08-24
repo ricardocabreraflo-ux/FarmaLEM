@@ -29,8 +29,13 @@ function fmtMoney(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 }
 
-export function DenominationsModal({ onConfirm, onClose }: { onConfirm: (total: number) => void; onClose: () => void }) {
+export function DenominationsModal({ show, onConfirm, onClose }: { show: boolean; onConfirm: (total: number) => void; onClose: () => void }) {
+  // El estado vive mientras el componente esté montado, así que aunque se
+  // oculte (show=false) no se pierde el conteo si vuelven a abrirlo para
+  // corregir un solo campo — no hace falta capturar todo de nuevo.
   const [counts, setCounts] = useState<Record<string, string>>({});
+
+  if (!show) return null;
 
   function key(group: "billete" | "moneda", value: number) {
     return `${group}-${value}`;

@@ -116,16 +116,15 @@ export function CutForm({
         </label>
       </div>
 
-      {showDenomModal && (
-        <DenominationsModal
-          onConfirm={(computedTotal) => {
-            setCashDelivered(computedTotal.toFixed(2));
-            setHasCounted(true);
-            setShowDenomModal(false);
-          }}
-          onClose={() => setShowDenomModal(false)}
-        />
-      )}
+      <DenominationsModal
+        show={showDenomModal}
+        onConfirm={(computedTotal) => {
+          setCashDelivered(computedTotal.toFixed(2));
+          setHasCounted(true);
+          setShowDenomModal(false);
+        }}
+        onClose={() => setShowDenomModal(false)}
+      />
 
       <p
         className={`rounded-lg px-4 py-3 text-[0.85rem] ${
