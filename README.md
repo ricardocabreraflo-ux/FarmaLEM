@@ -186,7 +186,6 @@ agregando como secciones nuevas del mismo menú, fase por fase.
 
 - Fotos reales de producto en `public/products/`.
 - Productos reales para el estante de liquidación por caducidad.
-- Confirmar el horario de la sucursal (por ahora: Lun–Sáb 8:00–21:00, Dom 9:00–15:00).
 - Llenar `.env.local` con las credenciales reales (ver tabla arriba) — sin
   esto el carrito funciona pero el pago y el panel de pedidos no.
 - Registrar el webhook en Mercado Pago una vez que el sitio tenga dominio

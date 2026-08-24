@@ -17,7 +17,7 @@ export const site = {
   instagramUrl: "https://www.instagram.com/farmacia_farmalem",
   direccion: "Av. Primavera 19, Col. Pueblo de Sta. María Aztahuacan, Iztapalapa, 09500 CDMX",
   sucursal: "Sucursal Iztapalapa",
-  horario: "Lun–Sáb 8:00–21:00, Dom 9:00–15:00",
+  horario: "Lun–Vie 8:00–22:00, Sáb 8:30–21:30, Dom 9:00–21:00",
   googleMapsUrl: "https://maps.app.goo.gl/hct9N73TB7yF3gcx6",
   mapCoords: { lat: 19.3446, lon: -99.0128 },
   avisoLegal:
