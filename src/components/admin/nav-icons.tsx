@@ -19,6 +19,22 @@ export function IconAsistencia({ className }: { className?: string }) {
   );
 }
 
+export function IconCalendario({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="8" y1="3" x2="8" y2="7" />
+      <line x1="16" y1="3" x2="16" y2="7" />
+      <circle cx="8" cy="13.5" r="1.1" />
+      <circle cx="12" cy="13.5" r="1.1" />
+      <circle cx="16" cy="13.5" r="1.1" />
+      <circle cx="8" cy="17.5" r="1.1" />
+      <circle cx="12" cy="17.5" r="1.1" />
+    </svg>
+  );
+}
+
 export function IconBonoExtra({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>

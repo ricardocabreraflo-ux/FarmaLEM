@@ -34,6 +34,15 @@ export async function upsertAttendanceForm(_prevState: AttendanceFormState | und
   redirect(`/admin/asistencia?mes=${month}`);
 }
 
+/** Confirma un turno ya asignado en el calendario, sin tener que volver a capturar empleado/turno a mano. */
+export async function confirmScheduledAttendance(workDate: string, employeeId: string, shift: string, status: AttendanceStatus, rate: number) {
+  const session = await requireAdminSession();
+  await upsertAttendance({ workDate, employeeId, shift, status, rate, note: null, createdBy: session.uid });
+  await logAction(session.uid, "Confirmó turno programado", `${workDate} · ${shift} · ${status}`);
+  revalidatePath("/admin/asistencia");
+  revalidatePath("/admin/asistencia/nuevo");
+}
+
 export async function deleteAttendanceAction(id: string) {
   const session = await requireAdminSession();
   await deleteAttendance(id);
