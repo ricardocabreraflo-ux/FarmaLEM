@@ -121,10 +121,11 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   const isAdmin = userRole === "admin";
-  const activeGroupId = NAV.find((e) => e.type === "group" && e.items.some((i) => i.href === activeHref)) as NavGroup | undefined;
+  const activeGroup = NAV.find((e) => e.type === "group" && e.items.some((i) => i.href === activeHref)) as NavGroup | undefined;
 
   const [collapsed, setCollapsed] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(activeGroupId ? [activeGroupId.id] : []));
+  // Acordeón: solo un grupo abierto a la vez.
+  const [openGroup, setOpenGroup] = useState<string | null>(activeGroup?.id ?? null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function clearAutoCollapse() {
@@ -147,17 +148,8 @@ export function AdminShell({
     setCollapsed(false);
   }
 
-  function toggleGroup(id: string) {
-    setOpenGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function openGroupAndExpand(id: string) {
-    setOpenGroups((prev) => new Set(prev).add(id));
+  function selectGroup(id: string) {
+    setOpenGroup((prev) => (prev === id ? null : id));
     expand();
   }
 
@@ -204,11 +196,13 @@ export function AdminShell({
       </header>
 
       <div className="mx-auto flex max-w-[1180px] items-start">
-        <div className="flex shrink-0" onMouseEnter={clearAutoCollapse} onMouseLeave={() => !collapsed && scheduleAutoCollapse()}>
-        {/* Riel: siempre visible, solo íconos */}
         <nav
-          aria-label="Navegación del panel (íconos)"
-          className="sticky top-16 flex h-[calc(100vh-4rem)] w-[68px] shrink-0 flex-col items-center gap-2 overflow-y-auto border-r border-admin-border bg-admin-surface py-4"
+          aria-label="Navegación del panel"
+          onMouseEnter={clearAutoCollapse}
+          onMouseLeave={() => !collapsed && scheduleAutoCollapse()}
+          className={`sticky top-16 flex h-[calc(100vh-4rem)] shrink-0 flex-col gap-1.5 overflow-x-hidden overflow-y-auto border-r border-admin-border bg-admin-bg py-4 transition-[width] duration-200 ${
+            collapsed ? "w-[68px] items-center px-2" : "w-[248px] px-3"
+          }`}
         >
           {NAV.map((entry) => {
             if (entry.type === "leaf") {
@@ -220,105 +214,88 @@ export function AdminShell({
                   key={entry.href}
                   href={entry.href}
                   onClick={handleNavigate}
+                  title={collapsed ? entry.label : undefined}
+                  aria-label={entry.label}
+                  className={
+                    collapsed
+                      ? `grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-colors ${
+                          active ? "bg-admin-primary-soft text-admin-primary-deep" : "text-admin-ink-soft hover:bg-admin-primary-soft hover:text-admin-primary-deep"
+                        }`
+                      : `flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-[1.05rem] font-bold shadow-sm transition-all ${
+                          active
+                            ? "border-admin-primary bg-admin-primary-soft text-admin-primary-deep"
+                            : "border-admin-border bg-admin-surface text-admin-ink hover:-translate-y-0.5 hover:shadow-md"
+                        }`
+                  }
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {!collapsed && entry.label}
+                </Link>
+              );
+            }
+
+            const items = visibleGroupItems(entry, isAdmin);
+            if (items.length === 0) return null;
+            const Icon = entry.icon;
+            const active = items.some((i) => i.href === activeHref);
+            const open = !collapsed && openGroup === entry.id;
+
+            if (collapsed) {
+              return (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => selectGroup(entry.id)}
                   title={entry.label}
                   aria-label={entry.label}
                   className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-colors ${
                     active ? "bg-admin-primary-soft text-admin-primary-deep" : "text-admin-ink-soft hover:bg-admin-primary-soft hover:text-admin-primary-deep"
                   }`}
                 >
-                  <Icon className="h-6 w-6" />
-                </Link>
+                  <Icon className="h-5 w-5" />
+                </button>
               );
             }
-            const items = visibleGroupItems(entry, isAdmin);
-            if (items.length === 0) return null;
-            const Icon = entry.icon;
-            const active = items.some((i) => i.href === activeHref);
+
             return (
-              <button
-                key={entry.id}
-                type="button"
-                onClick={() => openGroupAndExpand(entry.id)}
-                title={entry.label}
-                aria-label={entry.label}
-                className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-colors ${
-                  active ? "bg-admin-primary-soft text-admin-primary-deep" : "text-admin-ink-soft hover:bg-admin-primary-soft hover:text-admin-primary-deep"
-                }`}
-              >
-                <Icon className="h-6 w-6" />
-              </button>
+              <div key={entry.id} className="w-full">
+                <button
+                  type="button"
+                  onClick={() => selectGroup(entry.id)}
+                  aria-expanded={open}
+                  className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-[1.05rem] font-bold shadow-sm transition-all ${
+                    open ? "border-admin-primary bg-admin-primary-soft text-admin-primary-deep" : "border-admin-border bg-admin-surface text-admin-ink hover:-translate-y-0.5 hover:shadow-md"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className="flex-1 text-left">{entry.label}</span>
+                  <IconChevronDown className={`h-5 w-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+                </button>
+                {open && (
+                  <div className="mt-1.5 mb-1 flex flex-col gap-1 pl-4">
+                    {items.map((item) => {
+                      const ItemIcon = item.icon;
+                      const itemActive = item.href === activeHref;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={handleNavigate}
+                          className={`flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[0.92rem] font-semibold transition-colors ${
+                            itemActive ? "bg-admin-primary-soft text-admin-primary-deep" : "text-admin-ink-soft hover:bg-admin-primary-soft hover:text-admin-primary-deep"
+                          }`}
+                        >
+                          <ItemIcon className="h-4 w-4 shrink-0" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
-
-        {/* Panel expandido: aparece al abrir el menú y se cierra solo tras un rato sin usarse */}
-        {!collapsed && (
-          <nav aria-label="Navegación del panel" className="sticky top-16 flex h-[calc(100vh-4rem)] w-[240px] shrink-0 flex-col gap-2 overflow-y-auto border-r border-admin-border bg-admin-bg p-3">
-            {NAV.map((entry) => {
-              if (entry.type === "leaf") {
-                if (entry.adminOnly && !isAdmin) return null;
-                const Icon = entry.icon;
-                const active = entry.href === activeHref;
-                return (
-                  <Link
-                    key={entry.href}
-                    href={entry.href}
-                    onClick={handleNavigate}
-                    className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-[1.05rem] font-bold shadow-sm transition-all ${
-                      active
-                        ? "border-admin-primary bg-admin-primary-soft text-admin-primary-deep"
-                        : "border-admin-border bg-admin-surface text-admin-ink hover:-translate-y-0.5 hover:shadow-md"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5 shrink-0" />
-                    {entry.label}
-                  </Link>
-                );
-              }
-
-              const items = visibleGroupItems(entry, isAdmin);
-              if (items.length === 0) return null;
-              const Icon = entry.icon;
-              const open = openGroups.has(entry.id);
-              return (
-                <div key={entry.id}>
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(entry.id)}
-                    aria-expanded={open}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-admin-border bg-admin-surface px-4 py-3.5 text-[1.05rem] font-bold text-admin-ink shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <Icon className="h-5 w-5 shrink-0" />
-                    <span className="flex-1 text-left">{entry.label}</span>
-                    <IconChevronDown className={`h-5 w-5 shrink-0 text-admin-ink-soft transition-transform ${open ? "rotate-180" : ""}`} />
-                  </button>
-                  {open && (
-                    <div className="mt-1.5 mb-1 flex flex-col gap-1 pl-4">
-                      {items.map((item) => {
-                        const ItemIcon = item.icon;
-                        const active = item.href === activeHref;
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={handleNavigate}
-                            className={`flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[0.92rem] font-semibold transition-colors ${
-                              active ? "bg-admin-primary-soft text-admin-primary-deep" : "text-admin-ink-soft hover:bg-admin-primary-soft hover:text-admin-primary-deep"
-                            }`}
-                          >
-                            <ItemIcon className="h-4 w-4 shrink-0" />
-                            {item.label}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-        )}
-        </div>
 
         <main className="min-w-0 flex-1 px-5 py-8 lg:px-8">{children}</main>
       </div>

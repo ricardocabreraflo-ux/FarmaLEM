@@ -182,8 +182,14 @@ export function IconChevronDown({ className }: { className?: string }) {
 export function IconSettings({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 3v2.5M12 18.5V21M4.6 6.6l1.8 1.8M17.6 15.6l1.8 1.8M3 12h2.5M18.5 12H21M4.6 17.4l1.8-1.8M17.6 8.4l1.8-1.8" />
+      <circle cx="12" cy="12" r="6.8" />
+      <circle cx="12" cy="12" r="2.4" />
+      <rect x="10.8" y="1.9" width="2.4" height="3.3" rx="0.6" />
+      <rect x="10.8" y="1.9" width="2.4" height="3.3" rx="0.6" transform="rotate(60 12 12)" />
+      <rect x="10.8" y="1.9" width="2.4" height="3.3" rx="0.6" transform="rotate(120 12 12)" />
+      <rect x="10.8" y="1.9" width="2.4" height="3.3" rx="0.6" transform="rotate(180 12 12)" />
+      <rect x="10.8" y="1.9" width="2.4" height="3.3" rx="0.6" transform="rotate(240 12 12)" />
+      <rect x="10.8" y="1.9" width="2.4" height="3.3" rx="0.6" transform="rotate(300 12 12)" />
     </svg>
   );
 }
