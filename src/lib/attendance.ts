@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
-export type AttendanceStatus = "Asistió" | "Cubrió turno" | "Falta" | "Descanso" | "Cerrado";
+export type AttendanceStatus = "Asistió" | "Cubrió turno" | "Falta" | "Descanso" | "Cerrado" | "Día festivo";
 const PAID_STATUSES: AttendanceStatus[] = ["Asistió", "Cubrió turno"];
 
 export interface AttendanceRow {

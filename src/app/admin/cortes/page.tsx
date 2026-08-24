@@ -5,6 +5,7 @@ import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listCutsForMonth, getCutPhotoUrl } from "@/lib/cuts";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CutsList } from "@/components/admin/CutsList";
+import { MonthPicker } from "@/components/admin/MonthPicker";
 
 export const metadata: Metadata = { title: "Cortes" };
 export const dynamic = "force-dynamic";
@@ -57,15 +58,7 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Un registro por trabajador y turno.</p>
 
-      <form method="get" className="mt-4 flex items-end gap-3">
-        <label className="block max-w-[220px] flex-1 text-[0.85rem] font-semibold text-admin-ink">
-          Mes
-          <input type="month" name="mes" defaultValue={month} className="mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary" />
-        </label>
-        <button type="submit" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-          Ver
-        </button>
-      </form>
+      <MonthPicker month={month} basePath="/admin/cortes" />
 
       <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">

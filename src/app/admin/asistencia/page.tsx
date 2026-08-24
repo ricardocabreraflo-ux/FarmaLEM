@@ -5,6 +5,7 @@ import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listAttendanceForMonth } from "@/lib/attendance";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttendanceList } from "@/components/admin/AttendanceList";
+import { MonthPicker } from "@/components/admin/MonthPicker";
 
 export const metadata: Metadata = { title: "Asistencia" };
 export const dynamic = "force-dynamic";
@@ -39,20 +40,7 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Cada falta afecta únicamente el bono de la semana donde ocurrió.</p>
 
-      <form method="get" className="mt-4 flex items-end gap-3">
-        <label className="block max-w-[220px] flex-1 text-[0.85rem] font-semibold text-admin-ink">
-          Mes
-          <input
-            type="month"
-            name="mes"
-            defaultValue={month}
-            className="mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary"
-          />
-        </label>
-        <button type="submit" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-          Ver
-        </button>
-      </form>
+      <MonthPicker month={month} basePath="/admin/asistencia" />
 
       <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {activeEmployees.map((e) => {

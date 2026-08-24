@@ -222,3 +222,7 @@ agregando como secciones nuevas del mismo menú, fase por fase.
 - Configurar WhatsApp Business Cloud API en Meta y crear/aprobar la
   plantilla `nuevo_pedido_farmalem` (guía arriba) — el código ya está
   listo, solo falta esa configuración de tu lado.
+- Calendario de días festivos: hoy "Día festivo" en Asistencia se marca a
+  mano, día por día. Falta construir un calendario de festivos (fijos como
+  1 de enero, y los que ustedes decidan) para que el sistema lo proponga
+  solo en vez de tener que capturarlo manualmente cada vez.

@@ -89,12 +89,16 @@ export async function saveBonusWeek(input: BonusWeekInput, id?: string): Promise
   if (error) throw new Error(error.message);
 }
 
-/** Calcula ventas (cortes aprobados en el rango) y si hubo alguna falta en el rango. */
+/**
+ * Calcula ventas (cortes aprobados en el rango) y si hubo alguna falta en el
+ * rango. Un cierre no planeado (status "Cerrado") cuenta igual que una falta
+ * para el bono; un "Día festivo" (cierre planeado) no lo afecta.
+ */
 export async function computeWeekFromRecords(employeeId: string, startDate: string, endDate: string) {
   const db = supabaseAdmin();
   const [{ data: cuts, error: cutsError }, { data: att, error: attError }] = await Promise.all([
     db.from("cuts").select("total").eq("employee_id", employeeId).eq("status", "Aprobado").gte("cut_date", startDate).lte("cut_date", endDate),
-    db.from("attendance").select("status").eq("employee_id", employeeId).eq("status", "Falta").gte("work_date", startDate).lte("work_date", endDate),
+    db.from("attendance").select("status").eq("employee_id", employeeId).in("status", ["Falta", "Cerrado"]).gte("work_date", startDate).lte("work_date", endDate),
   ]);
   if (cutsError) throw new Error(cutsError.message);
   if (attError) throw new Error(attError.message);

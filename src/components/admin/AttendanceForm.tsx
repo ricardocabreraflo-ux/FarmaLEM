@@ -57,6 +57,7 @@ export function AttendanceForm({ employees, month }: { employees: Profile[]; mon
             <option>Falta</option>
             <option>Descanso</option>
             <option>Cerrado</option>
+            <option>Día festivo</option>
           </select>
         </label>
 
@@ -72,7 +73,8 @@ export function AttendanceForm({ employees, month }: { employees: Profile[]; mon
       </div>
 
       <p className="rounded-lg bg-admin-primary-soft px-4 py-3 text-[0.85rem] text-admin-primary-deep">
-        Asistió y Cubrió turno generan sueldo. Falta, Descanso y Cerrado no generan pago.
+        Asistió y Cubrió turno generan sueldo. Falta y Cerrado (cierre no planeado) quitan el bono de esa semana. Descanso y Día festivo (cierre planeado) no
+        generan pago pero tampoco quitan el bono.
       </p>
 
       {state?.error && (
