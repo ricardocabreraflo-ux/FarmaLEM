@@ -7,6 +7,7 @@ import { logout } from "@/app/admin/login/actions";
 import type { ProfileRole } from "@/lib/admin-auth";
 import {
   IconAsistencia,
+  IconBalance,
   IconBonoExtra,
   IconBonoSemanal,
   IconCaja,
@@ -24,6 +25,7 @@ import {
   IconProveedores,
   IconSalidas,
   IconSettings,
+  IconSliders,
   IconSueldos,
   IconVentas,
 } from "@/components/admin/nav-icons";
@@ -90,7 +92,12 @@ const NAV: NavEntry[] = [
     id: "finanzas",
     label: "Finanzas",
     icon: IconFinanzas,
-    items: [leaf("/admin/ventas", "Comparativa de ventas", IconVentas, true), leaf("/admin/finanzas", "Estado de resultados", IconFinanzas, true)],
+    items: [
+      leaf("/admin/ventas", "Comparativa de ventas", IconVentas, true),
+      leaf("/admin/finanzas", "Estado de resultados", IconFinanzas, true),
+      leaf("/admin/punto-equilibrio", "Punto de equilibrio", IconBalance, true),
+      leaf("/admin/punto-equilibrio/simulador", "Simulador de escenarios", IconSliders, true),
+    ],
   },
   leaf("/admin/historial", "Historial", IconHistorial, true),
   leaf("/admin/configuracion", "Configuración", IconSettings, true),

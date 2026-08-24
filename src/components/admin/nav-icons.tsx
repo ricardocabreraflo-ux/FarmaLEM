@@ -214,6 +214,31 @@ export function IconMercancia({ className }: { className?: string }) {
   );
 }
 
+export function IconBalance({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <line x1="12" y1="3" x2="12" y2="19" />
+      <line x1="5" y1="7" x2="19" y2="7" />
+      <line x1="5" y1="19" x2="19" y2="19" />
+      <polyline points="3,12 5,7 7,12" />
+      <polyline points="17,12 19,7 21,12" />
+    </svg>
+  );
+}
+
+export function IconSliders({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <line x1="5" y1="4" x2="5" y2="20" />
+      <circle cx="5" cy="9" r="1.8" />
+      <line x1="12" y1="4" x2="12" y2="20" />
+      <circle cx="12" cy="15" r="1.8" />
+      <line x1="19" y1="4" x2="19" y2="20" />
+      <circle cx="19" cy="7" r="1.8" />
+    </svg>
+  );
+}
+
 export function IconSueldos({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>
