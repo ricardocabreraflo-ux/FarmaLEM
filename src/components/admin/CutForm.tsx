@@ -8,15 +8,29 @@ import type { Profile } from "@/lib/profiles";
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
 
-export function CutForm({ employees }: { employees: Profile[] }) {
+export function CutForm({
+  employees,
+  defaultShift,
+  canChooseShift,
+}: {
+  employees: Profile[];
+  defaultShift: string;
+  canChooseShift: boolean;
+}) {
   const [state, formAction, pending] = useActionState<CutFormState | undefined, FormData>(createCutForm, undefined);
   const [total, setTotal] = useState("");
-  const [cash, setCash] = useState("");
   const [card, setCard] = useState("");
+  const [cashDelivered, setCashDelivered] = useState("");
 
-  const diff = Number(cash || 0) + Number(card || 0) - Number(total || 0);
-  const matches = Math.abs(diff) < 0.005;
-  const hasValues = total !== "" && cash !== "" && card !== "";
+  const totalNum = Number(total || 0);
+  const cardNum = Number(card || 0);
+  const cash = Math.max(totalNum - cardNum, 0);
+  const cardExceedsTotal = cardNum > totalNum;
+
+  const cashDeliveredNum = Number(cashDelivered || 0);
+  const hasDeliveredValue = cashDelivered !== "";
+  const deliveredDiff = cashDeliveredNum - cash;
+  const deliveredMatches = Math.abs(deliveredDiff) < 0.005;
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-4">
@@ -41,10 +55,17 @@ export function CutForm({ employees }: { employees: Profile[] }) {
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Turno
-          <select name="shift" className={inputClass}>
-            <option>Matutino</option>
-            <option>Vespertino</option>
-          </select>
+          {canChooseShift ? (
+            <select name="shift" defaultValue={defaultShift} className={inputClass}>
+              <option>Matutino</option>
+              <option>Vespertino</option>
+            </select>
+          ) : (
+            <>
+              <input type="hidden" name="shift" value={defaultShift} />
+              <div className={`${inputClass} bg-admin-primary-soft font-semibold text-admin-primary-deep`}>{defaultShift} (tu turno)</div>
+            </>
+          )}
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
@@ -53,18 +74,27 @@ export function CutForm({ employees }: { employees: Profile[] }) {
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
-          Efectivo
-          <input name="cash" type="number" min="0" step="0.01" required value={cash} onChange={(e) => setCash(e.target.value)} className={inputClass} />
+          Tarjeta / transferencia
+          <input name="card" type="number" min="0" step="0.01" value={card} onChange={(e) => setCard(e.target.value)} className={inputClass} />
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
-          Tarjeta
-          <input name="card" type="number" min="0" step="0.01" required value={card} onChange={(e) => setCard(e.target.value)} className={inputClass} />
+          Efectivo <span className="font-normal text-admin-ink-soft">(venta total − tarjeta)</span>
+          <input name="cash" type="number" readOnly value={cash.toFixed(2)} className={`${inputClass} bg-admin-bg/60 text-admin-ink-soft`} />
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
-          Efectivo entregado
-          <input name="cashDelivered" type="number" min="0" step="0.01" required className={inputClass} />
+          Efectivo entregado <span className="font-normal text-admin-ink-soft">(cuenta física)</span>
+          <input
+            name="cashDelivered"
+            type="number"
+            min="0"
+            step="0.01"
+            required
+            value={cashDelivered}
+            onChange={(e) => setCashDelivered(e.target.value)}
+            className={inputClass}
+          />
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
@@ -73,12 +103,20 @@ export function CutForm({ employees }: { employees: Profile[] }) {
         </label>
       </div>
 
-      <p className={`rounded-lg px-4 py-3 text-[0.85rem] ${hasValues && !matches ? "bg-admin-bad-bg text-admin-bad-text" : "bg-admin-primary-soft text-admin-primary-deep"}`}>
-        {!hasValues
-          ? "Captura los importes para comprobar el corte."
-          : matches
-            ? "✓ Efectivo + tarjeta coincide con la venta total."
-            : `Diferencia detectada: ${diff > 0 ? "+" : ""}${diff.toFixed(2)}`}
+      <p
+        className={`rounded-lg px-4 py-3 text-[0.85rem] ${
+          cardExceedsTotal || (hasDeliveredValue && !deliveredMatches) ? "bg-admin-bad-bg text-admin-bad-text" : "bg-admin-primary-soft text-admin-primary-deep"
+        }`}
+      >
+        {cardExceedsTotal
+          ? "La tarjeta/transferencia no puede ser mayor a la venta total."
+          : !hasDeliveredValue
+            ? "Captura el efectivo entregado para comprobar el corte."
+            : deliveredMatches
+              ? "✓ El efectivo entregado coincide con lo esperado."
+              : deliveredDiff < 0
+                ? `Faltan ${Math.abs(deliveredDiff).toFixed(2)} en el efectivo entregado.`
+                : `Sobran ${deliveredDiff.toFixed(2)} en el efectivo entregado.`}
       </p>
 
       {state?.error && (
@@ -93,7 +131,7 @@ export function CutForm({ employees }: { employees: Profile[] }) {
         </Link>
         <button
           type="submit"
-          disabled={pending || (hasValues && !matches)}
+          disabled={pending || cardExceedsTotal}
           className="rounded-full bg-admin-primary px-6 py-2.5 text-[0.86rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
         >
           {pending ? "Guardando…" : "Guardar corte"}
