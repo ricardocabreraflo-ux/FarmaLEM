@@ -27,12 +27,14 @@ export function ScheduledShiftsList({
   const router = useRouter();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const employeeById = new Map(employees.map((e) => [e.id, e]));
+  const covered = assignments.filter((a): a is ShiftAssignment & { employee_id: string } => a.employee_id !== null);
+  const vacantCount = assignments.length - covered.length;
 
   if (assignments.length === 0) {
     return <p className="rounded-lg bg-admin-bg px-4 py-3 text-[0.85rem] text-admin-ink-soft">No hay turnos programados para este día en el calendario.</p>;
   }
 
-  async function confirm(assignment: ShiftAssignment, status: AttendanceStatus) {
+  async function confirm(assignment: ShiftAssignment & { employee_id: string }, status: AttendanceStatus) {
     const key = `${assignment.shift}-${status}`;
     setPendingKey(key);
     const employee = employeeById.get(assignment.employee_id);
@@ -48,7 +50,12 @@ export function ScheduledShiftsList({
 
   return (
     <div className="flex flex-col gap-3">
-      {assignments.map((assignment) => {
+      {vacantCount > 0 && (
+        <p className="rounded-lg bg-admin-bad-bg px-4 py-3 text-[0.85rem] font-semibold text-admin-bad-text">
+          {vacantCount === 1 ? "Hay un turno vacante" : `Hay ${vacantCount} turnos vacantes`} este día — asígnalo en el Calendario de turnos.
+        </p>
+      )}
+      {covered.map((assignment) => {
         const employee = employeeById.get(assignment.employee_id);
         const confirmed = existing.find((a) => a.employee_id === assignment.employee_id && a.shift === assignment.shift);
         return (

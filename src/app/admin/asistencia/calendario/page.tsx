@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listShiftScheduleForMonth, listWeekLabels } from "@/lib/shift-schedule";
 import { buildMonthWeeks } from "@/lib/calendar-weeks";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ShiftScheduleGrid } from "@/components/admin/ShiftScheduleGrid";
+import { GenerateNextMonthButton } from "@/components/admin/GenerateNextMonthButton";
 
 export const metadata: Metadata = { title: "Calendario de turnos" };
 export const dynamic = "force-dynamic";
@@ -12,6 +14,11 @@ export const dynamic = "force-dynamic";
 function monthLabel(month: string) {
   const [y, m] = month.split("-").map(Number);
   return new Date(y, m - 1, 1).toLocaleDateString("es-MX", { month: "long", year: "numeric" });
+}
+
+function nextMonth(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
 }
 
 export default async function CalendarioTurnosPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
@@ -33,7 +40,7 @@ export default async function CalendarioTurnosPage({ searchParams }: { searchPar
       <h1 className="font-display text-2xl text-admin-ink capitalize">Calendario de turnos &middot; {monthLabel(month)}</h1>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Toca un turno para asignar quién lo cubre. Esto precarga el turno esperado en Asistencia.</p>
 
-      <form method="get" className="mt-4 flex items-end gap-3">
+      <form method="get" className="mt-4 flex flex-wrap items-end gap-3">
         <label className="block max-w-[220px] flex-1 text-[0.85rem] font-semibold text-admin-ink">
           Mes
           <input type="month" name="mes" defaultValue={month} className="mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary" />
@@ -41,10 +48,17 @@ export default async function CalendarioTurnosPage({ searchParams }: { searchPar
         <button type="submit" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
           Ver
         </button>
+        <Link href={`/admin/asistencia/calendario/imprimir?mes=${month}`} target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+          Imprimir / PDF
+        </Link>
       </form>
 
       <div className="mt-5">
         <ShiftScheduleGrid weeks={weeks} assignments={assignments} employees={activeEmployees} weekLabels={weekLabels} />
+      </div>
+
+      <div className="mt-5">
+        <GenerateNextMonthButton targetMonth={nextMonth(month)} />
       </div>
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-bg p-5 text-[0.82rem] text-admin-ink-soft">

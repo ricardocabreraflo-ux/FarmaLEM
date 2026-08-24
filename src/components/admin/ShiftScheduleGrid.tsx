@@ -63,18 +63,19 @@ export function ShiftScheduleGrid({
                   )}
                   {week.days.map((day) => {
                     const assignment = byKey.get(`${day.date}-${shift}`);
-                    const name = assignment ? nameById.get(assignment.employee_id) : null;
+                    const name = assignment?.employee_id ? nameById.get(assignment.employee_id) : null;
+                    const isVacant = assignment !== undefined && !assignment.employee_id;
                     return (
                       <td key={day.date} className={`px-1.5 py-1.5 align-top ${day.inMonth ? "" : "opacity-40"}`}>
                         <button
                           type="button"
                           onClick={() => setEditingCell({ date: day.date, shift })}
                           className={`flex w-full flex-col items-start rounded-lg px-2 py-1.5 text-left transition-colors ${
-                            name ? "bg-admin-primary-soft text-admin-primary-deep" : "text-admin-ink-soft hover:bg-admin-bg"
+                            name ? "bg-admin-primary-soft text-admin-primary-deep" : isVacant ? "bg-admin-bad-bg text-admin-bad-text" : "text-admin-ink-soft hover:bg-admin-bg"
                           }`}
                         >
                           <span className="text-[0.68rem] font-semibold opacity-70">{shift === "Matutino" ? "M" : "V"}</span>
-                          <span className="font-bold">{name ? firstName(name) : "—"}</span>
+                          <span className="font-bold">{name ? firstName(name) : isVacant ? "VACANTE" : "—"}</span>
                           {assignment?.is_double_shift && <span className="text-[0.65rem] font-bold text-admin-bad-text">DOBLE</span>}
                         </button>
                       </td>
@@ -183,7 +184,7 @@ function ShiftCellModal({
             onChange={(e) => setEmployeeId(e.target.value)}
             className="mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary"
           >
-            <option value="">Sin asignar</option>
+            <option value="">Vacante</option>
             {employees.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.full_name}
