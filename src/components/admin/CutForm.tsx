@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { createCutForm, type CutFormState } from "@/app/admin/cortes/actions";
+import { DenominationsModal } from "@/components/admin/DenominationsModal";
 import type { Profile } from "@/lib/profiles";
 
 const inputClass =
@@ -21,6 +22,7 @@ export function CutForm({
   const [total, setTotal] = useState("");
   const [card, setCard] = useState("");
   const [cashDelivered, setCashDelivered] = useState("");
+  const [showDenomModal, setShowDenomModal] = useState(false);
 
   const totalNum = Number(total || 0);
   const cardNum = Number(card || 0);
@@ -85,23 +87,43 @@ export function CutForm({
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Efectivo entregado <span className="font-normal text-admin-ink-soft">(cuenta física)</span>
-          <input
-            name="cashDelivered"
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            value={cashDelivered}
-            onChange={(e) => setCashDelivered(e.target.value)}
-            className={inputClass}
-          />
+          <div className="mt-1.5 flex gap-2">
+            <input
+              name="cashDelivered"
+              type="number"
+              min="0"
+              step="0.01"
+              required
+              value={cashDelivered}
+              onChange={(e) => setCashDelivered(e.target.value)}
+              className={`${inputClass} mt-0`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowDenomModal(true)}
+              className="shrink-0 rounded-lg border border-admin-border px-3.5 text-[0.82rem] font-semibold whitespace-nowrap text-admin-ink hover:bg-admin-primary-soft"
+            >
+              Contar efectivo
+            </button>
+          </div>
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
           Foto del corte (opcional)
-          <input name="photo" type="file" accept="image/*" className={`${inputClass} py-2`} />
+          <input name="photo" type="file" accept="image/*" capture="environment" className={`${inputClass} py-2`} />
+          <span className="mt-1 block font-normal text-admin-ink-soft">En el celular abre la cámara directamente.</span>
         </label>
       </div>
+
+      {showDenomModal && (
+        <DenominationsModal
+          onConfirm={(computedTotal) => {
+            setCashDelivered(computedTotal.toFixed(2));
+            setShowDenomModal(false);
+          }}
+          onClose={() => setShowDenomModal(false)}
+        />
+      )}
 
       <p
         className={`rounded-lg px-4 py-3 text-[0.85rem] ${
