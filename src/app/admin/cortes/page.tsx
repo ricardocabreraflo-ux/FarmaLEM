@@ -2,20 +2,26 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
-import { listCuts, getCutPhotoUrl } from "@/lib/cuts";
+import { listCutsForMonth, getCutPhotoUrl } from "@/lib/cuts";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CutsList } from "@/components/admin/CutsList";
 
 export const metadata: Metadata = { title: "Cortes" };
 export const dynamic = "force-dynamic";
 
-export default async function CortesPage() {
+function fmtMoney(n: number) {
+  return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
+}
+
+export default async function CortesPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireSession();
   const isAdmin = session.role === "admin";
+  const { mes } = await searchParams;
+  const month = mes || new Date().toISOString().slice(0, 7);
 
   const [profile, cuts, employees] = await Promise.all([
     getProfileById(session.uid),
-    listCuts(isAdmin ? undefined : session.uid),
+    listCutsForMonth(month, isAdmin ? undefined : session.uid),
     listProfiles(),
   ]);
 
@@ -28,12 +34,17 @@ export default async function CortesPage() {
     }))
   );
 
+  const totalVentas = cuts.reduce((s, c) => s + c.total, 0);
+  const totalEfectivo = cuts.reduce((s, c) => s + c.cash, 0);
+  const totalTarjeta = cuts.reduce((s, c) => s + c.card, 0);
+  const totalEntregado = cuts.reduce((s, c) => s + c.cash_delivered, 0);
+
   return (
     <AdminShell activeHref="/admin/cortes" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-admin-ink">Cortes</h1>
         <div className="flex items-center gap-3">
-          <Link href="/admin/cortes/reporte" target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+          <Link href={`/admin/cortes/reporte?mes=${month}`} target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
             Reporte mensual
           </Link>
           <Link
@@ -45,6 +56,35 @@ export default async function CortesPage() {
         </div>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Un registro por trabajador y turno.</p>
+
+      <form method="get" className="mt-4 flex items-end gap-3">
+        <label className="block max-w-[220px] flex-1 text-[0.85rem] font-semibold text-admin-ink">
+          Mes
+          <input type="month" name="mes" defaultValue={month} className="mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary" />
+        </label>
+        <button type="submit" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+          Ver
+        </button>
+      </form>
+
+      <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+          <p className="text-[0.78rem] text-admin-ink-soft">Venta total</p>
+          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalVentas)}</p>
+        </div>
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+          <p className="text-[0.78rem] text-admin-ink-soft">Efectivo</p>
+          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalEfectivo)}</p>
+        </div>
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+          <p className="text-[0.78rem] text-admin-ink-soft">Tarjeta</p>
+          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalTarjeta)}</p>
+        </div>
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+          <p className="text-[0.78rem] text-admin-ink-soft">Efectivo entregado</p>
+          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalEntregado)}</p>
+        </div>
+      </section>
 
       <div className="mt-6">
         <CutsList cuts={rows} isAdmin={isAdmin} />

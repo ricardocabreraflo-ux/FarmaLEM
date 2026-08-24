@@ -28,11 +28,13 @@ export async function listCuts(onlyEmployeeId?: string): Promise<Cut[]> {
   return data as Cut[];
 }
 
-export async function listCutsForMonth(month: string): Promise<Cut[]> {
+export async function listCutsForMonth(month: string, onlyEmployeeId?: string): Promise<Cut[]> {
   const [y, m] = month.split("-").map(Number);
   const start = `${month}-01`;
   const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
-  const { data, error } = await supabaseAdmin().from("cuts").select().gte("cut_date", start).lt("cut_date", end).order("cut_date");
+  let query = supabaseAdmin().from("cuts").select().gte("cut_date", start).lt("cut_date", end).order("cut_date", { ascending: false });
+  if (onlyEmployeeId) query = query.eq("employee_id", onlyEmployeeId);
+  const { data, error } = await query;
   if (error) throw new Error(`No se pudieron leer los cortes: ${error.message}`);
   return data as Cut[];
 }

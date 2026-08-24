@@ -27,6 +27,17 @@ export async function listWithdrawals(onlyCreatedBy?: string): Promise<Withdrawa
   return data as Withdrawal[];
 }
 
+export async function listWithdrawalsForMonth(month: string, onlyCreatedBy?: string): Promise<Withdrawal[]> {
+  const [y, m] = month.split("-").map(Number);
+  const start = `${month}-01`;
+  const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+  let query = supabaseAdmin().from("withdrawals").select().gte("withdrawal_date", start).lt("withdrawal_date", end).order("withdrawal_date");
+  if (onlyCreatedBy) query = query.eq("created_by", onlyCreatedBy);
+  const { data, error } = await query;
+  if (error) throw new Error(`No se pudieron leer las salidas de efectivo: ${error.message}`);
+  return data as Withdrawal[];
+}
+
 interface CreateWithdrawalInput {
   withdrawalDate: string;
   shift: string;

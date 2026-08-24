@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { listProfiles } from "@/lib/profiles";
 import { listCutsForMonth } from "@/lib/cuts";
-import { listWithdrawals } from "@/lib/withdrawals";
+import { listWithdrawalsForMonth } from "@/lib/withdrawals";
 import { PrintButton } from "@/components/admin/PrintButton";
 
 export const metadata: Metadata = { title: "Reporte mensual de cortes" };
@@ -27,9 +27,9 @@ export default async function ReporteCortesPage({ searchParams }: { searchParams
   const { mes } = await searchParams;
   const month = mes || new Date().toISOString().slice(0, 7);
 
-  const [employees, cuts, allWithdrawals] = await Promise.all([listProfiles(), listCutsForMonth(month), listWithdrawals()]);
+  const [employees, cutsDesc, withdrawals] = await Promise.all([listProfiles(), listCutsForMonth(month), listWithdrawalsForMonth(month)]);
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
-  const withdrawals = allWithdrawals.filter((w) => w.withdrawal_date.startsWith(month)).sort((a, b) => a.withdrawal_date.localeCompare(b.withdrawal_date));
+  const cuts = [...cutsDesc].sort((a, b) => a.cut_date.localeCompare(b.cut_date));
 
   const totalVentas = cuts.reduce((s, c) => s + c.total, 0);
   const totalEfectivo = cuts.reduce((s, c) => s + c.cash, 0);
