@@ -4,30 +4,48 @@ import { useState } from "react";
 import Link from "next/link";
 import { logout } from "@/app/admin/login/actions";
 import type { ProfileRole } from "@/lib/admin-auth";
+import {
+  IconAsistencia,
+  IconBonoExtra,
+  IconBonoSemanal,
+  IconCompras,
+  IconCortes,
+  IconEmpleados,
+  IconFinanzas,
+  IconHistorial,
+  IconInventario,
+  IconPedidos,
+  IconProveedores,
+  IconSalidas,
+  IconSueldos,
+  IconVentas,
+} from "@/components/admin/nav-icons";
 
 interface NavItem {
   href: string;
   label: string;
+  icon: (props: { className?: string }) => React.ReactElement;
   adminOnly?: boolean;
 }
 
 // Según se vayan construyendo las demás fases (Cortes, Empleados, Sueldos...)
 // solo hace falta agregar su entrada aquí para que aparezcan en el menú.
+// Se mantiene en orden alfabético por label.
 const NAV: NavItem[] = [
-  { href: "/admin", label: "Pedidos", adminOnly: true },
-  { href: "/admin/cortes", label: "Cortes" },
-  { href: "/admin/salidas", label: "Salidas de efectivo" },
-  { href: "/admin/proveedores", label: "Proveedores", adminOnly: true },
-  { href: "/admin/asistencia", label: "Asistencia", adminOnly: true },
-  { href: "/admin/sueldos", label: "Sueldos y salarios", adminOnly: true },
-  { href: "/admin/bonos", label: "Bonos semanales", adminOnly: true },
-  { href: "/admin/bonos-extra", label: "Bonos extraordinarios", adminOnly: true },
-  { href: "/admin/compras", label: "Recepción de mercancía", adminOnly: true },
-  { href: "/admin/inventario", label: "Inventario", adminOnly: true },
-  { href: "/admin/ventas", label: "Comparativa de ventas", adminOnly: true },
-  { href: "/admin/finanzas", label: "Estado de resultados", adminOnly: true },
-  { href: "/admin/empleados", label: "Empleados", adminOnly: true },
-  { href: "/admin/historial", label: "Historial", adminOnly: true },
+  { href: "/admin/asistencia", label: "Asistencia", icon: IconAsistencia, adminOnly: true },
+  { href: "/admin/bonos-extra", label: "Bonos extraordinarios", icon: IconBonoExtra, adminOnly: true },
+  { href: "/admin/bonos", label: "Bonos semanales", icon: IconBonoSemanal, adminOnly: true },
+  { href: "/admin/ventas", label: "Comparativa de ventas", icon: IconVentas, adminOnly: true },
+  { href: "/admin/cortes", label: "Cortes", icon: IconCortes },
+  { href: "/admin/empleados", label: "Empleados", icon: IconEmpleados, adminOnly: true },
+  { href: "/admin/finanzas", label: "Estado de resultados", icon: IconFinanzas, adminOnly: true },
+  { href: "/admin/historial", label: "Historial", icon: IconHistorial, adminOnly: true },
+  { href: "/admin/inventario", label: "Inventario", icon: IconInventario, adminOnly: true },
+  { href: "/admin", label: "Pedidos", icon: IconPedidos, adminOnly: true },
+  { href: "/admin/proveedores", label: "Proveedores", icon: IconProveedores, adminOnly: true },
+  { href: "/admin/compras", label: "Recepción de mercancía", icon: IconCompras, adminOnly: true },
+  { href: "/admin/salidas", label: "Salidas de efectivo", icon: IconSalidas },
+  { href: "/admin/sueldos", label: "Sueldos y salarios", icon: IconSueldos, adminOnly: true },
 ];
 
 export function AdminShell({
@@ -76,20 +94,27 @@ export function AdminShell({
       <div className="mx-auto flex max-w-[1180px] items-start">
         <nav
           aria-label="Navegación del panel"
-          className={`${menuOpen ? "flex" : "hidden"} fixed inset-x-0 top-16 bottom-0 z-10 flex-col gap-1 overflow-y-auto border-r border-admin-border bg-admin-surface p-4 lg:sticky lg:top-16 lg:flex lg:h-[calc(100vh-4rem)] lg:w-[220px] lg:shrink-0`}
+          className={`${menuOpen ? "flex" : "hidden"} fixed inset-x-0 top-16 bottom-0 z-10 flex-col gap-3 overflow-y-auto border-r border-admin-border bg-admin-bg p-4 lg:sticky lg:top-16 lg:flex lg:h-[calc(100vh-4rem)] lg:w-[280px] lg:shrink-0`}
         >
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMenuOpen(false)}
-              className={`rounded-lg px-3.5 py-2.5 text-[0.9rem] font-semibold transition-colors ${
-                item.href === activeHref ? "bg-admin-primary-soft text-admin-primary-deep" : "text-admin-ink-soft hover:bg-admin-primary-soft hover:text-admin-primary-deep"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {items.map((item) => {
+            const Icon = item.icon;
+            const active = item.href === activeHref;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className={`flex items-center gap-3 rounded-2xl border px-5 py-4 text-[1.15rem] font-bold shadow-sm transition-all ${
+                  active
+                    ? "border-admin-primary bg-admin-primary-soft text-admin-primary-deep"
+                    : "border-admin-border bg-admin-surface text-admin-ink hover:-translate-y-0.5 hover:shadow-md"
+                }`}
+              >
+                <Icon className="h-6 w-6 shrink-0" />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <main className="min-w-0 flex-1 px-5 py-8 lg:px-8">{children}</main>
