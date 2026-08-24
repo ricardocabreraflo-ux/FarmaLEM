@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { logout } from "@/app/admin/login/actions";
+import { ThemeToggle } from "@/components/admin/ThemeToggle";
 import type { ProfileRole } from "@/lib/admin-auth";
 import {
   IconAsistencia,
@@ -191,6 +192,7 @@ export function AdminShell({
               {userName} &middot; {isAdmin ? "Administración" : "Equipo"}
             </span>
           </div>
+          <ThemeToggle />
           <form action={logout}>
             <button
               type="submit"

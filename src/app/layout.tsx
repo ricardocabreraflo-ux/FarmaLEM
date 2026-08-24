@@ -49,6 +49,12 @@ export default function RootLayout({
   return (
     <html lang="es-MX" className={`${bricolage.variable} ${lexend.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-paper text-ink">
+        {/* Aplica el tema guardado (toggle de /admin) antes del primer paint, para evitar el parpadeo claro→oscuro. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("farmalem-admin-theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}`,
+          }}
+        />
         <CartProvider>{children}</CartProvider>
       </body>
     </html>
