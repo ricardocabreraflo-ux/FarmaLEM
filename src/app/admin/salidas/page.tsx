@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
-import { getProfileById } from "@/lib/profiles";
+import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listWithdrawalsForMonth, type WithdrawalType } from "@/lib/withdrawals";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { WithdrawalsList } from "@/components/admin/WithdrawalsList";
@@ -22,7 +22,12 @@ export default async function SalidasPage({ searchParams }: { searchParams: Prom
   const { mes } = await searchParams;
   const month = mes || new Date().toISOString().slice(0, 7);
 
-  const [profile, withdrawals] = await Promise.all([getProfileById(session.uid), listWithdrawalsForMonth(month, isAdmin ? undefined : session.uid)]);
+  const [profile, withdrawals, employees] = await Promise.all([
+    getProfileById(session.uid),
+    listWithdrawalsForMonth(month, isAdmin ? undefined : session.uid),
+    listProfiles(),
+  ]);
+  const employeeNameById = Object.fromEntries(employees.map((e) => [e.id, e.full_name]));
 
   const totalGeneral = withdrawals.reduce((s, w) => s + w.amount, 0);
   const totalByType = TYPES.map((type) => ({ type, total: withdrawals.filter((w) => w.type === type).reduce((s, w) => s + w.amount, 0) }));
@@ -56,7 +61,7 @@ export default async function SalidasPage({ searchParams }: { searchParams: Prom
       </section>
 
       <div className="mt-6">
-        <WithdrawalsList withdrawals={withdrawals} isAdmin={isAdmin} />
+        <WithdrawalsList withdrawals={withdrawals} isAdmin={isAdmin} employeeNameById={employeeNameById} />
       </div>
     </AdminShell>
   );

@@ -12,7 +12,7 @@ function fmtDate(v: string) {
   return new Date(`${v}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-export function WithdrawalsList({ withdrawals, isAdmin }: { withdrawals: Withdrawal[]; isAdmin: boolean }) {
+export function WithdrawalsList({ withdrawals, isAdmin, employeeNameById = {} }: { withdrawals: Withdrawal[]; isAdmin: boolean; employeeNameById?: Record<string, string> }) {
   if (withdrawals.length === 0) {
     return <p className="rounded-2xl border border-admin-border bg-admin-surface p-8 text-center text-admin-ink-soft">Sin salidas registradas.</p>;
   }
@@ -26,6 +26,7 @@ export function WithdrawalsList({ withdrawals, isAdmin }: { withdrawals: Withdra
               <th className="px-5 py-3 font-medium">Fecha</th>
               <th className="px-5 py-3 font-medium">Turno</th>
               <th className="px-5 py-3 font-medium">Tipo</th>
+              <th className="px-5 py-3 font-medium">Empleada</th>
               <th className="px-5 py-3 font-medium">Concepto</th>
               <th className="px-5 py-3 font-medium">Factura</th>
               <th className="px-5 py-3 text-right font-medium">Cantidad</th>
@@ -35,7 +36,7 @@ export function WithdrawalsList({ withdrawals, isAdmin }: { withdrawals: Withdra
           </thead>
           <tbody>
             {withdrawals.map((w) => (
-              <Row key={w.id} w={w} isAdmin={isAdmin} />
+              <Row key={w.id} w={w} isAdmin={isAdmin} employeeName={w.employee_id ? (employeeNameById[w.employee_id] ?? "—") : "—"} />
             ))}
           </tbody>
         </table>
@@ -44,7 +45,7 @@ export function WithdrawalsList({ withdrawals, isAdmin }: { withdrawals: Withdra
   );
 }
 
-function Row({ w, isAdmin }: { w: Withdrawal; isAdmin: boolean }) {
+function Row({ w, isAdmin, employeeName }: { w: Withdrawal; isAdmin: boolean; employeeName: string }) {
   const [pending, startTransition] = useTransition();
   const [authorized, setAuthorized] = useState(Boolean(w.authorized_by));
 
@@ -53,6 +54,7 @@ function Row({ w, isAdmin }: { w: Withdrawal; isAdmin: boolean }) {
       <td className="px-5 py-3 text-admin-ink-soft">{fmtDate(w.withdrawal_date)}</td>
       <td className="px-5 py-3 text-admin-ink-soft">{w.shift}</td>
       <td className="px-5 py-3 text-admin-ink-soft">{w.type}</td>
+      <td className="px-5 py-3 text-admin-ink-soft">{employeeName}</td>
       <td className="px-5 py-3 text-admin-ink">{w.concept}</td>
       <td className="px-5 py-3 text-admin-ink-soft">{w.invoice || "—"}</td>
       <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(w.amount)}</td>

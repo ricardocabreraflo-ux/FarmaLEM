@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { saveBreakevenMargin } from "@/lib/breakeven";
+import { saveDeletePinHash } from "@/lib/security-settings";
+import { hashPassword } from "@/lib/password";
 import { logAction } from "@/lib/history";
 
 export interface BreakevenMarginFormState {
@@ -25,5 +27,29 @@ export async function saveBreakevenMarginForm(_prevState: BreakevenMarginFormSta
   await logAction(session.uid, "Actualizó margen de punto de equilibrio", `${(marginPercent * 100).toFixed(1)}%`);
   revalidatePath("/admin/configuracion");
   revalidatePath("/admin/punto-equilibrio");
+  return { saved: true };
+}
+
+export interface DeletePinFormState {
+  error?: string;
+  saved?: boolean;
+}
+
+export async function saveDeletePinForm(_prevState: DeletePinFormState | undefined, formData: FormData): Promise<DeletePinFormState> {
+  const session = await requireAdminSession();
+
+  const pin = String(formData.get("pin") ?? "").trim();
+  const confirmPin = String(formData.get("confirmPin") ?? "").trim();
+  if (!/^\d{4,6}$/.test(pin)) return { error: "El PIN debe ser numérico, de 4 a 6 dígitos." };
+  if (pin !== confirmPin) return { error: "Los dos PIN no coinciden." };
+
+  try {
+    await saveDeletePinHash(hashPassword(pin));
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "No se pudo guardar el PIN." };
+  }
+
+  await logAction(session.uid, "Actualizó el PIN de eliminación", "");
+  revalidatePath("/admin/configuracion");
   return { saved: true };
 }

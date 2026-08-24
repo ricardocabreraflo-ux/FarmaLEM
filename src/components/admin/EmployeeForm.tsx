@@ -54,6 +54,30 @@ export function EmployeeForm({ action, profile }: { action: Action; profile?: Pr
             className={inputClass}
           />
         </Field>
+        <Field label="Fecha de ingreso" htmlFor="hireDate">
+          <input id="hireDate" name="hireDate" type="date" defaultValue={profile?.hire_date ?? ""} className={inputClass} />
+        </Field>
+        <Field label="Teléfono" htmlFor="phone">
+          <input id="phone" name="phone" defaultValue={profile?.phone ?? ""} className={inputClass} />
+        </Field>
+        <Field label="CURP / RFC" htmlFor="curpRfc">
+          <input id="curpRfc" name="curpRfc" defaultValue={profile?.curp_rfc ?? ""} className={inputClass} />
+        </Field>
+        <Field label="Contacto de emergencia (nombre)" htmlFor="emergencyContactName">
+          <input id="emergencyContactName" name="emergencyContactName" defaultValue={profile?.emergency_contact_name ?? ""} className={inputClass} />
+        </Field>
+        <Field label="Contacto de emergencia (teléfono)" htmlFor="emergencyContactPhone">
+          <input id="emergencyContactPhone" name="emergencyContactPhone" defaultValue={profile?.emergency_contact_phone ?? ""} className={inputClass} />
+        </Field>
+        <Field label="Dirección" htmlFor="address">
+          <input id="address" name="address" defaultValue={profile?.address ?? ""} className={`${inputClass} sm:col-span-2`} />
+        </Field>
+        <Field label="Carta de recomendación (PDF o imagen)" htmlFor="referenceLetter">
+          <input id="referenceLetter" name="referenceLetter" type="file" accept="application/pdf,image/*" className={`${inputClass} py-2`} />
+        </Field>
+        <Field label="Examen SICAD (PDF o imagen)" htmlFor="sicadExam">
+          <input id="sicadExam" name="sicadExam" type="file" accept="application/pdf,image/*" className={`${inputClass} py-2`} />
+        </Field>
       </div>
 
       <p className="rounded-lg bg-admin-primary-soft px-4 py-3 text-[0.82rem] text-admin-primary-deep">

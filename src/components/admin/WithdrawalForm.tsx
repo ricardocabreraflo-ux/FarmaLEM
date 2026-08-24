@@ -4,11 +4,12 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { createWithdrawalForm, type WithdrawalFormState } from "@/app/admin/salidas/actions";
 import type { Supplier } from "@/lib/suppliers";
+import type { Profile } from "@/lib/profiles";
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
 
-export function WithdrawalForm({ isAdmin, suppliers }: { isAdmin: boolean; suppliers: Supplier[] }) {
+export function WithdrawalForm({ isAdmin, suppliers, employees }: { isAdmin: boolean; suppliers: Supplier[]; employees: Profile[] }) {
   const [state, formAction, pending] = useActionState<WithdrawalFormState | undefined, FormData>(createWithdrawalForm, undefined);
 
   return (
@@ -45,6 +46,18 @@ export function WithdrawalForm({ isAdmin, suppliers }: { isAdmin: boolean; suppl
         <label className="block text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
           Concepto
           <input name="concept" required className={inputClass} />
+        </label>
+
+        <label className="block text-[0.85rem] font-semibold text-admin-ink">
+          Empleada (opcional, para Nómina)
+          <select name="employeeId" defaultValue="" className={inputClass}>
+            <option value="">No aplica</option>
+            {employees.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.full_name}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">

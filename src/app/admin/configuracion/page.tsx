@@ -2,15 +2,17 @@ import type { Metadata } from "next";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { getBreakevenMargin } from "@/lib/breakeven";
+import { hasDeletePin } from "@/lib/security-settings";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { BreakevenMarginForm } from "@/components/admin/BreakevenMarginForm";
+import { DeletePinForm } from "@/components/admin/DeletePinForm";
 
 export const metadata: Metadata = { title: "Configuración" };
 export const dynamic = "force-dynamic";
 
 export default async function ConfiguracionPage() {
   const session = await requireAdminSession();
-  const [profile, marginPercent] = await Promise.all([getProfileById(session.uid), getBreakevenMargin()]);
+  const [profile, marginPercent, pinSet] = await Promise.all([getProfileById(session.uid), getBreakevenMargin(), hasDeletePin()]);
 
   return (
     <AdminShell activeHref="/admin/configuracion" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -25,6 +27,18 @@ export default async function ConfiguracionPage() {
         </p>
         <div className="mt-4">
           <BreakevenMarginForm currentPercent={marginPercent} />
+        </div>
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">
+        <h2 className="font-display text-base text-admin-ink">PIN de eliminación</h2>
+        <p className="mt-1 text-[0.84rem] text-admin-ink-soft">
+          {pinSet
+            ? "Se pide para eliminar un empleado en Empleados. Solo se puede eliminar a alguien sin cortes, asistencia ni sueldos capturados."
+            : "Todavía no está configurado — hasta que lo captures, no vas a poder eliminar empleados."}
+        </p>
+        <div className="mt-4">
+          <DeletePinForm hasPin={pinSet} />
         </div>
       </section>
     </AdminShell>
