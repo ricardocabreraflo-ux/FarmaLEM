@@ -22,6 +22,7 @@ export function CutForm({
   const [total, setTotal] = useState("");
   const [card, setCard] = useState("");
   const [cashDelivered, setCashDelivered] = useState("");
+  const [hasCounted, setHasCounted] = useState(false);
   const [showDenomModal, setShowDenomModal] = useState(false);
 
   const totalNum = Number(total || 0);
@@ -91,21 +92,21 @@ export function CutForm({
             <input
               name="cashDelivered"
               type="number"
-              min="0"
-              step="0.01"
+              readOnly
               required
+              placeholder="Sin contar"
               value={cashDelivered}
-              onChange={(e) => setCashDelivered(e.target.value)}
-              className={`${inputClass} mt-0`}
+              className={`${inputClass} mt-0 cursor-not-allowed bg-admin-bg/60 text-admin-ink-soft`}
             />
             <button
               type="button"
               onClick={() => setShowDenomModal(true)}
-              className="shrink-0 rounded-lg border border-admin-border px-3.5 text-[0.82rem] font-semibold whitespace-nowrap text-admin-ink hover:bg-admin-primary-soft"
+              className="shrink-0 rounded-lg bg-admin-primary px-3.5 text-[0.82rem] font-semibold whitespace-nowrap text-white"
             >
               Contar efectivo
             </button>
           </div>
+          {!hasCounted && <span className="mt-1 block font-normal text-admin-bad-text">Obligatorio: cuenta el efectivo por denominación.</span>}
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
@@ -119,6 +120,7 @@ export function CutForm({
         <DenominationsModal
           onConfirm={(computedTotal) => {
             setCashDelivered(computedTotal.toFixed(2));
+            setHasCounted(true);
             setShowDenomModal(false);
           }}
           onClose={() => setShowDenomModal(false)}
@@ -153,7 +155,7 @@ export function CutForm({
         </Link>
         <button
           type="submit"
-          disabled={pending || cardExceedsTotal}
+          disabled={pending || cardExceedsTotal || !hasCounted}
           className="rounded-full bg-admin-primary px-6 py-2.5 text-[0.86rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
         >
           {pending ? "Guardando…" : "Guardar corte"}

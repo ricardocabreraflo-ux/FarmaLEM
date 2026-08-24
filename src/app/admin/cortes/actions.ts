@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
 import { createCut, approveCut, uploadCutPhoto } from "@/lib/cuts";
+import { getProfileById } from "@/lib/profiles";
 import { logAction } from "@/lib/history";
+import { sendCutWhatsAppNotification } from "@/lib/whatsapp";
 
 export interface CutFormState {
   error?: string;
@@ -56,6 +58,15 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   }
 
   await logAction(session.uid, "Creó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
+
+  const employeeProfile = await getProfileById(employeeId);
+  await sendCutWhatsAppNotification({
+    employeeName: employeeProfile?.full_name ?? "Equipo",
+    shift,
+    cutDate,
+    total,
+  });
+
   revalidatePath("/admin/cortes");
   redirect("/admin/cortes");
 }

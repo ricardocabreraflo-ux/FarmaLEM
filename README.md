@@ -40,6 +40,7 @@ Copia `.env.example` a `.env.local` y llena:
 | `WHATSAPP_PHONE_NUMBER_ID` | Misma pantalla, junto al número de prueba/producción |
 | `WHATSAPP_NOTIFY_NUMBER` | Tu número (a donde llega el aviso), formato `521XXXXXXXXXX` sin "+" |
 | `WHATSAPP_TEMPLATE_NAME` | Nombre de tu plantilla aprobada (ver abajo). Vacío = `nuevo_pedido_farmalem` |
+| `WHATSAPP_CUT_TEMPLATE_NAME` | Plantilla del aviso de corte capturado (ver abajo). Vacío = `corte_capturado_farmalem` |
 | `ADMIN_PASSWORD` | La eliges tú — es la contraseña para entrar a `/admin` |
 | `ADMIN_SESSION_SECRET` | Cadena aleatoria: `openssl rand -hex 32` |
 | `NEXT_PUBLIC_SITE_URL` | Tu dominio real una vez desplegado (ej. `https://farmalem.mx`). Vacío en local. |
@@ -86,6 +87,34 @@ Con tu acceso a Facebook Business / WhatsApp Business:
 Mientras la plantilla no esté aprobada o falten estas variables, los
 pedidos se marcan como pagados normalmente — el aviso simplemente no se
 manda (queda un registro en los logs del servidor), nunca bloquea el pago.
+
+### Aviso de "corte capturado" (panel interno)
+
+Mismo mecanismo, pero avisa a administración cada vez que se captura un
+corte de caja en `/admin/cortes/nuevo`. Usa el mismo token, phone number
+ID y número de destino de arriba — solo necesitas una plantilla nueva:
+
+1. En **WhatsApp Manager → Plantillas de mensaje**, crea otra:
+   - Nombre: `corte_capturado_farmalem`
+   - Categoría: **Utilidad**
+   - Idioma: Español (MX)
+   - Cuerpo del mensaje, con 4 variables en este orden exacto:
+     ```
+     Nuevo corte capturado en FarmaLEM
+
+     Empleado: {{1}}
+     Turno: {{2}}
+     Fecha: {{3}}
+     Total: ${{4}} MXN
+
+     Revísalo en tu panel de cortes.
+     ```
+   - Envíala a revisión.
+2. Si usas un nombre distinto a `corte_capturado_farmalem`, ponlo en
+   `WHATSAPP_CUT_TEMPLATE_NAME`.
+
+Igual que con los pedidos: mientras la plantilla no esté aprobada, el
+corte se guarda normalmente y el aviso solo se omite.
 
 ## Cómo funciona la tienda
 
