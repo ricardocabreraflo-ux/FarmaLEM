@@ -2,13 +2,14 @@
 
 import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveShiftAssignment } from "@/app/admin/asistencia/calendario/actions";
+import { saveShiftAssignment, saveWeekLabel } from "@/app/admin/asistencia/calendario/actions";
 import type { CalendarWeek } from "@/lib/calendar-weeks";
 import type { ShiftAssignment } from "@/lib/shift-schedule";
 import type { Profile } from "@/lib/profiles";
 
 const SHIFTS: Array<"Matutino" | "Vespertino"> = ["Matutino", "Vespertino"];
 const WEEKDAY_LABELS = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"];
+const WEEK_LABEL_OPTIONS = ["S-1", "S-2", "S-3", "S-4", "S-5", "S-6"];
 
 function firstName(fullName: string) {
   return fullName.trim().split(/\s+/)[0]?.toUpperCase() ?? fullName;
@@ -19,7 +20,17 @@ interface EditingCell {
   shift: "Matutino" | "Vespertino";
 }
 
-export function ShiftScheduleGrid({ weeks, assignments, employees }: { weeks: CalendarWeek[]; assignments: ShiftAssignment[]; employees: Profile[] }) {
+export function ShiftScheduleGrid({
+  weeks,
+  assignments,
+  employees,
+  weekLabels = {},
+}: {
+  weeks: CalendarWeek[];
+  assignments: ShiftAssignment[];
+  employees: Profile[];
+  weekLabels?: Record<string, string>;
+}) {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
 
   const byKey = new Map<string, ShiftAssignment>();
@@ -70,8 +81,8 @@ export function ShiftScheduleGrid({ weeks, assignments, employees }: { weeks: Ca
                     );
                   })}
                   {shiftIdx === 0 && (
-                    <td rowSpan={2} className="border-l border-admin-border px-2 py-2 align-middle text-[0.75rem] font-bold text-admin-primary-deep">
-                      {week.label}
+                    <td rowSpan={2} className="border-l border-admin-border px-1.5 py-2 align-middle">
+                      <WeekLabelSelect weekStart={week.days[0].date} value={weekLabels[week.days[0].date] ?? ""} />
                     </td>
                   )}
                 </tr>
@@ -91,6 +102,37 @@ export function ShiftScheduleGrid({ weeks, assignments, employees }: { weeks: Ca
         />
       )}
     </div>
+  );
+}
+
+function WeekLabelSelect({ weekStart, value }: { weekStart: string; value: string }) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+
+  async function handleChange(next: string) {
+    setSaving(true);
+    try {
+      await saveWeekLabel(weekStart, next);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <select
+      value={value}
+      disabled={saving}
+      onChange={(e) => handleChange(e.target.value)}
+      className="w-14 rounded-lg border border-admin-border bg-admin-bg px-1.5 py-1 text-[0.75rem] font-bold text-admin-primary-deep outline-none focus-visible:outline-2 focus-visible:outline-admin-primary disabled:opacity-60"
+    >
+      <option value=""></option>
+      {WEEK_LABEL_OPTIONS.map((opt) => (
+        <option key={opt} value={opt}>
+          {opt}
+        </option>
+      ))}
+    </select>
   );
 }
 

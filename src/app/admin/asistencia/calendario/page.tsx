@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
-import { listShiftScheduleForMonth } from "@/lib/shift-schedule";
+import { listShiftScheduleForMonth, listWeekLabels } from "@/lib/shift-schedule";
 import { buildMonthWeeks } from "@/lib/calendar-weeks";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ShiftScheduleGrid } from "@/components/admin/ShiftScheduleGrid";
@@ -19,7 +19,12 @@ export default async function CalendarioTurnosPage({ searchParams }: { searchPar
   const { mes } = await searchParams;
   const month = mes || new Date().toISOString().slice(0, 7);
 
-  const [profile, employees, assignments] = await Promise.all([getProfileById(session.uid), listProfiles(), listShiftScheduleForMonth(month)]);
+  const [profile, employees, assignments, weekLabels] = await Promise.all([
+    getProfileById(session.uid),
+    listProfiles(),
+    listShiftScheduleForMonth(month),
+    listWeekLabels(),
+  ]);
   const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);
   const weeks = buildMonthWeeks(month);
 
@@ -39,7 +44,7 @@ export default async function CalendarioTurnosPage({ searchParams }: { searchPar
       </form>
 
       <div className="mt-5">
-        <ShiftScheduleGrid weeks={weeks} assignments={assignments} employees={activeEmployees} />
+        <ShiftScheduleGrid weeks={weeks} assignments={assignments} employees={activeEmployees} weekLabels={weekLabels} />
       </div>
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-bg p-5 text-[0.82rem] text-admin-ink-soft">

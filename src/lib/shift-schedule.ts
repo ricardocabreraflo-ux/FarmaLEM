@@ -58,3 +58,19 @@ export async function deleteShiftAssignment(workDate: string, shift: string): Pr
   const { error } = await supabaseAdmin().from("shift_schedule").delete().eq("work_date", workDate).eq("shift", shift);
   if (error) throw new Error(`No se pudo quitar la asignación: ${error.message}`);
 }
+
+export async function listWeekLabels(): Promise<Record<string, string>> {
+  const { data, error } = await supabaseAdmin().from("shift_week_labels").select();
+  if (error) throw new Error(`No se pudieron leer las etiquetas de semana: ${error.message}`);
+  return Object.fromEntries((data as Array<{ week_start: string; label: string }>).map((r) => [r.week_start, r.label]));
+}
+
+export async function saveWeekLabel(weekStart: string, label: string): Promise<void> {
+  if (!label) {
+    const { error } = await supabaseAdmin().from("shift_week_labels").delete().eq("week_start", weekStart);
+    if (error) throw new Error(`No se pudo quitar la etiqueta: ${error.message}`);
+    return;
+  }
+  const { error } = await supabaseAdmin().from("shift_week_labels").upsert({ week_start: weekStart, label }, { onConflict: "week_start" });
+  if (error) throw new Error(`No se pudo guardar la etiqueta: ${error.message}`);
+}
