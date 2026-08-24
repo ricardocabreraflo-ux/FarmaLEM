@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { generateNextMonth } from "@/app/admin/asistencia/calendario/actions";
 import type { GenerateMonthResult } from "@/lib/shift-schedule";
@@ -25,7 +26,6 @@ export function GenerateNextMonthButton({ targetMonth }: { targetMonth: string }
     setPending(false);
     if (outcome.ok) {
       setResult(outcome.result);
-      router.push(`/admin/asistencia/calendario?mes=${targetMonth}`);
       router.refresh();
     } else {
       setError(outcome.error);
@@ -44,10 +44,15 @@ export function GenerateNextMonthButton({ targetMonth }: { targetMonth: string }
       </button>
 
       {result && (
-        <p className="mt-3 rounded-lg bg-admin-ok-bg px-4 py-3 text-[0.82rem] font-semibold text-admin-ok-text">
-          Listo — {monthLabel(targetMonth)} generado. Matutino: {result.matutinoName ?? "Vacante"} · Vespertino: {result.vespertinoName ?? "Vacante"}.
-          {result.soloWeekend && " Solo hay una empleada activa: los fines de semana quedaron en su turno normal, sin doblar — revísalo a mano si quieres que cubra el día completo."}
-        </p>
+        <div className="mt-3 rounded-lg bg-admin-ok-bg px-4 py-3 text-[0.82rem] font-semibold text-admin-ok-text">
+          <p>
+            Listo — {monthLabel(targetMonth)} generado. Matutino: {result.matutinoName ?? "Vacante"} · Vespertino: {result.vespertinoName ?? "Vacante"}.
+            {result.soloWeekend && " Solo hay una empleada activa: los fines de semana quedaron en su turno normal, sin doblar — revísalo a mano si quieres que cubra el día completo."}
+          </p>
+          <Link href={`/admin/asistencia/calendario?mes=${targetMonth}`} className="mt-1.5 inline-block underline">
+            Ver {monthLabel(targetMonth)} &rarr;
+          </Link>
+        </div>
       )}
       {error && <p className="mt-3 rounded-lg bg-admin-bad-bg px-4 py-3 text-[0.82rem] font-semibold text-admin-bad-text">{error}</p>}
     </div>
