@@ -32,7 +32,8 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
     manualCosts,
     gross,
     cashExpenses,
-    manualExpenses,
+    manualFixedExpenses,
+    manualVariableExpenses,
     salaries,
     bonuses,
     extraBonusesTotal,
@@ -91,7 +92,8 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
               <Row label="(−) Bonos semanales" value={bonuses} />
               <Row label="(−) Bonos extraordinarios" value={extraBonusesTotal} />
               <Row label="(−) Gastos desde caja" value={cashExpenses} />
-              <Row label="(−) Otros gastos operativos" value={manualExpenses} />
+              <Row label="(−) Gastos fijos" value={manualFixedExpenses} />
+              <Row label="(−) Gastos variables" value={manualVariableExpenses} />
               <Row label="Resultado neto antes de merma" value={netBeforeShrinkage} bold />
               <Row label="(−) Pérdidas por merma" value={shrinkage} />
               <Row label="Resultado neto" value={net} bold last />

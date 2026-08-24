@@ -19,6 +19,8 @@ export interface MonthlyFinancials {
   gross: number;
   cashExpenses: number;
   manualExpenses: number;
+  manualFixedExpenses: number;
+  manualVariableExpenses: number;
   salaries: number;
   bonuses: number;
   extraBonusesTotal: number;
@@ -55,7 +57,9 @@ export async function getMonthlyFinancials(month: string): Promise<MonthlyFinanc
   const manualCosts = movements.filter((m) => m.type === "Costo de venta").reduce((sum, m) => sum + m.amount, 0);
   const cogs = purchaseCosts + manualCosts;
   const cashExpenses = authorizedWithdrawals.filter((w) => w.type === "Gasto" || w.type === "Otro").reduce((sum, w) => sum + w.amount, 0);
-  const manualExpenses = movements.filter((m) => m.type === "Gasto operativo").reduce((sum, m) => sum + m.amount, 0);
+  const manualFixedExpenses = movements.filter((m) => m.type === "Gasto fijo").reduce((sum, m) => sum + m.amount, 0);
+  const manualVariableExpenses = movements.filter((m) => m.type === "Gasto variable").reduce((sum, m) => sum + m.amount, 0);
+  const manualExpenses = manualFixedExpenses + manualVariableExpenses;
   const salaries = activeEmployees.reduce(
     (sum, e) => sum + attendance.filter((a) => a.employee_id === e.id && PAID_ATTENDANCE.has(a.status)).reduce((s, a) => s + a.rate, 0),
     0
@@ -69,5 +73,23 @@ export async function getMonthlyFinancials(month: string): Promise<MonthlyFinanc
   const netBeforeShrinkage = gross - operating;
   const net = netBeforeShrinkage - shrinkage;
 
-  return { sales, otherIncome, purchaseCosts, manualCosts, cogs, gross, cashExpenses, manualExpenses, salaries, bonuses, extraBonusesTotal, operating, shrinkage, netBeforeShrinkage, net };
+  return {
+    sales,
+    otherIncome,
+    purchaseCosts,
+    manualCosts,
+    cogs,
+    gross,
+    cashExpenses,
+    manualExpenses,
+    manualFixedExpenses,
+    manualVariableExpenses,
+    salaries,
+    bonuses,
+    extraBonusesTotal,
+    operating,
+    shrinkage,
+    netBeforeShrinkage,
+    net,
+  };
 }

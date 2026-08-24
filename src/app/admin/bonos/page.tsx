@@ -34,7 +34,10 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
     <AdminShell activeHref="/admin/bonos" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-admin-ink">Bonos semanales</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/admin/bonos/reporte?mes=${month}`} target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+            Imprimir
+          </Link>
           <Link href={`/admin/bonos/metas?mes=${month}`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
             Configurar metas
           </Link>
@@ -65,26 +68,26 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
         </div>
       </section>
 
-      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="mt-6 flex flex-col gap-5">
         <section className="overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
           <h2 className="border-b border-admin-border px-5 py-3 font-display text-base text-admin-ink">Resultados semanales</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-[0.84rem]">
               <thead>
                 <tr className="border-b border-admin-border text-admin-ink-soft">
-                  <th className="px-4 py-2.5 font-medium">Semana</th>
-                  <th className="px-4 py-2.5 font-medium">Empleado</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Ventas</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Meta alcanzada</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Bono</th>
-                  <th className="px-4 py-2.5 font-medium">Resultado</th>
-                  <th className="px-4 py-2.5"></th>
+                  <th className="px-4 py-3 font-medium">Semana</th>
+                  <th className="px-4 py-3 font-medium">Empleado</th>
+                  <th className="px-4 py-3 text-right font-medium">Ventas</th>
+                  <th className="px-4 py-3 text-right font-medium">Meta alcanzada</th>
+                  <th className="px-4 py-3 text-right font-medium">Bono</th>
+                  <th className="px-4 py-3 font-medium">Resultado</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody>
                 {weeks.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-admin-ink-soft">
+                    <td colSpan={7} className="px-4 py-8 text-center text-admin-ink-soft">
                       Sin semanas calculadas
                     </td>
                   </tr>
@@ -93,21 +96,21 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
                   const bonus = earnedBonus(w, tiers);
                   return (
                     <tr key={w.id} className="border-b border-admin-border last:border-0">
-                      <td className="px-4 py-2.5 text-admin-ink-soft">Semana {w.week}</td>
-                      <td className="px-4 py-2.5 font-semibold text-admin-ink">{nameById.get(w.employee_id) ?? "Desconocido"}</td>
-                      <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink">{fmtMoney(w.sales)}</td>
-                      <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink-soft">{bonus > 0 ? fmtMoney(targetForWeek(w, tiers)) : "—"}</td>
-                      <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink">{fmtMoney(bonus)}</td>
-                      <td className="px-4 py-2.5">
+                      <td className="px-4 py-3 whitespace-nowrap text-admin-ink-soft">Semana {w.week}</td>
+                      <td className="px-4 py-3 whitespace-nowrap font-semibold text-admin-ink">{nameById.get(w.employee_id) ?? "Desconocido"}</td>
+                      <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(w.sales)}</td>
+                      <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink-soft">{bonus > 0 ? fmtMoney(targetForWeek(w, tiers)) : "—"}</td>
+                      <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(bonus)}</td>
+                      <td className="px-4 py-3">
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[0.72rem] font-semibold ${
+                          className={`inline-block rounded-full px-2.5 py-1 text-[0.72rem] font-semibold whitespace-nowrap ${
                             w.absent ? "bg-admin-bad-bg text-admin-bad-text" : bonus > 0 ? "bg-admin-ok-bg text-admin-ok-text" : "bg-admin-pending-bg text-admin-pending-text"
                           }`}
                         >
-                          {w.absent ? "Perdido por falta" : bonus > 0 ? "Nivel alcanzado" : "Sin meta"}
+                          {w.absent ? "Falta" : bonus > 0 ? "Nivel alcanzado" : "Sin meta"}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         <Link href={`/admin/bonos/${w.id}?mes=${month}`} className="font-semibold text-admin-primary hover:underline">
                           Editar
                         </Link>
@@ -123,14 +126,14 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
         <section className="overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
           <h2 className="border-b border-admin-border px-5 py-3 font-display text-base text-admin-ink">Pirámide de metas &middot; {month}</h2>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-[0.84rem]">
+            <table className="w-full max-w-[560px] text-left text-[0.84rem]">
               <thead>
                 <tr className="border-b border-admin-border text-admin-ink-soft">
-                  <th className="px-4 py-2.5 font-medium">Turno</th>
-                  <th className="px-4 py-2.5 font-medium">Nivel</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Meta semanal</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Promedio diario</th>
-                  <th className="px-4 py-2.5 text-right font-medium">Bono</th>
+                  <th className="px-4 py-3 font-medium">Turno</th>
+                  <th className="px-4 py-3 font-medium">Nivel</th>
+                  <th className="px-4 py-3 text-right font-medium">Meta semanal</th>
+                  <th className="px-4 py-3 text-right font-medium">Promedio diario</th>
+                  <th className="px-4 py-3 text-right font-medium">Bono</th>
                 </tr>
               </thead>
               <tbody>
@@ -143,11 +146,11 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
                 )}
                 {tiers.map((t) => (
                   <tr key={t.id} className="border-b border-admin-border last:border-0">
-                    <td className="px-4 py-2.5 text-admin-ink-soft">{t.shift}</td>
-                    <td className="px-4 py-2.5 text-admin-ink-soft">{t.level}</td>
-                    <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink">{fmtMoney(t.goal)}</td>
-                    <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(t.goal / 7)}</td>
-                    <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink">{fmtMoney(t.bonus)}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-admin-ink-soft">{t.shift}</td>
+                    <td className="px-4 py-3 text-admin-ink-soft">{t.level}</td>
+                    <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(t.goal)}</td>
+                    <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink-soft">{fmtMoney(t.goal / 7)}</td>
+                    <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(t.bonus)}</td>
                   </tr>
                 ))}
               </tbody>

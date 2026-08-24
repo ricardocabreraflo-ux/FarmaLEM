@@ -34,17 +34,17 @@ export default async function ComprobantePage({ searchParams }: { searchParams: 
   const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);
 
   return (
-    <main className="mx-auto max-w-[760px] px-6 py-10">
-      <style>{`@media print { .print\\:hidden { display: none !important; } }`}</style>
+    <main className="mx-auto max-w-[760px] bg-white px-6 py-10 text-slate-900">
+      <style>{`@media print { .print\\:hidden { display: none !important; } body { background: #fff; } }`}</style>
 
-      <Link href={`/admin/sueldos?mes=${month}`} className="text-[0.85rem] font-semibold text-admin-primary print:hidden">
+      <Link href={`/admin/sueldos?mes=${month}`} className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">
         &larr; Volver a Sueldos
       </Link>
       <div className="mt-2 flex items-center justify-between">
-        <h1 className="font-display text-xl text-admin-ink">FarmaLEM &middot; Pago de sueldo y bono</h1>
+        <h1 className="font-display text-xl text-slate-900">FarmaLEM &middot; Pago de sueldo y bono</h1>
         <PrintButton />
       </div>
-      <p className="mt-1 font-semibold text-admin-ink">{monthLabel(month)}</p>
+      <p className="mt-1 font-semibold text-slate-900">{monthLabel(month)}</p>
 
       {activeEmployees.map((e) => {
         const salary = attendance.filter((a) => a.employee_id === e.id && PAID_STATUSES.has(a.status)).reduce((sum, a) => sum + a.rate, 0);
@@ -52,13 +52,13 @@ export default async function ComprobantePage({ searchParams }: { searchParams: 
         const bonus = empWeeks.reduce((sum, w) => sum + earnedBonus(w, tiers), 0);
 
         return (
-          <section key={e.id} className="mt-8 border-t-2 border-admin-primary pt-4 [break-inside:avoid]">
-            <h3 className="font-display text-base text-admin-ink">
+          <section key={e.id} className="mt-8 border-t-2 border-emerald-700 pt-4 [break-inside:avoid]">
+            <h3 className="font-display text-base text-slate-900">
               {e.full_name} &middot; {e.shift}
             </h3>
             <table className="mt-3 w-full text-left text-[0.86rem]">
               <thead>
-                <tr className="border-b border-admin-border text-admin-ink-soft">
+                <tr className="border-b border-slate-200 text-slate-500">
                   <th className="py-2 font-medium">Semana</th>
                   <th className="py-2 text-right font-medium">Ventas</th>
                   <th className="py-2 text-right font-medium">Meta alcanzada</th>
@@ -68,7 +68,7 @@ export default async function ComprobantePage({ searchParams }: { searchParams: 
               <tbody>
                 {empWeeks.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-3 text-admin-ink-soft">
+                    <td colSpan={4} className="py-3 text-slate-500">
                       Sin bonos registrados
                     </td>
                   </tr>
@@ -76,35 +76,35 @@ export default async function ComprobantePage({ searchParams }: { searchParams: 
                   empWeeks.map((w) => {
                     const b = earnedBonus(w, tiers);
                     return (
-                      <tr key={w.id} className="border-b border-admin-border">
-                        <td className="py-2 text-admin-ink">
+                      <tr key={w.id} className="border-b border-slate-200">
+                        <td className="py-2 text-slate-900">
                           Semana {w.week}
                           {w.absent ? " · Falta" : ""}
                         </td>
-                        <td className="py-2 text-right font-data tabular-nums text-admin-ink">{fmtMoney(w.sales)}</td>
-                        <td className="py-2 text-right font-data tabular-nums text-admin-ink-soft">{b > 0 ? fmtMoney(targetForWeek(w, tiers)) : "—"}</td>
-                        <td className="py-2 text-right font-data tabular-nums text-admin-ink">{fmtMoney(b)}</td>
+                        <td className="py-2 text-right font-data tabular-nums text-slate-900">{fmtMoney(w.sales)}</td>
+                        <td className="py-2 text-right font-data tabular-nums text-slate-500">{b > 0 ? fmtMoney(targetForWeek(w, tiers)) : "—"}</td>
+                        <td className="py-2 text-right font-data tabular-nums text-slate-900">{fmtMoney(b)}</td>
                       </tr>
                     );
                   })
                 )}
-                <tr className="border-b border-admin-border">
-                  <td colSpan={3} className="py-2 font-semibold text-admin-ink">
+                <tr className="border-b border-slate-200">
+                  <td colSpan={3} className="py-2 font-semibold text-slate-900">
                     Sueldo
                   </td>
-                  <td className="py-2 text-right font-data tabular-nums font-semibold text-admin-ink">{fmtMoney(salary)}</td>
+                  <td className="py-2 text-right font-data tabular-nums font-semibold text-slate-900">{fmtMoney(salary)}</td>
                 </tr>
                 <tr>
-                  <td colSpan={3} className="py-2 font-bold text-admin-ink">
+                  <td colSpan={3} className="py-2 font-bold text-slate-900">
                     Total sueldo + bono
                   </td>
-                  <td className="py-2 text-right font-data tabular-nums font-bold text-admin-ink">{fmtMoney(salary + bonus)}</td>
+                  <td className="py-2 text-right font-data tabular-nums font-bold text-slate-900">{fmtMoney(salary + bonus)}</td>
                 </tr>
               </tbody>
             </table>
             <div className="mt-14 flex justify-between gap-8">
-              <span className="w-2/5 border-t border-admin-ink-soft pt-1.5 text-center text-[0.8rem] text-admin-ink-soft">Firma de empleada</span>
-              <span className="w-2/5 border-t border-admin-ink-soft pt-1.5 text-center text-[0.8rem] text-admin-ink-soft">Firma de Administración</span>
+              <span className="w-2/5 border-t border-admin-ink-soft pt-1.5 text-center text-[0.8rem] text-slate-500">Firma de empleada</span>
+              <span className="w-2/5 border-t border-admin-ink-soft pt-1.5 text-center text-[0.8rem] text-slate-500">Firma de Administración</span>
             </div>
           </section>
         );

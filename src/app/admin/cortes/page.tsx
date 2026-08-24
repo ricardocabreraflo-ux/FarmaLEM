@@ -80,7 +80,7 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
       </section>
 
       <div className="mt-6">
-        <CutsList cuts={rows} isAdmin={isAdmin} />
+        <CutsList cuts={rows} isAdmin={isAdmin} employees={employees.filter((e) => e.role === "employee")} />
       </div>
     </AdminShell>
   );

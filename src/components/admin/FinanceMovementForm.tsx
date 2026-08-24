@@ -23,7 +23,8 @@ export function FinanceMovementForm({ month }: { month: string }) {
           <select name="type" className={inputClass}>
             <option>Ingreso</option>
             <option>Costo de venta</option>
-            <option>Gasto operativo</option>
+            <option>Gasto fijo</option>
+            <option>Gasto variable</option>
             <option>Merma</option>
           </select>
         </label>

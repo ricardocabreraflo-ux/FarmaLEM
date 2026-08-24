@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import type { Cut } from "@/lib/cuts";
+import type { Profile } from "@/lib/profiles";
 import { approveCutAction } from "@/app/admin/cortes/actions";
+import { EditCutModal } from "@/components/admin/EditCutModal";
 
 const STATUS_STYLE: Record<Cut["status"], string> = {
   "Por revisar": "bg-admin-pending-bg text-admin-pending-text",
@@ -24,7 +25,9 @@ interface Row extends Cut {
   photoUrl: string | null;
 }
 
-export function CutsList({ cuts, isAdmin }: { cuts: Row[]; isAdmin: boolean }) {
+export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: boolean; employees: Profile[] }) {
+  const [editingCut, setEditingCut] = useState<Row | null>(null);
+
   if (cuts.length === 0) {
     return <p className="rounded-2xl border border-admin-border bg-admin-surface p-8 text-center text-admin-ink-soft">Sin cortes registrados.</p>;
   }
@@ -50,16 +53,18 @@ export function CutsList({ cuts, isAdmin }: { cuts: Row[]; isAdmin: boolean }) {
           </thead>
           <tbody>
             {cuts.map((cut) => (
-              <CutRow key={cut.id} cut={cut} isAdmin={isAdmin} />
+              <CutRow key={cut.id} cut={cut} isAdmin={isAdmin} onEdit={() => setEditingCut(cut)} />
             ))}
           </tbody>
         </table>
       </div>
+
+      {editingCut && <EditCutModal cut={editingCut} employees={employees} onClose={() => setEditingCut(null)} />}
     </section>
   );
 }
 
-function CutRow({ cut, isAdmin }: { cut: Row; isAdmin: boolean }) {
+function CutRow({ cut, isAdmin, onEdit }: { cut: Row; isAdmin: boolean; onEdit: () => void }) {
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState(cut.status);
 
@@ -103,9 +108,9 @@ function CutRow({ cut, isAdmin }: { cut: Row; isAdmin: boolean }) {
       )}
       {isAdmin && (
         <td className="px-5 py-3 text-right">
-          <Link href={`/admin/cortes/${cut.id}/editar`} className="font-semibold text-admin-primary hover:underline">
+          <button type="button" onClick={onEdit} className="font-semibold text-admin-primary hover:underline">
             Editar
-          </Link>
+          </button>
         </td>
       )}
     </tr>

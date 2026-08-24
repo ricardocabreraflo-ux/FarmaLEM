@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
 
-export type FinanceMovementType = "Ingreso" | "Costo de venta" | "Gasto operativo" | "Merma";
+export type FinanceMovementType = "Ingreso" | "Costo de venta" | "Gasto fijo" | "Gasto variable" | "Merma";
 
 export interface FinanceMovement {
   id: string;

@@ -1,5 +1,6 @@
 import "server-only";
 import { listCuts } from "@/lib/cuts";
+import { listHistoricalSales } from "@/lib/historical-sales";
 
 export interface MonthlySales {
   month: string;
@@ -21,14 +22,22 @@ function monthLabel(month: string) {
   return `${MONTH_NAMES[m - 1]} ${y}`;
 }
 
-/** Ventas mensuales a partir de cortes aprobados, ordenadas cronológicamente, con variación contra el mes anterior. */
+/**
+ * Ventas mensuales, ordenadas cronológicamente, con variación contra el mes
+ * anterior. Para cada mes usa los cortes aprobados si hay alguno capturado;
+ * si no hay ninguno (meses previos al panel), cae al total histórico
+ * cargado a mano en `historical_sales`.
+ */
 export async function monthlySales(): Promise<MonthlySales[]> {
-  const cuts = await listCuts();
+  const [cuts, historical] = await Promise.all([listCuts(), listHistoricalSales()]);
   const totalsByMonth = new Map<string, number>();
   for (const c of cuts) {
     if (c.status !== "Aprobado") continue;
     const month = c.cut_date.slice(0, 7);
     totalsByMonth.set(month, (totalsByMonth.get(month) ?? 0) + c.total);
+  }
+  for (const h of historical) {
+    if (!totalsByMonth.has(h.month)) totalsByMonth.set(h.month, h.total);
   }
 
   const months = [...totalsByMonth.keys()].sort();
