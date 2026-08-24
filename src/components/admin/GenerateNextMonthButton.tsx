@@ -21,14 +21,14 @@ export function GenerateNextMonthButton({ targetMonth }: { targetMonth: string }
     setPending(true);
     setError(null);
     setResult(null);
-    try {
-      const r = await generateNextMonth(targetMonth);
-      setResult(r);
+    const outcome = await generateNextMonth(targetMonth);
+    setPending(false);
+    if (outcome.ok) {
+      setResult(outcome.result);
+      router.push(`/admin/asistencia/calendario?mes=${targetMonth}`);
       router.refresh();
-    } catch {
-      setError("No se pudo generar el calendario.");
-    } finally {
-      setPending(false);
+    } else {
+      setError(outcome.error);
     }
   }
 
@@ -44,12 +44,12 @@ export function GenerateNextMonthButton({ targetMonth }: { targetMonth: string }
       </button>
 
       {result && (
-        <p className="mt-2 text-[0.8rem] text-admin-ink-soft">
-          Matutino: {result.matutinoName ?? "Vacante"} · Vespertino: {result.vespertinoName ?? "Vacante"}.
+        <p className="mt-3 rounded-lg bg-admin-ok-bg px-4 py-3 text-[0.82rem] font-semibold text-admin-ok-text">
+          Listo — {monthLabel(targetMonth)} generado. Matutino: {result.matutinoName ?? "Vacante"} · Vespertino: {result.vespertinoName ?? "Vacante"}.
           {result.soloWeekend && " Solo hay una empleada activa: los fines de semana quedaron en su turno normal, sin doblar — revísalo a mano si quieres que cubra el día completo."}
         </p>
       )}
-      {error && <p className="mt-2 text-[0.8rem] font-semibold text-admin-bad-text">{error}</p>}
+      {error && <p className="mt-3 rounded-lg bg-admin-bad-bg px-4 py-3 text-[0.82rem] font-semibold text-admin-bad-text">{error}</p>}
     </div>
   );
 }

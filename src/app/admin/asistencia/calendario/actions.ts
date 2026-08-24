@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { upsertShiftAssignment, saveWeekLabel as saveWeekLabelDb, generateMonthSchedule } from "@/lib/shift-schedule";
+import { upsertShiftAssignment, saveWeekLabel as saveWeekLabelDb, generateMonthSchedule, type GenerateMonthResult } from "@/lib/shift-schedule";
 import { logAction } from "@/lib/history";
 
 export async function saveShiftAssignment(workDate: string, shift: "Matutino" | "Vespertino", employeeId: string, isDoubleShift: boolean) {
@@ -26,12 +26,16 @@ export async function saveWeekLabel(weekStart: string, label: string) {
   revalidatePath("/admin/asistencia/calendario");
 }
 
-export async function generateNextMonth(month: string) {
+export async function generateNextMonth(month: string): Promise<{ ok: true; result: GenerateMonthResult } | { ok: false; error: string }> {
   const session = await requireAdminSession();
-  const result = await generateMonthSchedule(month, session.uid);
-  await logAction(session.uid, "Generó calendario de turnos", month);
-  revalidatePath("/admin/asistencia/calendario");
-  revalidatePath("/admin/asistencia");
-  revalidatePath("/admin/asistencia/nuevo");
-  return result;
+  try {
+    const result = await generateMonthSchedule(month, session.uid);
+    await logAction(session.uid, "Generó calendario de turnos", month);
+    revalidatePath("/admin/asistencia/calendario");
+    revalidatePath("/admin/asistencia");
+    revalidatePath("/admin/asistencia/nuevo");
+    return { ok: true, result };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Error desconocido." };
+  }
 }
