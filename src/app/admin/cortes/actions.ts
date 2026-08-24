@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
-import { createCut, approveCut, uploadCutPhoto } from "@/lib/cuts";
+import { createCut, approveCut, updateCut, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
 import { getProfileById } from "@/lib/profiles";
 import { logAction } from "@/lib/history";
 import { sendCutWhatsAppNotification } from "@/lib/whatsapp";
@@ -66,6 +66,33 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
     cutDate,
     total,
   });
+
+  revalidatePath("/admin/cortes");
+  redirect("/admin/cortes");
+}
+
+export async function updateCutForm(_prevState: CutFormState | undefined, formData: FormData): Promise<CutFormState> {
+  const session = await requireAdminSession();
+
+  const id = String(formData.get("id") ?? "");
+  const cutDate = String(formData.get("cutDate") ?? "");
+  const shift = String(formData.get("shift") ?? "");
+  const employeeId = String(formData.get("employeeId") ?? "");
+  const total = Number(formData.get("total") ?? 0);
+  const card = Number(formData.get("card") ?? 0);
+  const cash = Math.max(total - card, 0);
+  const cashDelivered = Number(formData.get("cashDelivered") ?? 0);
+  const status = String(formData.get("status") ?? "Aprobado") as CutStatus;
+
+  if (!id || !cutDate || !shift || !employeeId) return { error: "Fecha, turno y empleado son obligatorios." };
+
+  try {
+    await updateCut(id, { cutDate, shift, employeeId, total, cash, card, cashDelivered, status });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "No se pudo actualizar el corte." };
+  }
+
+  await logAction(session.uid, "Editó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
 
   revalidatePath("/admin/cortes");
   redirect("/admin/cortes");

@@ -32,12 +32,17 @@ export default async function CortesPage() {
     <AdminShell activeHref="/admin/cortes" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-admin-ink">Cortes</h1>
-        <Link
-          href="/admin/cortes/nuevo"
-          className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
-        >
-          + Capturar corte
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/admin/cortes/reporte" target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+            Reporte mensual
+          </Link>
+          <Link
+            href="/admin/cortes/nuevo"
+            className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
+          >
+            + Capturar corte
+          </Link>
+        </div>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Un registro por trabajador y turno.</p>
 

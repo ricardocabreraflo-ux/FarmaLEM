@@ -28,6 +28,21 @@ export async function listCuts(onlyEmployeeId?: string): Promise<Cut[]> {
   return data as Cut[];
 }
 
+export async function listCutsForMonth(month: string): Promise<Cut[]> {
+  const [y, m] = month.split("-").map(Number);
+  const start = `${month}-01`;
+  const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+  const { data, error } = await supabaseAdmin().from("cuts").select().gte("cut_date", start).lt("cut_date", end).order("cut_date");
+  if (error) throw new Error(`No se pudieron leer los cortes: ${error.message}`);
+  return data as Cut[];
+}
+
+export async function getCut(id: string): Promise<Cut | null> {
+  const { data, error } = await supabaseAdmin().from("cuts").select().eq("id", id).single();
+  if (error) return null;
+  return data as Cut;
+}
+
 interface CreateCutInput {
   cutDate: string;
   shift: string;
@@ -56,6 +71,37 @@ export async function createCut(input: CreateCutInput): Promise<void> {
   });
   if (error) {
     if (error.code === "23505") throw new Error("Ya existe un corte capturado para esa fecha y ese turno.");
+    if (error.code === "23514") throw new Error("Efectivo + tarjeta debe ser igual a la venta total.");
+    throw new Error(error.message);
+  }
+}
+
+interface UpdateCutInput {
+  cutDate: string;
+  shift: string;
+  employeeId: string;
+  total: number;
+  cash: number;
+  card: number;
+  cashDelivered: number;
+  status: CutStatus;
+}
+
+export async function updateCut(id: string, input: UpdateCutInput): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from("cuts")
+    .update({
+      cut_date: input.cutDate,
+      shift: input.shift,
+      employee_id: input.employeeId,
+      total: input.total,
+      cash: input.cash,
+      card: input.card,
+      cash_delivered: input.cashDelivered,
+      status: input.status,
+    })
+    .eq("id", id);
+  if (error) {
     if (error.code === "23514") throw new Error("Efectivo + tarjeta debe ser igual a la venta total.");
     throw new Error(error.message);
   }

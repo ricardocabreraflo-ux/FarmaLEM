@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import type { Cut } from "@/lib/cuts";
 import { approveCutAction } from "@/app/admin/cortes/actions";
 
@@ -38,8 +39,12 @@ export function CutsList({ cuts, isAdmin }: { cuts: Row[]; isAdmin: boolean }) {
               <th className="px-5 py-3 font-medium">Turno</th>
               <th className="px-5 py-3 font-medium">Empleado</th>
               <th className="px-5 py-3 text-right font-medium">Total</th>
+              <th className="px-5 py-3 text-right font-medium">Efectivo</th>
+              <th className="px-5 py-3 text-right font-medium">Tarjeta</th>
+              <th className="px-5 py-3 text-right font-medium">Efectivo entregado</th>
               <th className="px-5 py-3 font-medium">Estado</th>
               <th className="px-5 py-3"></th>
+              {isAdmin && <th className="px-5 py-3"></th>}
               {isAdmin && <th className="px-5 py-3"></th>}
             </tr>
           </thead>
@@ -64,6 +69,9 @@ function CutRow({ cut, isAdmin }: { cut: Row; isAdmin: boolean }) {
       <td className="px-5 py-3 text-admin-ink-soft">{cut.shift}</td>
       <td className="px-5 py-3 font-semibold text-admin-ink">{cut.employeeName}</td>
       <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(cut.total)}</td>
+      <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(cut.cash)}</td>
+      <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(cut.card)}</td>
+      <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(cut.cash_delivered)}</td>
       <td className="px-5 py-3">
         <span className={`rounded-full px-2.5 py-1 text-[0.76rem] font-semibold ${STATUS_STYLE[status]}`}>{status}</span>
       </td>
@@ -91,6 +99,13 @@ function CutRow({ cut, isAdmin }: { cut: Row; isAdmin: boolean }) {
               Aprobar
             </button>
           )}
+        </td>
+      )}
+      {isAdmin && (
+        <td className="px-5 py-3 text-right">
+          <Link href={`/admin/cortes/${cut.id}/editar`} className="font-semibold text-admin-primary hover:underline">
+            Editar
+          </Link>
         </td>
       )}
     </tr>
