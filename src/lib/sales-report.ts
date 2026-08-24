@@ -41,6 +41,29 @@ export async function monthlySales(): Promise<MonthlySales[]> {
   });
 }
 
+export interface DailySales {
+  day: number;
+  total: number;
+}
+
+/** Ventas día por día del mes en curso, a partir de cortes aprobados. Incluye los días sin ventas en 0. */
+export async function dailySalesForCurrentMonth(): Promise<{ month: string; label: string; days: DailySales[] }> {
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+  const cuts = await listCuts();
+  const totalsByDay = new Map<number, number>();
+  for (const c of cuts) {
+    if (c.status !== "Aprobado" || !c.cut_date.startsWith(month)) continue;
+    const day = Number(c.cut_date.slice(8, 10));
+    totalsByDay.set(day, (totalsByDay.get(day) ?? 0) + c.total);
+  }
+
+  const days: DailySales[] = Array.from({ length: daysInMonth }, (_, i) => ({ day: i + 1, total: totalsByDay.get(i + 1) ?? 0 }));
+  return { month, label: monthLabel(month), days };
+}
+
 /** Pivote año contra año: una fila por mes del calendario, una columna por cada año con datos. */
 export async function yearlySalesGrid(): Promise<{ years: string[]; rows: YearlyRow[]; totalsByYear: Record<string, number> }> {
   const months = await monthlySales();

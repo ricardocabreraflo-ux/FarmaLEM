@@ -13,7 +13,7 @@ import { redirect } from "next/navigation";
  *     genera una con: openssl rand -hex 32)
  */
 export const ADMIN_COOKIE_NAME = "farmalem_admin_session";
-const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 días
 
 export type ProfileRole = "admin" | "employee";
 

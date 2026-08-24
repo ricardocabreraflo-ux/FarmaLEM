@@ -151,6 +151,16 @@ export function IconSalidas({ className }: { className?: string }) {
   );
 }
 
+export function IconLogout({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="4" y="3" width="10" height="18" rx="1" />
+      <line x1="20" y1="12" x2="9" y2="12" />
+      <polyline points="15,8 20,12 15,16" />
+    </svg>
+  );
+}
+
 export function IconSueldos({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>

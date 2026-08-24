@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { logout } from "@/app/admin/login/actions";
 import type { ProfileRole } from "@/lib/admin-auth";
@@ -14,6 +15,7 @@ import {
   IconFinanzas,
   IconHistorial,
   IconInventario,
+  IconLogout,
   IconPedidos,
   IconProveedores,
   IconSalidas,
@@ -75,7 +77,7 @@ export function AdminShell({
             ☰
           </button>
           <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-admin-primary text-base font-bold text-white">+</span>
+            <Image src="/logo.png" alt="FarmaLEM" width={32} height={32} className="h-8 w-8 object-contain" priority />
             <strong className="font-display text-[1.05rem] text-admin-ink">FarmaLEM</strong>
           </div>
         </div>
@@ -84,8 +86,13 @@ export function AdminShell({
             {userName} &middot; {userRole === "admin" ? "Administración" : "Equipo"}
           </span>
           <form action={logout}>
-            <button type="submit" className="font-semibold text-admin-ink-soft hover:text-admin-primary">
-              Salir
+            <button
+              type="submit"
+              aria-label="Salir"
+              title="Salir"
+              className="grid h-9 w-9 place-items-center rounded-lg text-admin-ink-soft hover:bg-admin-bad-bg hover:text-admin-bad-text"
+            >
+              <IconLogout className="h-5 w-5" />
             </button>
           </form>
         </div>
