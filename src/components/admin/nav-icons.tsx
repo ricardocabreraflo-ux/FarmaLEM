@@ -289,3 +289,13 @@ export function IconMoon({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function IconGastos({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <rect x="3" y="6" width="18" height="13" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M7 14.5h5" />
+    </svg>
+  );
+}

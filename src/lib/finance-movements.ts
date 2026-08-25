@@ -10,6 +10,7 @@ export interface FinanceMovement {
   category: string;
   concept: string;
   amount: number;
+  template_id: string | null;
   created_by: string;
 }
 
@@ -39,6 +40,7 @@ interface CreateFinanceMovementInput {
   concept: string;
   amount: number;
   createdBy: string;
+  templateId?: string | null;
 }
 
 export async function createFinanceMovement(input: CreateFinanceMovementInput): Promise<void> {
@@ -49,6 +51,7 @@ export async function createFinanceMovement(input: CreateFinanceMovementInput): 
     concept: input.concept,
     amount: input.amount,
     created_by: input.createdBy,
+    template_id: input.templateId ?? null,
   });
   if (error) throw new Error(error.message);
 }

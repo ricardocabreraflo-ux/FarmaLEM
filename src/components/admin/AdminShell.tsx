@@ -18,6 +18,7 @@ import {
   IconCortes,
   IconEmpleados,
   IconFinanzas,
+  IconGastos,
   IconHistorial,
   IconInventario,
   IconLogout,
@@ -98,6 +99,7 @@ const NAV: NavEntry[] = [
     items: [
       leaf("/admin/ventas", "Comparativa de ventas", IconVentas, true),
       leaf("/admin/finanzas", "Estado de resultados", IconFinanzas, true),
+      leaf("/admin/finanzas/gastos", "Gastos fijos y variables", IconGastos, true),
       leaf("/admin/punto-equilibrio", "Punto de equilibrio", IconBalance, true),
       leaf("/admin/punto-equilibrio/simulador", "Simulador de escenarios", IconSliders, true),
     ],
