@@ -146,6 +146,9 @@ export function AdminShell({
 
   function scheduleAutoCollapse() {
     clearAutoCollapse();
+    // Solo se auto-oculta en celular: en escritorio hay espacio de sobra y se
+    // queda fija como el usuario la dejó.
+    if (typeof window !== "undefined" && window.innerWidth >= MOBILE_BREAKPOINT) return;
     timerRef.current = setTimeout(() => setCollapsed(true), AUTO_COLLAPSE_MS);
   }
 
