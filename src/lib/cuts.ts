@@ -21,7 +21,12 @@ export interface Cut {
 }
 
 export async function listCuts(onlyEmployeeId?: string): Promise<Cut[]> {
-  let query = supabaseAdmin().from("cuts").select().order("cut_date", { ascending: false }).order("created_at", { ascending: false });
+  let query = supabaseAdmin()
+    .from("cuts")
+    .select()
+    .order("cut_date", { ascending: false })
+    .order("shift", { ascending: true })
+    .order("created_at", { ascending: false });
   if (onlyEmployeeId) query = query.eq("employee_id", onlyEmployeeId);
   const { data, error } = await query;
   if (error) throw new Error(`No se pudieron leer los cortes: ${error.message}`);
@@ -32,7 +37,14 @@ export async function listCutsForMonth(month: string, onlyEmployeeId?: string): 
   const [y, m] = month.split("-").map(Number);
   const start = `${month}-01`;
   const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
-  let query = supabaseAdmin().from("cuts").select().gte("cut_date", start).lt("cut_date", end).order("cut_date", { ascending: false });
+  // "Matutino" < "Vespertino" alfabéticamente, así que el orden ascendente ya deja primero el turno de la mañana.
+  let query = supabaseAdmin()
+    .from("cuts")
+    .select()
+    .gte("cut_date", start)
+    .lt("cut_date", end)
+    .order("cut_date", { ascending: false })
+    .order("shift", { ascending: true });
   if (onlyEmployeeId) query = query.eq("employee_id", onlyEmployeeId);
   const { data, error } = await query;
   if (error) throw new Error(`No se pudieron leer los cortes: ${error.message}`);
