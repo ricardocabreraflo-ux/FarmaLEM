@@ -226,3 +226,7 @@ agregando como secciones nuevas del mismo menú, fase por fase.
   mano, día por día. Falta construir un calendario de festivos (fijos como
   1 de enero, y los que ustedes decidan) para que el sistema lo proponga
   solo en vez de tener que capturarlo manualmente cada vez.
+- Reloj checador: hoy la Asistencia se captura a mano, turno por turno.
+  Falta construir un reloj checador (entrada/salida real del empleado) para
+  que la asistencia se registre sola en vez de capturarla manualmente cada
+  día.
