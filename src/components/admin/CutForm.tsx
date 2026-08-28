@@ -21,20 +21,28 @@ export function CutForm({
   minDate?: string;
 }) {
   const [state, formAction, pending] = useActionState<CutFormState | undefined, FormData>(createCutForm, undefined);
+  const [cutDate, setCutDate] = useState(new Date().toISOString().slice(0, 10));
   const [total, setTotal] = useState("");
   const [card, setCard] = useState("");
   const [cashDelivered, setCashDelivered] = useState("");
+  const [nomina, setNomina] = useState("");
   const [hasCounted, setHasCounted] = useState(false);
   const [showDenomModal, setShowDenomModal] = useState(false);
+
+  const weekday = new Date(`${cutDate}T12:00:00`).getDay();
+  const isWeekend = weekday === 0 || weekday === 6;
 
   const totalNum = Number(total || 0);
   const cardNum = Number(card || 0);
   const cash = Math.max(totalNum - cardNum, 0);
   const cardExceedsTotal = cardNum > totalNum;
 
+  const nominaNum = isWeekend ? Number(nomina || 0) : 0;
+  const expectedCash = Math.max(cash - nominaNum, 0);
+
   const cashDeliveredNum = Number(cashDelivered || 0);
   const hasDeliveredValue = cashDelivered !== "";
-  const deliveredDiff = cashDeliveredNum - cash;
+  const deliveredDiff = cashDeliveredNum - expectedCash;
   const deliveredMatches = Math.abs(deliveredDiff) < 0.005;
 
   return (
@@ -42,7 +50,7 @@ export function CutForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Fecha
-          <input name="cutDate" type="date" required min={minDate} defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          <input name="cutDate" type="date" required min={minDate} value={cutDate} onChange={(e) => setCutDate(e.target.value)} className={inputClass} />
           {minDate && <span className="mt-1 block font-normal text-admin-ink-soft">Solo puedes capturar del mes en curso en adelante.</span>}
         </label>
 
@@ -88,6 +96,14 @@ export function CutForm({
           Efectivo <span className="font-normal text-admin-ink-soft">(venta total − tarjeta)</span>
           <input name="cash" type="number" readOnly value={cash.toFixed(2)} className={`${inputClass} bg-admin-bg/60 text-admin-ink-soft`} />
         </label>
+
+        {isWeekend && (
+          <label className="block text-[0.85rem] font-semibold text-admin-ink">
+            Pago de nómina de esta semana <span className="font-normal text-admin-ink-soft">(si se pagó de este corte)</span>
+            <input name="nomina" type="number" min="0" step="0.01" placeholder="0.00" value={nomina} onChange={(e) => setNomina(e.target.value)} className={inputClass} />
+            <span className="mt-1 block font-normal text-admin-ink-soft">Se resta del efectivo esperado y se registra como salida de nómina.</span>
+          </label>
+        )}
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Efectivo entregado <span className="font-normal text-admin-ink-soft">(cuenta física)</span>

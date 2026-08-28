@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
 import { createCut, approveCut, updateCut, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
+import { createWithdrawal } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
 import { logAction } from "@/lib/history";
 import { sendCutWhatsAppNotification } from "@/lib/whatsapp";
@@ -22,6 +23,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   const cash = Number(formData.get("cash") ?? 0);
   const card = Number(formData.get("card") ?? 0);
   const cashDelivered = Number(formData.get("cashDelivered") ?? 0);
+  const nomina = Number(formData.get("nomina") ?? 0);
   const photo = formData.get("photo");
 
   // Una empleada solo puede capturar su propio corte; solo administración
@@ -58,6 +60,22 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
     });
   } catch (err) {
     return { error: err instanceof Error ? err.message : "No se pudo guardar el corte." };
+  }
+
+  if (nomina > 0) {
+    await createWithdrawal({
+      withdrawalDate: cutDate,
+      shift,
+      type: "Nómina",
+      amount: nomina,
+      concept: "Pago de nómina desde corte",
+      invoice: null,
+      recipient: null,
+      supplierId: null,
+      employeeId,
+      createdBy: session.uid,
+      authorizedBy: session.role === "admin" ? session.uid : null,
+    });
   }
 
   await logAction(session.uid, "Creó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
