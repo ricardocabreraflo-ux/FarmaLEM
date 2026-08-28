@@ -137,6 +137,7 @@ export function CutForm({
 
       <DenominationsModal
         show={showDenomModal}
+        expected={expectedCash}
         onConfirm={(computedTotal) => {
           setCashDelivered(computedTotal.toFixed(2));
           setHasCounted(true);

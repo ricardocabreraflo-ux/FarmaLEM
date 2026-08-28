@@ -29,7 +29,17 @@ function fmtMoney(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 }
 
-export function DenominationsModal({ show, onConfirm, onClose }: { show: boolean; onConfirm: (total: number) => void; onClose: () => void }) {
+export function DenominationsModal({
+  show,
+  expected,
+  onConfirm,
+  onClose,
+}: {
+  show: boolean;
+  expected?: number;
+  onConfirm: (total: number) => void;
+  onClose: () => void;
+}) {
   // El estado vive mientras el componente esté montado, así que aunque se
   // oculte (show=false) no se pierde el conteo si vuelven a abrirlo para
   // corregir un solo campo — no hace falta capturar todo de nuevo.
@@ -49,6 +59,9 @@ export function DenominationsModal({ show, onConfirm, onClose }: { show: boolean
   }
 
   const grandTotal = total();
+  const hasExpected = typeof expected === "number";
+  const diff = hasExpected ? grandTotal - expected! : 0;
+  const matches = hasExpected && Math.abs(diff) < 0.005;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -93,6 +106,11 @@ export function DenominationsModal({ show, onConfirm, onClose }: { show: boolean
           <div>
             <span className="text-[0.78rem] text-admin-ink-soft">Total contado</span>
             <p className="font-display text-xl text-admin-ink">{fmtMoney(grandTotal)}</p>
+            {hasExpected && (
+              <p className={`mt-0.5 text-[0.82rem] font-semibold ${matches ? "text-admin-ok-text" : "text-admin-bad-text"}`}>
+                {matches ? "✓ Coincide con lo esperado" : diff < 0 ? `Falta ${fmtMoney(Math.abs(diff))}` : `Sobra ${fmtMoney(diff)}`}
+              </p>
+            )}
           </div>
           <div className="flex gap-2.5">
             <button type="button" onClick={onClose} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink-soft">
@@ -123,7 +141,7 @@ function DenomRow({ label, value, onChange }: { label: string; value: string; on
         placeholder="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-20 rounded-lg border border-admin-border bg-admin-bg px-3 py-1.5 text-right text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary"
+        className="w-20 rounded-lg border border-admin-border bg-admin-input-bg px-3 py-1.5 text-right text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary"
       />
     </label>
   );
