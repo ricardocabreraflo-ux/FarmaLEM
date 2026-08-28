@@ -6,7 +6,7 @@ import { upsertAttendanceForm, type AttendanceFormState } from "@/app/admin/asis
 import type { Profile } from "@/lib/profiles";
 
 const inputClass =
-  "mt-1.5 w-full rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
+  "mt-1.5 w-full rounded-lg border border-admin-border bg-admin-input-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
 
 const DEFAULT_RATE = 242.86;
 

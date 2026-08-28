@@ -28,9 +28,8 @@ export default async function ReporteCortesPage({ searchParams }: { searchParams
   const { mes } = await searchParams;
   const month = mes || new Date().toISOString().slice(0, 7);
 
-  const [employees, cutsDesc, withdrawals] = await Promise.all([listProfiles(), listCutsForMonth(month), listWithdrawalsForMonth(month)]);
+  const [employees, cuts, withdrawals] = await Promise.all([listProfiles(), listCutsForMonth(month), listWithdrawalsForMonth(month)]);
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
-  const cuts = [...cutsDesc].sort((a, b) => a.cut_date.localeCompare(b.cut_date));
 
   const payrollByKey = new Map<string, number>();
   for (const w of withdrawals) {

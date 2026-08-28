@@ -12,13 +12,19 @@ export default async function RelojPage() {
   return (
     <div className="min-h-screen bg-admin-bg">
       <ClockKiosk />
-      {session.role === "admin" && (
-        <p className="pb-8 text-center">
+      <div className="flex flex-col items-center gap-3 pb-10">
+        <Link
+          href="/admin/cortes/nuevo"
+          className="rounded-full bg-admin-primary px-6 py-3 text-[0.9rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
+        >
+          Capturar corte
+        </Link>
+        {session.role === "admin" && (
           <Link href="/admin/reloj/bitacora" className="text-[0.82rem] font-semibold text-admin-primary hover:underline">
             Ver bitácora del día
           </Link>
-        </p>
-      )}
+        )}
+      </div>
     </div>
   );
 }

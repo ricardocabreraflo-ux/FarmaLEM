@@ -38,6 +38,7 @@
   --admin-border: rgb(23 33 27 / 0.12);
   --admin-ink: #17211b;
   --admin-ink-soft: #59665d;
+  --admin-input-bg: #e6ebe7;
   --admin-ok-bg: #e7f5ed;
   --admin-ok-text: #176b46;
   --admin-pending-bg: #fff3d8;
@@ -73,6 +74,7 @@
     --admin-border: rgb(236 242 246 / 0.12);
     --admin-ink: #ecf2f6;
     --admin-ink-soft: #a9b9c6;
+    --admin-input-bg: #1e2b23;
     --admin-ok-bg: rgb(74 222 154 / 0.16);
     --admin-ok-text: #4ade9a;
     --admin-pending-bg: rgb(255 200 87 / 0.16);
@@ -98,6 +100,7 @@
   --admin-border: rgb(23 33 27 / 0.12);
   --admin-ink: #17211b;
   --admin-ink-soft: #59665d;
+  --admin-input-bg: #e6ebe7;
   --admin-ok-bg: #e7f5ed;
   --admin-ok-text: #176b46;
   --admin-pending-bg: #fff3d8;
@@ -116,6 +119,7 @@
   --admin-border: rgb(236 242 246 / 0.12);
   --admin-ink: #ecf2f6;
   --admin-ink-soft: #a9b9c6;
+  --admin-input-bg: #1e2b23;
   --admin-ok-bg: rgb(74 222 154 / 0.16);
   --admin-ok-text: #4ade9a;
   --admin-pending-bg: rgb(255 200 87 / 0.16);
@@ -155,6 +159,7 @@
   --color-admin-primary-soft: var(--admin-primary-soft);
   --color-admin-bg: var(--admin-bg);
   --color-admin-surface: var(--admin-surface);
+  --color-admin-input-bg: var(--admin-input-bg);
   --color-admin-border: var(--admin-border);
   --color-admin-ink: var(--admin-ink);
   --color-admin-ink-soft: var(--admin-ink-soft);

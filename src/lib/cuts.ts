@@ -39,12 +39,13 @@ export async function listCutsForMonth(month: string, onlyEmployeeId?: string): 
   const start = `${month}-01`;
   const end = m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`;
   // "Matutino" < "Vespertino" alfabéticamente, así que el orden ascendente ya deja primero el turno de la mañana.
+  // La fecha va ascendente (día 1 arriba, bajando hacia fin de mes) para leerse igual que el resumen en papel.
   let query = supabaseAdmin()
     .from("cuts")
     .select()
     .gte("cut_date", start)
     .lt("cut_date", end)
-    .order("cut_date", { ascending: false })
+    .order("cut_date", { ascending: true })
     .order("shift", { ascending: true });
   if (onlyEmployeeId) query = query.eq("employee_id", onlyEmployeeId);
   const { data, error } = await query;

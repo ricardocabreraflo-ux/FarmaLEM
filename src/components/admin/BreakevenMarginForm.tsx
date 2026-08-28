@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { saveBreakevenMarginForm, type BreakevenMarginFormState } from "@/app/admin/configuracion/actions";
 
 const inputClass =
-  "mt-1.5 w-full max-w-[160px] rounded-lg border border-admin-border bg-admin-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
+  "mt-1.5 w-full max-w-[160px] rounded-lg border border-admin-border bg-admin-input-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
 
 export function BreakevenMarginForm({ currentPercent }: { currentPercent: number }) {
   const [state, formAction, pending] = useActionState<BreakevenMarginFormState | undefined, FormData>(saveBreakevenMarginForm, undefined);
