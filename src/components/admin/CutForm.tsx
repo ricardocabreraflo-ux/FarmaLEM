@@ -72,14 +72,14 @@ export function CutForm({
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Turno
-          {isWeekend ? (
+          {isWeekend && !canChooseShift ? (
             <>
               <input type="hidden" name="shift" value={weekendShift} />
               <div className={`${inputClass} bg-admin-primary-soft font-semibold text-admin-primary-deep`}>Fin de semana</div>
               <span className="mt-1 block font-normal text-admin-ink-soft">Solo hay un turno el fin de semana.</span>
             </>
           ) : canChooseShift ? (
-            <select name="shift" defaultValue={defaultShift} className={inputClass}>
+            <select name="shift" defaultValue={isWeekend ? weekendShift : defaultShift} className={inputClass}>
               <option>Matutino</option>
               <option>Vespertino</option>
             </select>
