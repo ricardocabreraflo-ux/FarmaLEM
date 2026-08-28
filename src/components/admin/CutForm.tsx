@@ -31,6 +31,9 @@ export function CutForm({
 
   const weekday = new Date(`${cutDate}T12:00:00`).getDay();
   const isWeekend = weekday === 0 || weekday === 6;
+  // Fin de semana solo abre un turno al día; por convención el sábado cuenta como
+  // Matutino y el domingo como Vespertino, sin importar quién lo cubra.
+  const weekendShift = weekday === 6 ? "Matutino" : "Vespertino";
 
   const totalNum = Number(total || 0);
   const cardNum = Number(card || 0);
@@ -69,7 +72,13 @@ export function CutForm({
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Turno
-          {canChooseShift ? (
+          {isWeekend ? (
+            <>
+              <input type="hidden" name="shift" value={weekendShift} />
+              <div className={`${inputClass} bg-admin-primary-soft font-semibold text-admin-primary-deep`}>Fin de semana</div>
+              <span className="mt-1 block font-normal text-admin-ink-soft">Solo hay un turno el fin de semana.</span>
+            </>
+          ) : canChooseShift ? (
             <select name="shift" defaultValue={defaultShift} className={inputClass}>
               <option>Matutino</option>
               <option>Vespertino</option>
