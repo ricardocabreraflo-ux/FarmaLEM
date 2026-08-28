@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { isCutDateLocked } from "@/lib/cuts-lock";
 
 export type CutStatus = "Por revisar" | "Aprobado" | "Rechazado";
 
@@ -102,6 +103,14 @@ interface UpdateCutInput {
 }
 
 export async function updateCut(id: string, input: UpdateCutInput): Promise<void> {
+  const existing = await getCut(id);
+  if (existing && isCutDateLocked(existing.cut_date)) {
+    throw new Error("Ese corte es de junio 2026 o antes — ese periodo ya quedó cerrado y no se puede modificar.");
+  }
+  if (isCutDateLocked(input.cutDate)) {
+    throw new Error("No puedes mover un corte a junio 2026 o antes — ese periodo ya quedó cerrado.");
+  }
+
   const { error } = await supabaseAdmin()
     .from("cuts")
     .update({

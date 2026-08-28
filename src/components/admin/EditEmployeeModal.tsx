@@ -17,6 +17,7 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
   const boundAction = updateEmployee.bind(null, profile.id);
   const [state, formAction, pending] = useActionState<EmployeeFormState | undefined, FormData>(boundAction, undefined);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [dailyRate, setDailyRate] = useState(String(profile.daily_rate));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -61,8 +62,33 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
                 <option value="false">Inactivo</option>
               </select>
             </Field>
+            <Field label="Sueldo semanal (opcional)" htmlFor="weeklySalary">
+              <input
+                id="weeklySalary"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ej. 1700"
+                onChange={(e) => {
+                  const weekly = Number(e.target.value || 0);
+                  if (weekly > 0) setDailyRate((weekly / 7).toFixed(2));
+                }}
+                className={inputClass}
+              />
+              <span className="mt-1 block font-normal text-admin-ink-soft">Captúralo y la tarifa diaria se calcula sola (÷7).</span>
+            </Field>
             <Field label="Tarifa diaria" htmlFor="dailyRate">
-              <input id="dailyRate" name="dailyRate" type="number" min="0" step="0.01" required defaultValue={profile.daily_rate} className={inputClass} />
+              <input
+                id="dailyRate"
+                name="dailyRate"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                value={dailyRate}
+                onChange={(e) => setDailyRate(e.target.value)}
+                className={inputClass}
+              />
             </Field>
             <Field label="Fecha de ingreso" htmlFor="hireDate">
               <input id="hireDate" name="hireDate" type="date" defaultValue={profile.hire_date ?? ""} className={inputClass} />

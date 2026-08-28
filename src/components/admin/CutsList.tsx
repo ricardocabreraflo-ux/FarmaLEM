@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { Cut } from "@/lib/cuts";
+import { isCutDateLocked } from "@/lib/cuts-lock";
 import type { Profile } from "@/lib/profiles";
 import { approveCutAction } from "@/app/admin/cortes/actions";
 import { EditCutModal } from "@/components/admin/EditCutModal";
@@ -108,9 +109,15 @@ function CutRow({ cut, isAdmin, onEdit }: { cut: Row; isAdmin: boolean; onEdit: 
       )}
       {isAdmin && (
         <td className="px-5 py-3 text-right">
-          <button type="button" onClick={onEdit} className="font-semibold text-admin-primary hover:underline">
-            Editar
-          </button>
+          {isCutDateLocked(cut.cut_date) ? (
+            <span className="text-[0.78rem] font-semibold text-admin-ink-soft" title="Junio 2026 y antes ya quedó cerrado.">
+              Cerrado
+            </span>
+          ) : (
+            <button type="button" onClick={onEdit} className="font-semibold text-admin-primary hover:underline">
+              Editar
+            </button>
+          )}
         </td>
       )}
     </tr>

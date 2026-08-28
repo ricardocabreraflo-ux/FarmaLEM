@@ -13,10 +13,12 @@ export function CutForm({
   employees,
   defaultShift,
   canChooseShift,
+  minDate,
 }: {
   employees: Profile[];
   defaultShift: string;
   canChooseShift: boolean;
+  minDate?: string;
 }) {
   const [state, formAction, pending] = useActionState<CutFormState | undefined, FormData>(createCutForm, undefined);
   const [total, setTotal] = useState("");
@@ -40,7 +42,8 @@ export function CutForm({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Fecha
-          <input name="cutDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          <input name="cutDate" type="date" required min={minDate} defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          {minDate && <span className="mt-1 block font-normal text-admin-ink-soft">Solo puedes capturar del mes en curso en adelante.</span>}
         </label>
 
         {employees.length > 0 && (

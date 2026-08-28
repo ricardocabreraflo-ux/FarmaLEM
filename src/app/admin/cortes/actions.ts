@@ -29,6 +29,9 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   const employeeId = session.role === "admin" && requestedEmployeeId ? requestedEmployeeId : session.uid;
 
   if (!cutDate || !shift) return { error: "Fecha y turno son obligatorios." };
+  if (session.role !== "admin" && cutDate < new Date().toISOString().slice(0, 7) + "-01") {
+    return { error: "Ya no puedes capturar un corte de un mes anterior — pídele a administración que lo agregue." };
+  }
   if (Math.abs(cash + card - total) >= 0.01) return { error: "Efectivo + tarjeta debe ser igual a la venta total." };
 
   let photoPath: string | null = null;

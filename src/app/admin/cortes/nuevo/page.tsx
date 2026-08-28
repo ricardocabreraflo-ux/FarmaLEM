@@ -16,11 +16,12 @@ export default async function NewCutPage() {
 
   const canChooseShift = session.role === "admin" || !profile?.shift || profile.shift === "Administración";
   const defaultShift = profile?.shift && profile.shift !== "Administración" ? profile.shift : "Matutino";
+  const minDate = session.role === "admin" ? undefined : new Date().toISOString().slice(0, 7) + "-01";
 
   return (
     <AdminShell activeHref="/admin/cortes" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <h1 className="font-display text-2xl text-admin-ink">Capturar corte</h1>
-      <CutForm employees={employees} defaultShift={defaultShift} canChooseShift={canChooseShift} />
+      <CutForm employees={employees} defaultShift={defaultShift} canChooseShift={canChooseShift} minDate={minDate} />
     </AdminShell>
   );
 }

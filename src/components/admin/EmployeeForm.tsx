@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import type { EmployeeFormState } from "@/app/admin/empleados/actions";
 import type { Profile } from "@/lib/profiles";
@@ -10,6 +10,7 @@ type Action = (prevState: EmployeeFormState | undefined, formData: FormData) => 
 export function EmployeeForm({ action, profile }: { action: Action; profile?: Profile }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const isEdit = Boolean(profile);
+  const [dailyRate, setDailyRate] = useState(String(profile?.daily_rate ?? 150));
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-4">
@@ -42,6 +43,21 @@ export function EmployeeForm({ action, profile }: { action: Action; profile?: Pr
             <option value="false">Inactivo</option>
           </select>
         </Field>
+        <Field label="Sueldo semanal (opcional)" htmlFor="weeklySalary">
+          <input
+            id="weeklySalary"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Ej. 1700"
+            onChange={(e) => {
+              const weekly = Number(e.target.value || 0);
+              if (weekly > 0) setDailyRate((weekly / 7).toFixed(2));
+            }}
+            className={inputClass}
+          />
+          <span className="mt-1 block font-normal text-admin-ink-soft">Captúralo y la tarifa diaria se calcula sola (÷7).</span>
+        </Field>
         <Field label="Tarifa diaria" htmlFor="dailyRate">
           <input
             id="dailyRate"
@@ -50,7 +66,8 @@ export function EmployeeForm({ action, profile }: { action: Action; profile?: Pr
             min="0"
             step="0.01"
             required
-            defaultValue={profile?.daily_rate ?? 150}
+            value={dailyRate}
+            onChange={(e) => setDailyRate(e.target.value)}
             className={inputClass}
           />
         </Field>
