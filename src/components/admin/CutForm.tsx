@@ -40,7 +40,10 @@ export function CutForm({
   const cash = Math.max(totalNum - cardNum, 0);
   const cardExceedsTotal = cardNum > totalNum;
 
-  const nominaNum = isWeekend ? Number(nomina || 0) : 0;
+  // A las empleadas solo se les pide nómina el fin de semana (que es cuando se paga
+  // normalmente); administración la puede capturar cualquier día al meter un corte a mano.
+  const showNomina = isWeekend || canChooseShift;
+  const nominaNum = showNomina ? Number(nomina || 0) : 0;
   const expectedCash = Math.max(cash - nominaNum, 0);
 
   const cashDeliveredNum = Number(cashDelivered || 0);
@@ -72,14 +75,14 @@ export function CutForm({
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Turno
-          {isWeekend && !canChooseShift ? (
+          {isWeekend ? (
             <>
               <input type="hidden" name="shift" value={weekendShift} />
               <div className={`${inputClass} bg-admin-primary-soft font-semibold text-admin-primary-deep`}>Fin de semana</div>
               <span className="mt-1 block font-normal text-admin-ink-soft">Solo hay un turno el fin de semana.</span>
             </>
           ) : canChooseShift ? (
-            <select name="shift" defaultValue={isWeekend ? weekendShift : defaultShift} className={inputClass}>
+            <select name="shift" defaultValue={defaultShift} className={inputClass}>
               <option>Matutino</option>
               <option>Vespertino</option>
             </select>
@@ -106,7 +109,7 @@ export function CutForm({
           <input name="cash" type="number" readOnly value={cash.toFixed(2)} className={`${inputClass} bg-admin-bg/60 text-admin-ink-soft`} />
         </label>
 
-        {isWeekend && (
+        {showNomina && (
           <label className="block text-[0.85rem] font-semibold text-admin-ink">
             Pago de nómina de esta semana <span className="font-normal text-admin-ink-soft">(si se pagó de este corte)</span>
             <input name="nomina" type="number" min="0" step="0.01" placeholder="0.00" value={nomina} onChange={(e) => setNomina(e.target.value)} className={inputClass} />
