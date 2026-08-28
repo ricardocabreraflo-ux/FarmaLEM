@@ -19,6 +19,7 @@ export interface Profile {
   address: string | null;
   reference_letter_path: string | null;
   sicad_exam_path: string | null;
+  clock_pin_hash: string | null;
 }
 
 export async function getProfileByUsername(username: string): Promise<Profile | null> {
@@ -119,6 +120,14 @@ export async function saveEmployeeDocumentPath(id: string, field: "reference_let
   const { error } = await supabaseAdmin()
     .from("profiles")
     .update({ [field]: path, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function setClockPin(id: string, hash: string): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from("profiles")
+    .update({ clock_pin_hash: hash, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw new Error(error.message);
 }

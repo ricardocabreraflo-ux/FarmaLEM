@@ -290,6 +290,15 @@ export function IconMoon({ className }: { className?: string }) {
   );
 }
 
+export function IconReloj({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <polyline points="12,7 12,12 16,14" />
+    </svg>
+  );
+}
+
 export function IconGastos({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>

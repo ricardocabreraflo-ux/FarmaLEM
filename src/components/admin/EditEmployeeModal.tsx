@@ -39,6 +39,9 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
             <Field label="Nueva contraseña (déjala vacía para conservarla)" htmlFor="password">
               <input id="password" name="password" type="password" className={inputClass} />
             </Field>
+            <Field label={profile.clock_pin_hash ? "Nuevo PIN del reloj checador (4 a 6 dígitos)" : "PIN del reloj checador (4 a 6 dígitos)"} htmlFor="clockPin">
+              <input id="clockPin" name="clockPin" type="password" inputMode="numeric" pattern="\d{4,6}" className={inputClass} />
+            </Field>
             <Field label="Turno" htmlFor="shift">
               <select id="shift" name="shift" defaultValue={profile.shift} className={inputClass}>
                 <option>Matutino</option>

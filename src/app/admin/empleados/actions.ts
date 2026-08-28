@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession, type ProfileRole } from "@/lib/admin-auth";
-import { createProfile, updateProfile, deleteProfile, profileHasHistory, uploadEmployeeDocument, saveEmployeeDocumentPath } from "@/lib/profiles";
+import { createProfile, updateProfile, deleteProfile, profileHasHistory, uploadEmployeeDocument, saveEmployeeDocumentPath, setClockPin } from "@/lib/profiles";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { getDeletePinHash } from "@/lib/security-settings";
 import { logAction } from "@/lib/history";
@@ -69,12 +69,15 @@ export async function updateEmployee(id: string, _prevState: EmployeeFormState |
 
   const fields = readFields(formData);
   const password = String(formData.get("password") ?? "");
+  const clockPin = String(formData.get("clockPin") ?? "").trim();
   if (!fields.username || !fields.fullName) return { error: "Usuario y nombre son obligatorios." };
   if (fields.dailyRate < 0) return { error: "La tarifa diaria no puede ser negativa." };
+  if (clockPin && !/^\d{4,6}$/.test(clockPin)) return { error: "El PIN del reloj checador debe tener de 4 a 6 dígitos." };
 
   try {
     await updateProfile(id, fields, password ? hashPassword(password) : null);
     await uploadDocuments(id, formData);
+    if (clockPin) await setClockPin(id, hashPassword(clockPin));
   } catch (err) {
     return { error: err instanceof Error ? err.message : "No se pudo guardar el empleado." };
   }
