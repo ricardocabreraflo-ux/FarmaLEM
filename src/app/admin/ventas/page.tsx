@@ -32,36 +32,6 @@ export default async function VentasPage() {
       )}
 
       <section className="mt-5 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
-        <h2 className="border-b border-admin-border px-5 py-3 font-display text-base text-admin-ink">Mes a mes</h2>
-        {months.length === 0 ? (
-          <p className="px-5 py-8 text-center text-admin-ink-soft">Todavía no hay cortes aprobados para comparar.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-[0.86rem]">
-              <thead>
-                <tr className="border-b border-admin-border text-admin-ink-soft">
-                  <th className="px-5 py-3 font-medium">Mes</th>
-                  <th className="px-5 py-3 text-right font-medium">Ventas</th>
-                  <th className="px-5 py-3 text-right font-medium">Variación</th>
-                  <th className="px-5 py-3 text-right font-medium">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {months.map((m) => (
-                  <tr key={m.month} className="border-b border-admin-border last:border-0">
-                    <td className="px-5 py-3 font-semibold text-admin-ink">{m.label}</td>
-                    <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(m.total)}</td>
-                    <td className={`px-5 py-3 text-right font-data tabular-nums ${diffColor(m.diff)}`}>{m.diff === null ? "—" : fmtMoney(m.diff)}</td>
-                    <td className={`px-5 py-3 text-right font-data tabular-nums ${diffColor(m.pctChange)}`}>{m.pctChange === null ? "—" : fmtPct(m.pctChange)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="mt-5 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
         <h2 className="border-b border-admin-border px-5 py-3 font-display text-base text-admin-ink">Año contra año</h2>
         {grid.years.length === 0 ? (
           <p className="px-5 py-8 text-center text-admin-ink-soft">Todavía no hay cortes aprobados para comparar.</p>
@@ -114,6 +84,36 @@ export default async function VentasPage() {
                   ))}
                 </tr>
               </tfoot>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-5 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+        <h2 className="border-b border-admin-border px-5 py-3 font-display text-base text-admin-ink">Mes a mes</h2>
+        {months.length === 0 ? (
+          <p className="px-5 py-8 text-center text-admin-ink-soft">Todavía no hay cortes aprobados para comparar.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[0.86rem]">
+              <thead>
+                <tr className="border-b border-admin-border text-admin-ink-soft">
+                  <th className="px-5 py-3 font-medium">Mes</th>
+                  <th className="px-5 py-3 text-right font-medium">Ventas</th>
+                  <th className="px-5 py-3 text-right font-medium">Variación</th>
+                  <th className="px-5 py-3 text-right font-medium">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {months.map((m) => (
+                  <tr key={m.month} className="border-b border-admin-border last:border-0">
+                    <td className="px-5 py-3 font-semibold text-admin-ink">{m.label}</td>
+                    <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(m.total)}</td>
+                    <td className={`px-5 py-3 text-right font-data tabular-nums ${diffColor(m.diff)}`}>{m.diff === null ? "—" : fmtMoney(m.diff)}</td>
+                    <td className={`px-5 py-3 text-right font-data tabular-nums ${diffColor(m.pctChange)}`}>{m.pctChange === null ? "—" : fmtPct(m.pctChange)}</td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         )}
