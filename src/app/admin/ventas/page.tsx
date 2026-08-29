@@ -3,7 +3,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { monthlySales, yearlySalesGrid } from "@/lib/sales-report";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { YearlyTotalsChart } from "@/components/admin/YearlyTotalsChart";
+import { YearOverYearChart } from "@/components/admin/YearOverYearChart";
 
 export const metadata: Metadata = { title: "Comparativa de ventas" };
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export default async function VentasPage() {
 
       {grid.years.length > 0 && (
         <div className="mt-6">
-          <YearlyTotalsChart years={grid.years} totalsByYear={grid.totalsByYear} />
+          <YearOverYearChart years={grid.years} rows={grid.rows} />
         </div>
       )}
 
