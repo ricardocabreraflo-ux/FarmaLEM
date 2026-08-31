@@ -3,8 +3,35 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { replaceBonusTiers, saveBonusWeek, computeWeekFromRecords } from "@/lib/bonuses";
+import { replaceBonusTiers, saveBonusWeek, computeWeekFromRecords, listBonusTiers, type BonusTier } from "@/lib/bonuses";
 import { logAction } from "@/lib/history";
+
+function previousMonth(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`;
+}
+
+export interface SuggestedTier {
+  shift: "Matutino" | "Vespertino";
+  level: number;
+  goal: number;
+  bonus: number;
+}
+
+/** Toma las metas del mes anterior y sube la meta semanal (no el bono) el porcentaje indicado, redondeado a $100. */
+export async function suggestIncreasedTiers(month: string, percent: number): Promise<SuggestedTier[] | { error: string }> {
+  await requireAdminSession();
+  const prev = previousMonth(month);
+  const prevTiers = await listBonusTiers(prev);
+  if (prevTiers.length === 0) return { error: `${prev} no tiene metas configuradas para copiar.` };
+
+  return prevTiers.map((t: BonusTier) => ({
+    shift: t.shift,
+    level: t.level,
+    goal: Math.round((t.goal * (1 + percent / 100)) / 100) * 100,
+    bonus: t.bonus,
+  }));
+}
 
 export interface BonusFormState {
   error?: string;
