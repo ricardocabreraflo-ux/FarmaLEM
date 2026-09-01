@@ -25,8 +25,28 @@ export default async function ImprimirCalendarioPage({ searchParams }: { searchP
   const weeks = buildMonthWeeks(month);
 
   return (
-    <main className="mx-auto max-w-[980px] px-6 py-10">
-      <style>{`@media print { .print\\:hidden { display: none !important; } @page { size: landscape; } }`}</style>
+    <main className="force-light-admin mx-auto max-w-[980px] px-6 py-10">
+      <style>{`
+        @media print { .print\\:hidden { display: none !important; } @page { size: landscape; } }
+        .force-light-admin {
+          /* El calendario reutiliza ShiftScheduleGrid (pensado para el panel, que sigue el tema
+             claro/oscuro del sistema); aquí se fuerzan los mismos tokens en claro para que la
+             versión de impresión nunca salga oscura, sin tocar el componente compartido. */
+          --admin-bg: #f3f6f4;
+          --admin-surface: #ffffff;
+          --admin-input-bg: #e6ebe7;
+          --admin-border: rgb(23 33 27 / 0.12);
+          --admin-ink: #17211b;
+          --admin-ink-soft: #59665d;
+          --admin-primary: #176b46;
+          --admin-primary-deep: #0f4d33;
+          --admin-primary-soft: #e8f1ec;
+          --admin-bad-bg: #ffebe9;
+          --admin-bad-text: #a6251b;
+          background: var(--admin-bg);
+          color: var(--admin-ink);
+        }
+      `}</style>
 
       <Link href={`/admin/asistencia/calendario?mes=${month}`} className="text-[0.85rem] font-semibold text-admin-primary print:hidden">
         &larr; Volver al calendario
