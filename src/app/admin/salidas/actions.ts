@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession, requireAdminSession } from "@/lib/admin-auth";
+import { requireAdminSession } from "@/lib/admin-auth";
 import { createWithdrawal, authorizeWithdrawal, type WithdrawalType } from "@/lib/withdrawals";
 import { logAction } from "@/lib/history";
 
@@ -11,7 +11,7 @@ export interface WithdrawalFormState {
 }
 
 export async function createWithdrawalForm(_prevState: WithdrawalFormState | undefined, formData: FormData): Promise<WithdrawalFormState> {
-  const session = await requireSession();
+  const session = await requireAdminSession();
 
   const withdrawalDate = String(formData.get("withdrawalDate") ?? "");
   const shift = String(formData.get("shift") ?? "");
@@ -39,7 +39,7 @@ export async function createWithdrawalForm(_prevState: WithdrawalFormState | und
       supplierId: supplierId || null,
       employeeId: employeeId || null,
       createdBy: session.uid,
-      authorizedBy: session.role === "admin" ? session.uid : null,
+      authorizedBy: session.uid,
     });
   } catch (err) {
     return { error: err instanceof Error ? err.message : "No se pudo registrar la salida." };

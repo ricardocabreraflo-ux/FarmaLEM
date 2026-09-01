@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireSession } from "@/lib/admin-auth";
+import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listSuppliers } from "@/lib/suppliers";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Registrar salida" };
 export const dynamic = "force-dynamic";
 
 export default async function NewWithdrawalPage() {
-  const session = await requireSession();
+  const session = await requireAdminSession();
   const [profile, suppliers, employees] = await Promise.all([getProfileById(session.uid), listSuppliers(true), listProfiles()]);
 
   return (

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireSession } from "@/lib/admin-auth";
+import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listWithdrawalsForMonth, type WithdrawalType } from "@/lib/withdrawals";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -17,7 +17,7 @@ function fmtMoney(n: number) {
 }
 
 export default async function SalidasPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
-  const session = await requireSession();
+  const session = await requireAdminSession();
   const isAdmin = session.role === "admin";
   const { mes } = await searchParams;
   const month = mes || new Date().toISOString().slice(0, 7);

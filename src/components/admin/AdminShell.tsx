@@ -65,7 +65,7 @@ const NAV: NavEntry[] = [
     id: "caja",
     label: "Caja",
     icon: IconCaja,
-    items: [leaf("/admin/cortes", "Cortes", IconCortes), leaf("/admin/salidas", "Salidas de efectivo", IconSalidas)],
+    items: [leaf("/admin/cortes", "Cortes", IconCortes), leaf("/admin/salidas", "Salidas de efectivo", IconSalidas, true)],
   },
   {
     type: "group",
