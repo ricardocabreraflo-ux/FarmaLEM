@@ -25,9 +25,12 @@ export default async function ImprimirCalendarioPage({ searchParams }: { searchP
   const weeks = buildMonthWeeks(month);
 
   return (
-    <main className="force-light-admin mx-auto max-w-[980px] px-6 py-10">
+    <main className="force-light-admin mx-auto max-w-[980px] px-6 py-10 print:px-0 print:py-1">
       <style>{`
-        @media print { .print\\:hidden { display: none !important; } @page { size: landscape; } }
+        @media print {
+          .print\\:hidden { display: none !important; }
+          @page { size: landscape; margin: 8mm; }
+        }
         .force-light-admin {
           /* El calendario reutiliza ShiftScheduleGrid (pensado para el panel, que sigue el tema
              claro/oscuro del sistema); aquí se fuerzan los mismos tokens en claro para que la
@@ -51,12 +54,12 @@ export default async function ImprimirCalendarioPage({ searchParams }: { searchP
       <Link href={`/admin/asistencia/calendario?mes=${month}`} className="text-[0.85rem] font-semibold text-admin-primary print:hidden">
         &larr; Volver al calendario
       </Link>
-      <div className="mt-2 flex items-center justify-between">
-        <h1 className="font-display text-xl text-admin-ink capitalize">FarmaLEM &middot; Calendario de turnos &middot; {monthLabel(month)}</h1>
+      <div className="mt-2 flex items-center justify-between print:mt-0">
+        <h1 className="font-display text-xl text-admin-ink capitalize print:text-[0.95rem]">FarmaLEM &middot; Calendario de turnos &middot; {monthLabel(month)}</h1>
         <PrintButton />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 print:mt-1">
         <ShiftScheduleGrid weeks={weeks} assignments={assignments} employees={activeEmployees} weekLabels={weekLabels} />
       </div>
     </main>

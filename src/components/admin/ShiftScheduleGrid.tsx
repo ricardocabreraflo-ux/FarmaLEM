@@ -39,16 +39,16 @@ export function ShiftScheduleGrid({
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-admin-border bg-admin-surface">
-      <table className="w-full min-w-[760px] border-collapse text-[0.8rem]">
+      <table className="w-full min-w-[760px] border-collapse text-[0.8rem] print:min-w-0 print:text-[0.62rem]">
         <thead>
           <tr className="border-b border-admin-border bg-admin-bg text-admin-ink-soft">
-            <th className="w-10 px-2 py-2 text-left font-medium"></th>
+            <th className="w-10 px-2 py-2 text-left font-medium print:py-0.5"></th>
             {WEEKDAY_LABELS.map((label) => (
-              <th key={label} className="px-2 py-2 text-left font-medium">
+              <th key={label} className="px-2 py-2 text-left font-medium print:py-0.5">
                 {label}
               </th>
             ))}
-            <th className="w-14 px-2 py-2 text-left font-medium"></th>
+            <th className="w-14 px-2 py-2 text-left font-medium print:hidden"></th>
           </tr>
         </thead>
         <tbody>
@@ -57,7 +57,7 @@ export function ShiftScheduleGrid({
               {SHIFTS.map((shift, shiftIdx) => (
                 <tr key={`${week.label}-${shift}`} className={`border-b border-admin-border ${shiftIdx === 0 ? "border-t-2 border-t-admin-border" : ""}`}>
                   {shiftIdx === 0 && (
-                    <td rowSpan={2} className="border-r border-admin-border px-2 py-2 align-top text-[0.72rem] font-bold text-admin-ink-soft">
+                    <td rowSpan={2} className="border-r border-admin-border px-2 py-2 align-top text-[0.72rem] font-bold text-admin-ink-soft print:py-0.5 print:text-[0.6rem]">
                       {week.days[0].dayNum}
                     </td>
                   )}
@@ -66,23 +66,23 @@ export function ShiftScheduleGrid({
                     const name = assignment?.employee_id ? nameById.get(assignment.employee_id) : null;
                     const isVacant = assignment !== undefined && !assignment.employee_id;
                     return (
-                      <td key={day.date} className={`px-1.5 py-1.5 align-top ${day.inMonth ? "" : "opacity-40"}`}>
+                      <td key={day.date} className={`px-1.5 py-1.5 align-top print:px-0.5 print:py-0.5 ${day.inMonth ? "" : "opacity-40"}`}>
                         <button
                           type="button"
                           onClick={() => setEditingCell({ date: day.date, shift })}
-                          className={`flex w-full flex-col items-start rounded-lg px-2 py-1.5 text-left transition-colors ${
+                          className={`flex w-full flex-col items-start rounded-lg px-2 py-1.5 text-left leading-tight transition-colors print:px-1 print:py-0.5 print:leading-none ${
                             name ? "bg-admin-primary-soft text-admin-primary-deep" : isVacant ? "bg-admin-bad-bg text-admin-bad-text" : "text-admin-ink-soft hover:bg-admin-bg"
                           }`}
                         >
-                          <span className="text-[0.68rem] font-semibold opacity-70">{shift === "Matutino" ? "M" : "V"}</span>
+                          <span className="text-[0.68rem] font-semibold opacity-70 print:text-[0.52rem]">{shift === "Matutino" ? "M" : "V"}</span>
                           <span className="font-bold">{name ? firstName(name) : isVacant ? "VACANTE" : "—"}</span>
-                          {assignment?.is_double_shift && <span className="text-[0.65rem] font-bold text-admin-bad-text">DOBLE</span>}
+                          {assignment?.is_double_shift && <span className="text-[0.65rem] font-bold text-admin-bad-text print:text-[0.5rem]">DOBLE</span>}
                         </button>
                       </td>
                     );
                   })}
                   {shiftIdx === 0 && (
-                    <td rowSpan={2} className="border-l border-admin-border px-1.5 py-2 align-middle">
+                    <td rowSpan={2} className="border-l border-admin-border px-1.5 py-2 align-middle print:hidden">
                       <WeekLabelSelect weekStart={week.days[0].date} value={weekLabels[week.days[0].date] ?? ""} />
                     </td>
                   )}
