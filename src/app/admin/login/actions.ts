@@ -31,8 +31,8 @@ export async function login(_prevState: { error?: string } | undefined, formData
     maxAge: 60 * 60 * 24 * 30,
   });
 
-  // Administración entra directo a Pedidos; el equipo entra directo a su reloj checador.
-  redirect(profile.role === "admin" ? "/admin" : "/admin/reloj");
+  // Administración entra directo a Pedidos; el equipo entra directo a su Inicio.
+  redirect(profile.role === "admin" ? "/admin" : "/admin/inicio");
 }
 
 export async function logout() {

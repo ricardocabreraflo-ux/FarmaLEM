@@ -45,7 +45,7 @@ export async function loginWithPin(shift: string, pin: string): Promise<TurnoFor
 
   await setSessionCookie(employee.id, employee.role);
   await logAction(employee.id, "Inició sesión (PIN rápido)", shift);
-  redirect("/admin/reloj");
+  redirect("/admin/inicio");
 }
 
 /** Primera vez en esta computadora: pide usuario/contraseña y, si es correcto, marca la computadora como reconocida para ese turno. */
@@ -65,7 +65,7 @@ export async function loginWithPassword(shift: string, password: string): Promis
 
   await setSessionCookie(employee.id, employee.role);
   await logAction(employee.id, "Inició sesión (usuario y contraseña)", shift);
-  redirect("/admin/reloj");
+  redirect("/admin/inicio");
 }
 
 /** Cierra la sesión actual y regresa al selector de turno (para cuando cambia el turno en la misma computadora). */

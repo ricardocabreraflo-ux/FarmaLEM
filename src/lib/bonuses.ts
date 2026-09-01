@@ -119,6 +119,21 @@ function tiersForShift(tiers: BonusTier[], shift: string) {
   return tiers.filter((t) => t.shift === shift).sort((a, b) => a.goal - b.goal);
 }
 
+export interface TierProgress {
+  ordered: BonusTier[];
+  currentTier: BonusTier | null;
+  nextTier: BonusTier | null;
+}
+
+/** Dónde va un empleado en la escalera de niveles de su turno, dadas sus ventas hasta ahora — para el Inicio del equipo. */
+export function tierProgress(sales: number, shift: string, tiers: BonusTier[]): TierProgress {
+  const ordered = tiersForShift(tiers, shift);
+  const reached = ordered.filter((t) => sales >= t.goal);
+  const currentTier = reached.length > 0 ? reached[reached.length - 1] : null;
+  const nextTier = ordered.find((t) => sales < t.goal) ?? null;
+  return { ordered, currentTier, nextTier };
+}
+
 export function achievedTier(week: BonusWeek, tiers: BonusTier[]): BonusTier | null {
   const options = tiersForShift(tiers, week.shift);
   const reached = options.filter((t) => week.sales >= t.goal);

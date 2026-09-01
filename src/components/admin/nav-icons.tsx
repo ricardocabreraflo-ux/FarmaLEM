@@ -290,6 +290,15 @@ export function IconMoon({ className }: { className?: string }) {
   );
 }
 
+export function IconInicio({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 11.5 12 4l8 7.5" />
+      <path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" />
+    </svg>
+  );
+}
+
 export function IconReloj({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>
