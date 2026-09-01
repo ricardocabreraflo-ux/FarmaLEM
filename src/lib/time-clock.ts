@@ -48,9 +48,9 @@ export async function nextEventType(employeeId: string): Promise<ClockEventType>
 }
 
 /**
- * Registra el siguiente movimiento (Entrada/Salida) del empleado. Al marcar
- * Salida, si hubo Entrada el mismo día, deja lista la asistencia del día
- * como "Asistió" para que Sueldos ya no requiera capturarla aparte.
+ * Registra el siguiente movimiento (Entrada/Salida) del empleado. Ya con la
+ * Entrada deja lista la asistencia del día como "Asistió" (se ve al toque en
+ * Asistencia/Sueldos); la Salida solo queda en la bitácora del reloj.
  */
 export async function registerPunch(employee: Profile, createdBy: string): Promise<{ type: ClockEventType; occurredAt: string }> {
   const type = await nextEventType(employee.id);
@@ -59,7 +59,7 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
   const { error } = await supabaseAdmin().from("time_clock_events").insert({ employee_id: employee.id, event_type: type, occurred_at: occurredAt });
   if (error) throw new Error(`No se pudo registrar el movimiento: ${error.message}`);
 
-  if (type === "Salida") {
+  if (type === "Entrada") {
     const { today } = todayRange();
     await upsertAttendance({
       workDate: today,
