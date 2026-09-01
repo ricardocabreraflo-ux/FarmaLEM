@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
  * la importes desde un componente cliente ni la expongas al navegador.
  *
  * Requiere en .env.local:
- *   NEXT_PUBLIC_SUPABASE_URL=https://bzrqoqbetrqpmyfzcqsm.supabase.co
+ *   NEXT_PUBLIC_SUPABASE_URL=https://iatyvxljzrcdfmmtesig.supabase.co
  *   SUPABASE_SERVICE_ROLE_KEY=... (Supabase → Settings → API → service_role)
  */
 function getSupabaseAdmin() {
