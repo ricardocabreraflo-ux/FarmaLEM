@@ -1,6 +1,5 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { verifyPassword } from "@/lib/password";
 import { upsertAttendance } from "@/lib/attendance";
 import type { Profile } from "@/lib/profiles";
 
@@ -30,15 +29,8 @@ function todayRange() {
   return { today, ...dayRange(today) };
 }
 
-/** Busca entre los empleados activos con PIN configurado cuál corresponde al PIN capturado. */
-export async function findEmployeeByClockPin(pin: string): Promise<Profile | null> {
-  const { data, error } = await supabaseAdmin().from("profiles").select().eq("active", true).not("clock_pin_hash", "is", null);
-  if (error) throw new Error(`No se pudo verificar el PIN: ${error.message}`);
-  const candidates = (data ?? []) as Profile[];
-  return candidates.find((p) => p.clock_pin_hash && verifyPassword(pin, p.clock_pin_hash)) ?? null;
-}
-
-async function lastEventToday(employeeId: string): Promise<TimeClockEvent | null> {
+/** Última marca de hoy de un empleado (o null si aún no marca), para avisar en pantalla antes de que vuelva a marcar. */
+export async function lastEventToday(employeeId: string): Promise<TimeClockEvent | null> {
   const { start, end } = todayRange();
   const { data, error } = await supabaseAdmin()
     .from("time_clock_events")

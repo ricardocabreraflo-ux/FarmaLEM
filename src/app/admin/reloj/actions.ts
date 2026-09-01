@@ -1,7 +1,8 @@
 "use server";
 
 import { requireSession } from "@/lib/admin-auth";
-import { findEmployeeByClockPin, registerPunch } from "@/lib/time-clock";
+import { getProfileById } from "@/lib/profiles";
+import { registerPunch } from "@/lib/time-clock";
 import { logAction } from "@/lib/history";
 
 export interface PunchResult {
@@ -12,12 +13,11 @@ export interface PunchResult {
   time?: string;
 }
 
-export async function punchWithPin(pin: string): Promise<PunchResult> {
+/** Marca la Entrada/Salida de quien ya inició sesión (turno de confianza): sin volver a pedir PIN. */
+export async function punchForSession(): Promise<PunchResult> {
   const session = await requireSession();
-  if (!pin || !/^\d{4,6}$/.test(pin)) return { ok: false, error: "PIN inválido." };
-
-  const employee = await findEmployeeByClockPin(pin);
-  if (!employee) return { ok: false, error: "PIN no reconocido." };
+  const employee = await getProfileById(session.uid);
+  if (!employee) return { ok: false, error: "No se encontró tu usuario." };
 
   try {
     const { type, occurredAt } = await registerPunch(employee, session.uid);
