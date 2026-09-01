@@ -1,0 +1,4 @@
+project_id = "farmalem"
+
+[functions.parse-ticket]
+verify_jwt = true
