@@ -9,7 +9,7 @@ type Result = { employeeName: string; type: "Entrada" | "Salida"; time: string }
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "borrar", "0", "enviar"];
 
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "America/Mexico_City" });
 }
 
 export function ClockKiosk() {

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
-import { listEventsForDate } from "@/lib/time-clock";
+import { listEventsForDate, mexicoCityToday } from "@/lib/time-clock";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DayPicker } from "@/components/admin/DayPicker";
 
@@ -9,13 +10,13 @@ export const metadata: Metadata = { title: "Bitácora del reloj checador" };
 export const dynamic = "force-dynamic";
 
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "America/Mexico_City" });
 }
 
 export default async function BitacoraRelojPage({ searchParams }: { searchParams: Promise<{ fecha?: string }> }) {
   const session = await requireAdminSession();
   const { fecha } = await searchParams;
-  const date = fecha || new Date().toISOString().slice(0, 10);
+  const date = fecha || mexicoCityToday();
 
   const [profile, employees, events] = await Promise.all([getProfileById(session.uid), listProfiles(), listEventsForDate(date)]);
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
@@ -24,6 +25,10 @@ export default async function BitacoraRelojPage({ searchParams }: { searchParams
     <AdminShell activeHref="/admin/reloj" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <h1 className="font-display text-2xl text-admin-ink">Bitácora del reloj checador</h1>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Cada Entrada/Salida marcada desde el reloj checador.</p>
+
+      <Link href="/admin/reloj/semana" className="mt-2 inline-block text-[0.85rem] font-semibold text-admin-primary hover:underline">
+        Ver reporte semanal de entradas (para pagar la semana) &rarr;
+      </Link>
 
       <DayPicker date={date} basePath="/admin/reloj/bitacora" />
 

@@ -13,9 +13,21 @@ export interface TimeClockEvent {
   occurred_at: string;
 }
 
+// El servidor corre en UTC; "hoy" y los límites del día se calculan en hora de
+// Ciudad de México (fija en UTC-6 desde que México quitó el horario de verano
+// en 2022) para que un registro de la tarde/noche no se cuente en el día
+// equivocado.
+export function mexicoCityToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date());
+}
+
+function dayRange(date: string) {
+  return { start: `${date}T00:00:00.000-06:00`, end: `${date}T23:59:59.999-06:00` };
+}
+
 function todayRange() {
-  const today = new Date().toISOString().slice(0, 10);
-  return { today, start: `${today}T00:00:00`, end: `${today}T23:59:59.999` };
+  const today = mexicoCityToday();
+  return { today, ...dayRange(today) };
 }
 
 /** Busca entre los empleados activos con PIN configurado cuál corresponde al PIN capturado. */
@@ -76,11 +88,22 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
 }
 
 export async function listEventsForDate(date: string): Promise<TimeClockEvent[]> {
+  const { start, end } = dayRange(date);
+  const { data, error } = await supabaseAdmin().from("time_clock_events").select().gte("occurred_at", start).lte("occurred_at", end).order("occurred_at", { ascending: true });
+  if (error) throw new Error(`No se pudo leer el reloj checador: ${error.message}`);
+  return data as TimeClockEvent[];
+}
+
+/** Entradas (no Salidas) entre dos fechas (inclusive), para el reporte semanal de nómina. */
+export async function listEntradasForRange(startDate: string, endDate: string): Promise<TimeClockEvent[]> {
+  const start = dayRange(startDate).start;
+  const end = dayRange(endDate).end;
   const { data, error } = await supabaseAdmin()
     .from("time_clock_events")
     .select()
-    .gte("occurred_at", `${date}T00:00:00`)
-    .lte("occurred_at", `${date}T23:59:59.999`)
+    .eq("event_type", "Entrada")
+    .gte("occurred_at", start)
+    .lte("occurred_at", end)
     .order("occurred_at", { ascending: true });
   if (error) throw new Error(`No se pudo leer el reloj checador: ${error.message}`);
   return data as TimeClockEvent[];
