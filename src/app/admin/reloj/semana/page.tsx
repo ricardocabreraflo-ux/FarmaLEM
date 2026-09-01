@@ -3,29 +3,11 @@ import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { listProfiles } from "@/lib/profiles";
 import { listEntradasForRange, mexicoCityToday } from "@/lib/time-clock";
+import { addDays, mondayOf } from "@/lib/dates";
 import { PrintButton } from "@/components/admin/PrintButton";
 
 export const metadata: Metadata = { title: "Reporte semanal de entradas" };
 export const dynamic = "force-dynamic";
-
-function pad(n: number) {
-  return String(n).padStart(2, "0");
-}
-
-function toISODate(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function addDays(date: string, days: number): string {
-  const d = new Date(`${date}T12:00:00`);
-  d.setDate(d.getDate() + days);
-  return toISODate(d);
-}
-
-function mondayOf(date: string): string {
-  const dow = new Date(`${date}T12:00:00`).getDay(); // 0 domingo ... 6 sábado
-  return addDays(date, -((dow + 6) % 7));
-}
 
 function dayLabel(date: string) {
   return new Date(`${date}T12:00:00`).toLocaleDateString("es-MX", { weekday: "long", day: "2-digit", month: "short" });

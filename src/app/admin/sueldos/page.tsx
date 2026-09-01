@@ -57,9 +57,14 @@ export default async function SueldosPage({ searchParams }: { searchParams: Prom
     <AdminShell activeHref="/admin/sueldos" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-admin-ink">Sueldos y salarios</h1>
-        <Link href={`/admin/sueldos/comprobante?mes=${month}`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-          Comprobante mensual
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/admin/sueldos/comprobante-semanal" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+            Comprobante semanal
+          </Link>
+          <Link href={`/admin/sueldos/comprobante?mes=${month}`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+            Comprobante mensual
+          </Link>
+        </div>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Calculado desde turnos pagados y bonos semanales.</p>
 

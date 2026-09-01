@@ -35,6 +35,18 @@ export async function listAttendanceForMonth(month: string): Promise<AttendanceR
   return data as AttendanceRow[];
 }
 
+/** Asistencia entre dos fechas (inclusive) sin importar el mes — para el comprobante semanal. */
+export async function listAttendanceForRange(startDate: string, endDate: string): Promise<AttendanceRow[]> {
+  const { data, error } = await supabaseAdmin()
+    .from("attendance")
+    .select()
+    .gte("work_date", startDate)
+    .lte("work_date", endDate)
+    .order("work_date", { ascending: true });
+  if (error) throw new Error(`No se pudo leer la asistencia: ${error.message}`);
+  return data as AttendanceRow[];
+}
+
 /** Suma lo que gana un empleado en el mes: solo cuentan Asistió y Cubrió turno. */
 export async function salaryForEmployee(employeeId: string, month: string): Promise<number> {
   const rows = await listAttendanceForMonth(month);

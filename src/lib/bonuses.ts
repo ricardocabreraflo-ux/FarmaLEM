@@ -53,6 +53,13 @@ export async function listBonusWeeks(month: string): Promise<BonusWeek[]> {
   return data as BonusWeek[];
 }
 
+/** Semanas que empiezan justo en esa fecha (Lunes), sin importar a qué mes quedaron asignadas — para el comprobante semanal. */
+export async function listBonusWeeksStarting(mondayDate: string): Promise<BonusWeek[]> {
+  const { data, error } = await supabaseAdmin().from("bonus_weeks").select().eq("start_date", mondayDate);
+  if (error) throw new Error(`No se pudieron leer los bonos semanales: ${error.message}`);
+  return data as BonusWeek[];
+}
+
 export async function getBonusWeek(id: string): Promise<BonusWeek | null> {
   const { data, error } = await supabaseAdmin().from("bonus_weeks").select().eq("id", id).single();
   if (error) return null;
