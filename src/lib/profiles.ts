@@ -20,6 +20,7 @@ export interface Profile {
   reference_letter_path: string | null;
   sicad_exam_path: string | null;
   clock_pin_hash: string | null;
+  quick_login_token: string | null;
 }
 
 export async function getProfileByUsername(username: string): Promise<Profile | null> {
@@ -130,6 +131,23 @@ export async function setClockPin(id: string, hash: string): Promise<void> {
     .update({ clock_pin_hash: hash, updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+export async function getProfileByQuickLoginToken(token: string): Promise<Profile | null> {
+  const { data, error } = await supabaseAdmin().from("profiles").select().eq("quick_login_token", token).eq("active", true).single();
+  if (error) return null;
+  return data as Profile;
+}
+
+/** Genera (o reemplaza) el enlace de "cambiar de usuario" de un empleado y regresa el token nuevo. */
+export async function regenerateQuickLoginToken(id: string): Promise<string> {
+  const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+  const { error } = await supabaseAdmin()
+    .from("profiles")
+    .update({ quick_login_token: token, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  return token;
 }
 
 const HISTORY_TABLES = ["cuts", "attendance", "bonus_weeks", "withdrawals", "payroll", "extra_bonuses"] as const;

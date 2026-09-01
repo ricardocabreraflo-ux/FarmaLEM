@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateEmployee, deleteEmployeeAction, type EmployeeFormState } from "@/app/admin/empleados/actions";
+import { updateEmployee, deleteEmployeeAction, regenerateQuickLoginTokenAction, type EmployeeFormState } from "@/app/admin/empleados/actions";
 import type { Profile } from "@/lib/profiles";
 
 const inputClass =
@@ -155,8 +155,66 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
           </div>
         </form>
 
+        <QuickLoginLink profile={profile} />
+
         {confirmingDelete && <DeleteConfirm profile={profile} pinConfigured={pinConfigured} onCancel={() => setConfirmingDelete(false)} onClose={onClose} />}
       </div>
+    </div>
+  );
+}
+
+function QuickLoginLink({ profile }: { profile: Row }) {
+  const [token, setToken] = useState(profile.quick_login_token);
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const url = origin && token ? `${origin}/admin/switch/${token}` : "";
+
+  function generate() {
+    setError(null);
+    startTransition(async () => {
+      const result = await regenerateQuickLoginTokenAction(profile.id);
+      if (result.token) setToken(result.token);
+      else setError(result.error ?? "No se pudo generar el enlace.");
+    });
+  }
+
+  async function copy() {
+    if (!url) return;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="mt-5 rounded-xl border border-admin-border bg-admin-bg p-4">
+      <p className="text-[0.85rem] font-semibold text-admin-ink">Acceso directo (cambiar de usuario)</p>
+      <p className="mt-1 text-[0.8rem] text-admin-ink-soft">
+        Entra directo como {profile.full_name.split(" ")[0]} en la computadora de la farmacia, sin escribir contraseña. Guárdalo como acceso directo solo en un
+        equipo de confianza.
+      </p>
+      {url ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input readOnly value={url} onFocus={(e) => e.target.select()} className="min-w-0 flex-1 rounded-lg border border-admin-border bg-admin-input-bg px-3 py-2 text-[0.8rem] text-admin-ink" />
+          <button type="button" onClick={copy} className="rounded-full border border-admin-border px-4 py-2 text-[0.8rem] font-semibold text-admin-ink">
+            {copied ? "Copiado" : "Copiar"}
+          </button>
+        </div>
+      ) : null}
+      <div className="mt-3">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={generate}
+          className="rounded-full border border-admin-border px-4 py-2 text-[0.8rem] font-semibold text-admin-ink disabled:opacity-60"
+        >
+          {pending ? "Generando…" : token ? "Regenerar enlace" : "Generar enlace"}
+        </button>
+        {token && <span className="ml-2 text-[0.78rem] text-admin-ink-soft">Regenerarlo invalida el anterior.</span>}
+      </div>
+      {error && <p className="mt-2 text-[0.82rem] font-semibold text-admin-bad-text">{error}</p>}
     </div>
   );
 }
