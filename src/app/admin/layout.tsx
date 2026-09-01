@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { UpdateBanner } from "@/components/admin/UpdateBanner";
 
 // Manifest propio para que "Agregar a pantalla de inicio" desde /admin abra
 // el panel de pedidos y no la tienda — sin esto, iOS usa el manifest raíz del
@@ -13,5 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      {children}
+      <UpdateBanner />
+    </>
+  );
 }
