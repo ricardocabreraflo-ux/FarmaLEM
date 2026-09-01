@@ -75,3 +75,42 @@ export async function requireAdminSession(): Promise<Session> {
   if (session.role !== "admin") redirect("/admin");
   return session;
 }
+
+/**
+ * "Dispositivo de confianza" para /admin/turno: tras un primer inicio de
+ * sesión completo (usuario y contraseña) desde esa pantalla, esta cookie
+ * marca que ESE navegador ya puede volver a entrar como esa empleada solo
+ * con su PIN corto, sin volver a teclear la contraseña. Dura 1 año; no
+ * reemplaza la sesión normal, solo evita repetir la contraseña en el
+ * mismo equipo.
+ */
+export const TRUST_COOKIE_PREFIX = "farmalem_trust_";
+export const TRUST_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
+
+export function trustCookieName(shift: string): string {
+  return `${TRUST_COOKIE_PREFIX}${shift.toLowerCase()}`;
+}
+
+export function createTrustToken(employeeId: string): string {
+  const encoded = Buffer.from(JSON.stringify({ employeeId })).toString("base64url");
+  return `${encoded}.${sign(encoded)}`;
+}
+
+export function verifyTrustToken(token: string | undefined): { employeeId: string } | null {
+  if (!token) return null;
+  const [encoded, signature] = token.split(".");
+  if (!encoded || !signature) return null;
+
+  const expected = sign(encoded);
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(encoded, "base64url").toString()) as { employeeId?: unknown };
+    if (typeof payload.employeeId !== "string") return null;
+    return { employeeId: payload.employeeId };
+  } catch {
+    return null;
+  }
+}

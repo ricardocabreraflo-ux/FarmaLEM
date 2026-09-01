@@ -3,16 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession, type ProfileRole } from "@/lib/admin-auth";
-import {
-  createProfile,
-  updateProfile,
-  deleteProfile,
-  profileHasHistory,
-  uploadEmployeeDocument,
-  saveEmployeeDocumentPath,
-  setClockPin,
-  regenerateQuickLoginToken,
-} from "@/lib/profiles";
+import { createProfile, updateProfile, deleteProfile, profileHasHistory, uploadEmployeeDocument, saveEmployeeDocumentPath, setClockPin } from "@/lib/profiles";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { getDeletePinHash } from "@/lib/security-settings";
 import { logAction } from "@/lib/history";
@@ -122,15 +113,4 @@ export async function deleteEmployeeAction(id: string, name: string, pin: string
   await logAction(session.uid, "Eliminó empleado", name);
   revalidatePath("/admin/empleados");
   return { ok: true };
-}
-
-export async function regenerateQuickLoginTokenAction(employeeId: string): Promise<{ token?: string; error?: string }> {
-  const session = await requireAdminSession();
-  try {
-    const token = await regenerateQuickLoginToken(employeeId);
-    await logAction(session.uid, "Generó acceso directo", employeeId);
-    return { token };
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "No se pudo generar el enlace." };
-  }
 }
