@@ -40,6 +40,15 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Cada falta afecta únicamente el bono de la semana donde ocurrió.</p>
 
+      <div className="mt-3 flex flex-wrap gap-4">
+        <Link href="/admin/reloj/semana" className="text-[0.85rem] font-semibold text-admin-primary hover:underline">
+          Reporte semanal de entradas (reloj checador) &rarr;
+        </Link>
+        <Link href="/admin/reloj/bitacora" className="text-[0.85rem] font-semibold text-admin-primary hover:underline">
+          Bitácora del reloj checador &rarr;
+        </Link>
+      </div>
+
       <MonthPicker month={month} basePath="/admin/asistencia" />
 
       <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
