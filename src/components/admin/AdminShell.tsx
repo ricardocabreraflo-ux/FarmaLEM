@@ -43,7 +43,6 @@ interface NavLeaf {
   label: string;
   icon: IconComponent;
   adminOnly?: boolean;
-  employeeOnly?: boolean;
 }
 
 interface NavGroup {
@@ -56,20 +55,13 @@ interface NavGroup {
 
 type NavEntry = NavLeaf | NavGroup;
 
-const leaf = (href: string, label: string, icon: IconComponent, adminOnly?: boolean, employeeOnly?: boolean): NavLeaf => ({
-  type: "leaf",
-  href,
-  label,
-  icon,
-  adminOnly,
-  employeeOnly,
-});
+const leaf = (href: string, label: string, icon: IconComponent, adminOnly?: boolean): NavLeaf => ({ type: "leaf", href, label, icon, adminOnly });
 
 // Estructura del menú: entradas sueltas arriba y abajo, agrupaciones al centro.
 // Conforme se agreguen más pantallas, solo hace falta sumarlas aquí.
 const NAV: NavEntry[] = [
+  leaf("/admin/inicio", "Inicio", IconInicio),
   leaf("/admin", "Pedidos", IconPedidos, true),
-  leaf("/admin/inicio", "Inicio", IconInicio, false, true),
   {
     type: "group",
     id: "caja",
@@ -235,7 +227,6 @@ export function AdminShell({
           {NAV.map((entry) => {
             if (entry.type === "leaf") {
               if (entry.adminOnly && !isAdmin) return null;
-              if (entry.employeeOnly && isAdmin) return null;
               const Icon = entry.icon;
               const active = entry.href === activeHref;
               return (
