@@ -8,7 +8,6 @@ export function DayPicker({ date, basePath, className }: { date: string; basePat
   function go(value: string) {
     if (!value) return;
     router.push(`${basePath}?fecha=${value}`);
-    router.refresh();
   }
 
   return (

@@ -71,7 +71,7 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
       </section>
 
       <div className="mt-6">
-        <AttendanceList rows={rows} />
+        <AttendanceList key={month} rows={rows} />
       </div>
     </AdminShell>
   );
