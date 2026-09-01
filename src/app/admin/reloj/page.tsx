@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
+import { logout } from "@/app/admin/login/actions";
 import { logoutToTurno } from "@/app/admin/turno/actions";
 import { ClockKiosk } from "@/components/admin/ClockKiosk";
 
@@ -25,11 +26,18 @@ export default async function RelojPage() {
             Ver bitácora del día
           </Link>
         )}
-        <form action={logoutToTurno}>
-          <button type="submit" className="text-[0.82rem] font-semibold text-admin-ink-soft hover:underline">
-            Cambiar de turno
-          </button>
-        </form>
+        <div className="flex items-center gap-4">
+          <form action={logoutToTurno}>
+            <button type="submit" className="text-[0.82rem] font-semibold text-admin-ink-soft hover:underline">
+              Cambiar de turno
+            </button>
+          </form>
+          <form action={logout}>
+            <button type="submit" className="text-[0.82rem] font-semibold text-admin-ink-soft hover:underline">
+              Salir
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

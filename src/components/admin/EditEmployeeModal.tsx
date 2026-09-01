@@ -38,10 +38,10 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
               <input id="username" name="username" required defaultValue={profile.username} className={inputClass} />
             </Field>
             <Field label="Nueva contraseña (déjala vacía para conservarla)" htmlFor="password">
-              <input id="password" name="password" type="password" className={inputClass} />
+              <RevealInput id="password" name="password" />
             </Field>
             <Field label={profile.clock_pin_hash ? "Nuevo PIN del reloj checador (4 a 6 dígitos)" : "PIN del reloj checador (4 a 6 dígitos)"} htmlFor="clockPin">
-              <input id="clockPin" name="clockPin" type="password" inputMode="numeric" pattern="\d{4,6}" className={inputClass} />
+              <RevealInput id="clockPin" name="clockPin" inputMode="numeric" pattern="\d{4,6}" />
             </Field>
             <Field label="Turno" htmlFor="shift">
               <select id="shift" name="shift" defaultValue={profile.shift} className={inputClass}>
@@ -157,6 +157,24 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
 
         {confirmingDelete && <DeleteConfirm profile={profile} pinConfigured={pinConfigured} onCancel={() => setConfirmingDelete(false)} onClose={onClose} />}
       </div>
+    </div>
+  );
+}
+
+function RevealInput({ id, name, inputMode, pattern }: { id: string; name: string; inputMode?: "numeric"; pattern?: string }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div className="relative">
+      <input id={id} name={name} type={show ? "text" : "password"} inputMode={inputMode} pattern={pattern} className={`${inputClass} pr-14`} />
+      <button
+        type="button"
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? "Ocultar" : "Mostrar"}
+        className="absolute top-1/2 right-2 -translate-y-1/2 rounded-md px-2 py-1 text-[0.72rem] font-semibold text-admin-ink-soft hover:bg-admin-bg"
+      >
+        {show ? "Ocultar" : "Ver"}
+      </button>
     </div>
   );
 }
