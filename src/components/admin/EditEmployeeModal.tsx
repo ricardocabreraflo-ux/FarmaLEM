@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateEmployee, deleteEmployeeAction, type EmployeeFormState } from "@/app/admin/empleados/actions";
 import type { Profile } from "@/lib/profiles";
@@ -18,6 +18,18 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
   const [state, formAction, pending] = useActionState<EmployeeFormState | undefined, FormData>(boundAction, undefined);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [dailyRate, setDailyRate] = useState(String(profile.daily_rate));
+  const [password, setPassword] = useState("");
+  const [clockPin, setClockPin] = useState("");
+  const [confirmingCredentials, setConfirmingCredentials] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  function handleSaveClick() {
+    if (!confirmingCredentials && (password || clockPin)) {
+      setConfirmingCredentials(true);
+      return;
+    }
+    formRef.current?.requestSubmit();
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -29,7 +41,7 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
       >
         <h2 className="font-display text-lg text-admin-ink">Editar empleado</h2>
 
-        <form action={formAction} className="mt-4 flex flex-col gap-4">
+        <form ref={formRef} action={formAction} className="mt-4 flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Nombre completo" htmlFor="fullName">
               <input id="fullName" name="fullName" required defaultValue={profile.full_name} className={inputClass} />
@@ -38,10 +50,10 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
               <input id="username" name="username" required defaultValue={profile.username} className={inputClass} />
             </Field>
             <Field label="Nueva contraseña (déjala vacía para conservarla)" htmlFor="password">
-              <RevealInput id="password" name="password" />
+              <RevealInput id="password" name="password" value={password} onChange={setPassword} />
             </Field>
             <Field label={profile.clock_pin_hash ? "Nuevo PIN del reloj checador (4 a 6 dígitos)" : "PIN del reloj checador (4 a 6 dígitos)"} htmlFor="clockPin">
-              <RevealInput id="clockPin" name="clockPin" inputMode="numeric" pattern="\d{4,6}" />
+              <RevealInput id="clockPin" name="clockPin" inputMode="numeric" pattern="\d{4,6}" value={clockPin} onChange={setClockPin} />
             </Field>
             <Field label="Turno" htmlFor="shift">
               <select id="shift" name="shift" defaultValue={profile.shift} className={inputClass}>
@@ -62,32 +74,27 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
                 <option value="false">Inactivo</option>
               </select>
             </Field>
-            <Field label="Sueldo semanal (opcional)" htmlFor="weeklySalary">
+            <Field label="Sueldo semanal" htmlFor="weeklySalary">
               <input
                 id="weeklySalary"
                 type="number"
                 min="0"
                 step="0.01"
-                placeholder="Ej. 1700"
-                onChange={(e) => {
-                  const weekly = Number(e.target.value || 0);
-                  if (weekly > 0) setDailyRate((weekly / 7).toFixed(2));
-                }}
+                required
+                defaultValue={(profile.daily_rate * 7).toFixed(2)}
+                onChange={(e) => setDailyRate((Number(e.target.value || 0) / 7).toFixed(2))}
                 className={inputClass}
               />
-              <span className="mt-1 block font-normal text-admin-ink-soft">Captúralo y la tarifa diaria se calcula sola (÷7).</span>
+              <span className="mt-1 block font-normal text-admin-ink-soft">La tarifa diaria se calcula sola (÷7).</span>
             </Field>
             <Field label="Tarifa diaria" htmlFor="dailyRate">
               <input
                 id="dailyRate"
                 name="dailyRate"
                 type="number"
-                min="0"
-                step="0.01"
-                required
+                readOnly
                 value={dailyRate}
-                onChange={(e) => setDailyRate(e.target.value)}
-                className={inputClass}
+                className={`${inputClass} bg-admin-bg/60 text-admin-ink-soft`}
               />
             </Field>
             <Field label="Fecha de ingreso" htmlFor="hireDate">
@@ -132,6 +139,16 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
             </p>
           )}
 
+          {confirmingCredentials && (
+            <div className="rounded-lg border border-admin-primary bg-admin-primary-soft px-4 py-3 text-[0.85rem] text-admin-primary-deep">
+              <p className="font-semibold">Vas a guardar esto — anótalo antes de continuar, ya no se podrá volver a ver:</p>
+              <ul className="mt-1.5 list-none space-y-0.5 font-data">
+                {password && <li>Contraseña nueva: {password}</li>}
+                {clockPin && <li>PIN nuevo: {clockPin}</li>}
+              </ul>
+            </div>
+          )}
+
           <div className="flex flex-wrap justify-between gap-3">
             <button
               type="button"
@@ -141,15 +158,20 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
               Eliminar empleado
             </button>
             <div className="flex gap-3">
-              <button type="button" onClick={onClose} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink-soft">
-                Cancelar
+              <button
+                type="button"
+                onClick={() => (confirmingCredentials ? setConfirmingCredentials(false) : onClose())}
+                className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink-soft"
+              >
+                {confirmingCredentials ? "Seguir editando" : "Cancelar"}
               </button>
               <button
-                type="submit"
+                type="button"
                 disabled={pending}
+                onClick={handleSaveClick}
                 className="rounded-full bg-admin-primary px-6 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
               >
-                {pending ? "Guardando…" : "Guardar cambios"}
+                {pending ? "Guardando…" : confirmingCredentials ? "Confirmar y guardar" : "Guardar cambios"}
               </button>
             </div>
           </div>
@@ -161,12 +183,35 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
   );
 }
 
-function RevealInput({ id, name, inputMode, pattern }: { id: string; name: string; inputMode?: "numeric"; pattern?: string }) {
+function RevealInput({
+  id,
+  name,
+  value,
+  onChange,
+  inputMode,
+  pattern,
+}: {
+  id: string;
+  name: string;
+  value: string;
+  onChange: (v: string) => void;
+  inputMode?: "numeric";
+  pattern?: string;
+}) {
   const [show, setShow] = useState(false);
 
   return (
     <div className="relative">
-      <input id={id} name={name} type={show ? "text" : "password"} inputMode={inputMode} pattern={pattern} className={`${inputClass} pr-14`} />
+      <input
+        id={id}
+        name={name}
+        type={show ? "text" : "password"}
+        inputMode={inputMode}
+        pattern={pattern}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputClass} pr-14`}
+      />
       <button
         type="button"
         onClick={() => setShow((s) => !s)}

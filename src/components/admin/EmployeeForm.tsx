@@ -43,33 +43,22 @@ export function EmployeeForm({ action, profile }: { action: Action; profile?: Pr
             <option value="false">Inactivo</option>
           </select>
         </Field>
-        <Field label="Sueldo semanal (opcional)" htmlFor="weeklySalary">
+        <Field label="Sueldo semanal" htmlFor="weeklySalary">
           <input
             id="weeklySalary"
             type="number"
             min="0"
             step="0.01"
+            required
             placeholder="Ej. 1700"
-            onChange={(e) => {
-              const weekly = Number(e.target.value || 0);
-              if (weekly > 0) setDailyRate((weekly / 7).toFixed(2));
-            }}
+            defaultValue={profile ? (profile.daily_rate * 7).toFixed(2) : undefined}
+            onChange={(e) => setDailyRate((Number(e.target.value || 0) / 7).toFixed(2))}
             className={inputClass}
           />
-          <span className="mt-1 block font-normal text-admin-ink-soft">Captúralo y la tarifa diaria se calcula sola (÷7).</span>
+          <span className="mt-1 block font-normal text-admin-ink-soft">La tarifa diaria se calcula sola (÷7).</span>
         </Field>
         <Field label="Tarifa diaria" htmlFor="dailyRate">
-          <input
-            id="dailyRate"
-            name="dailyRate"
-            type="number"
-            min="0"
-            step="0.01"
-            required
-            value={dailyRate}
-            onChange={(e) => setDailyRate(e.target.value)}
-            className={inputClass}
-          />
+          <input id="dailyRate" name="dailyRate" type="number" readOnly value={dailyRate} className={`${inputClass} bg-admin-bg/60 text-admin-ink-soft`} />
         </Field>
         <Field label="Fecha de ingreso" htmlFor="hireDate">
           <input id="hireDate" name="hireDate" type="date" defaultValue={profile?.hire_date ?? ""} className={inputClass} />
