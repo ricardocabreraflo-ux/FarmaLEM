@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listAttendanceForMonth } from "@/lib/attendance";
+import { mexicoCityToday } from "@/lib/time-clock";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttendanceList } from "@/components/admin/AttendanceList";
 import { MonthPicker } from "@/components/admin/MonthPicker";
@@ -19,7 +20,7 @@ function fmtMoney(n: number) {
 export default async function AsistenciaPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, employees, attendance] = await Promise.all([getProfileById(session.uid), listProfiles(), listAttendanceForMonth(month)]);
   const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);

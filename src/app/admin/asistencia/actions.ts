@@ -19,7 +19,6 @@ export async function upsertAttendanceForm(_prevState: AttendanceFormState | und
   const status = String(formData.get("status") ?? "") as AttendanceStatus;
   const rate = Number(formData.get("rate") ?? 0);
   const note = String(formData.get("note") ?? "").trim();
-  const month = String(formData.get("month") ?? workDate.slice(0, 7));
 
   if (!workDate || !employeeId || !shift || !status) return { error: "Completa fecha, empleado, turno y estado." };
 
@@ -31,7 +30,9 @@ export async function upsertAttendanceForm(_prevState: AttendanceFormState | und
 
   await logAction(session.uid, "Registró asistencia", `${workDate} · ${shift} · ${status}`);
   revalidatePath("/admin/asistencia");
-  redirect(`/admin/asistencia?mes=${month}`);
+  // Manda al mes de la fecha que se acaba de capturar, no al mes que estaba abierto antes de entrar aquí
+  // (si no, un registro de un mes distinto al que traía la URL "desaparecía" al guardar).
+  redirect(`/admin/asistencia?mes=${workDate.slice(0, 7)}`);
 }
 
 /** Confirma un turno ya asignado en el calendario, sin tener que volver a capturar empleado/turno a mano. */

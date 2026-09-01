@@ -6,7 +6,9 @@ export function MonthPicker({ month, basePath, className }: { month: string; bas
   const router = useRouter();
 
   function go(value: string) {
-    if (value) router.push(`${basePath}?mes=${value}`);
+    if (!value) return;
+    router.push(`${basePath}?mes=${value}`);
+    router.refresh();
   }
 
   return (

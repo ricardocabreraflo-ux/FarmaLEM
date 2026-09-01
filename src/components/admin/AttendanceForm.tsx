@@ -17,7 +17,6 @@ export function AttendanceForm({ employees, month }: { employees: Profile[]; mon
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-4">
-      <input type="hidden" name="month" value={month} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Fecha

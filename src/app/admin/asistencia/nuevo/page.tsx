@@ -3,6 +3,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listShiftScheduleForDate } from "@/lib/shift-schedule";
 import { listAttendanceForMonth } from "@/lib/attendance";
+import { mexicoCityToday } from "@/lib/time-clock";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttendanceForm } from "@/components/admin/AttendanceForm";
 import { ScheduledShiftsList } from "@/components/admin/ScheduledShiftsList";
@@ -13,8 +14,9 @@ export const dynamic = "force-dynamic";
 export default async function NewAttendancePage({ searchParams }: { searchParams: Promise<{ mes?: string; fecha?: string }> }) {
   const session = await requireAdminSession();
   const { mes, fecha } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
-  const workDate = fecha || new Date().toISOString().slice(0, 10);
+  const today = mexicoCityToday();
+  const month = mes || today.slice(0, 7);
+  const workDate = fecha || today;
 
   const [profile, employees, scheduled, attendanceThisMonth] = await Promise.all([
     getProfileById(session.uid),
