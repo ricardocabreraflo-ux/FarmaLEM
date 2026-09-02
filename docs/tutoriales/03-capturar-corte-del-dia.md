@@ -18,6 +18,10 @@ O, en el menú ☰, **Caja → Cortes → "+ Capturar corte"**.
 
 ![Formulario de Capturar corte vacío: fecha de hoy, tu turno ya puesto, y los campos de venta total, tarjeta, efectivo y efectivo entregado](img/corte-01-formulario-vacio.png)
 
+*En la computadora del mostrador:*
+
+![Lo mismo en pantalla de computadora](img/corte-01-formulario-vacio-desktop.png)
+
 La **fecha** ya viene en hoy y tu **turno** ya viene puesto — como empleada
 no necesitas elegir turno, ya sabe cuál es el tuyo.
 
@@ -27,6 +31,10 @@ Escribe la **Venta total** del día y cuánto de eso fue con **Tarjeta /
 transferencia**.
 
 ![Formulario con Venta total 3200 y Tarjeta 800 capturados; el campo Efectivo se calcula solo en 2400.00](img/corte-02-venta-y-tarjeta.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/corte-02-venta-y-tarjeta-desktop.png)
 
 El campo **Efectivo** se calcula solo (venta total menos tarjeta) — no lo
 tienes que llenar tú.
@@ -38,9 +46,17 @@ billetes y monedas de cada denominación trae el sobre.
 
 ![Ventana "Contar efectivo" vacía, con columnas de Billetes y Monedas y un contador en $0.00](img/corte-03-contar-efectivo-vacio.png)
 
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/corte-03-contar-efectivo-vacio-desktop.png)
+
 Cuenta el efectivo físico y captura cuántos hay de cada uno.
 
 ![Ventana "Contar efectivo" llena: 4 billetes de $500, 2 de $100 y 4 de $50, con total $2,400.00 y el mensaje "Coincide con lo esperado"](img/corte-04-contar-efectivo-lleno.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/corte-04-contar-efectivo-lleno-desktop.png)
 
 Abajo ves el **total contado** y si coincide con lo que se esperaba (venta
 en efectivo, o menos la nómina si la pagaste de esa venta). Cuando esté
@@ -57,6 +73,10 @@ con lo que contaste, y el aviso de abajo confirma que coincide.
 
 ![Formulario listo para guardar: efectivo entregado en $2,400.00 y el mensaje verde "El efectivo entregado coincide con lo esperado"](img/corte-05-listo-para-guardar.png)
 
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/corte-05-listo-para-guardar-desktop.png)
+
 Si quieres, adjunta una foto del corte en **"Foto del corte (opcional)"** —
 en el celular abre la cámara directo. Cuando todo esté correcto, toca
 **"Guardar corte"**.
@@ -67,6 +87,10 @@ Tu corte queda guardado en **Cortes**, con estado **"Por revisar"** hasta que
 administración lo apruebe.
 
 ![Pantalla de Cortes mostrando el corte recién guardado: venta $3,200.00, efectivo $2,400.00, tarjeta $800.00 y el registro del día en la lista](img/corte-06-guardado-en-lista.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/corte-06-guardado-en-lista-desktop.png)
 
 ---
 

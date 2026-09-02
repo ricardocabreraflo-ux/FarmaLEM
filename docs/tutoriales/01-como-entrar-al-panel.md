@@ -21,6 +21,10 @@ mostrador. Se abre directo en la pantalla para elegir tu turno.
 
 ![Pantalla para elegir tu turno: MATUTINO y VESPERTINO, cada uno con el nombre de quien lo tiene asignado](img/entrar-01-elegir-turno.png)
 
+*En la computadora del mostrador se ve igual, solo más grande:*
+
+![Lo mismo en pantalla de computadora](img/entrar-01-elegir-turno-desktop.png)
+
 Cada botón muestra el nombre de quien está asignado a ese turno. Toca el
 tuyo — por ejemplo, **MATUTINO**.
 
@@ -32,6 +36,10 @@ completa (la misma de siempre). Esto es solo para que esa computadora
 
 ![Pantalla pidiendo la contraseña la primera vez, con el campo lleno de puntos y el botón Entrar](img/entrar-03-contrasena-lista.png)
 
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/entrar-03-contrasena-lista-desktop.png)
+
 Escribe tu contraseña y toca **Entrar**.
 
 ## Paso 3 — Llegas a Inicio
@@ -40,6 +48,10 @@ Ahí ves tu meta de ventas de la semana, tu última marca del reloj checador y
 accesos directos a lo que más usas.
 
 ![Pantalla de Inicio: meta de la semana, última marca, botones Ir al reloj checador y Capturar corte](img/entrar-04-inicio.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/entrar-04-inicio-desktop.png)
 
 Desde aquí puedes ir directo al [reloj checador](02-reloj-checador.md) o a
 [capturar el corte del día](03-capturar-corte-del-dia.md).
@@ -53,6 +65,10 @@ vez de pedirte la contraseña completa, solo te pide tu **PIN corto** (el
 mismo de 4 a 6 dígitos que usas para todo lo demás en el mostrador).
 
 ![Pantalla de PIN: computadora ya reconocida, teclado numérico de 0 a 9](img/entrar-05-pin-reconocida.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/entrar-05-pin-reconocida-desktop.png)
 
 Marca tu PIN y toca **OK**. Si el PIN se te olvida, pídele a administración
 que te asigne uno nuevo desde **Empleados**.
@@ -69,6 +85,10 @@ Ese acceso no cambió: usuario y contraseña de siempre, desde el enlace
 turno.
 
 ![Pantalla de acceso para administración: campos de usuario y contraseña](img/entrar-06-login-admin.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/entrar-06-login-admin-desktop.png)
 
 ---
 

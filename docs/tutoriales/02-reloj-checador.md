@@ -18,6 +18,10 @@ Desde **Inicio**, toca **"Ir al reloj checador"**. O, en el menú ☰,
 
 ![Reloj checador antes de marcar: "Aún no marcas tu entrada hoy" y el botón Marcar mi Entrada](img/reloj-01-antes-de-marcar.png)
 
+*En la computadora del mostrador:*
+
+![Lo mismo en pantalla de computadora](img/reloj-01-antes-de-marcar-desktop.png)
+
 La pantalla te dice claramente si ya marcaste hoy o no. El botón siempre
 dice qué vas a marcar a continuación — no tienes que elegir nada.
 
@@ -26,6 +30,10 @@ dice qué vas a marcar a continuación — no tienes que elegir nada.
 Toca el botón verde. En este caso dice **"Marcar mi Entrada"**.
 
 ![Reloj checador con la entrada ya registrada: "Ya marcaste tu Entrada a las 12:27 a.m." y el botón cambia a Marcar mi Salida](img/reloj-02-entrada-marcada.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/reloj-02-entrada-marcada-desktop.png)
 
 La pantalla confirma tu nombre y la **hora exacta**. El botón cambia solo a
 **"Marcar mi Salida"**, listo para cuando termines tu turno.
@@ -38,6 +46,10 @@ como **"Asistió"** — no hace falta que nadie la capture aparte en Asistencia.
 Mismo botón, mismo lugar.
 
 ![Reloj checador con la salida ya registrada: "Ya marcaste tu Salida a las 12:27 a.m." y el botón vuelve a decir Marcar mi Entrada](img/reloj-03-salida-marcada.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/reloj-03-salida-marcada-desktop.png)
 
 **No te vayas sin marcarla.** Si no marcas tu salida, tu horario del día
 queda incompleto en los reportes, aunque tu asistencia ya haya quedado bien
