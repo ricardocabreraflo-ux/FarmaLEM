@@ -94,6 +94,88 @@ const MATCH_CLASS: Record<Match, string> = {
   nuevo: "bg-admin-pending-bg text-admin-pending-text",
 };
 
+type ColumnKey = "estado" | "claveProv" | "descTicket" | "cantidad" | "precio" | "total" | "lote" | "caducidad" | "barcode" | "producto" | "factor" | "piezas" | "costo" | "precioVenta";
+
+const COLUMN_LABELS: Record<ColumnKey, string> = {
+  estado: "Estado",
+  claveProv: "Clave prov.",
+  descTicket: "Descripción ticket",
+  cantidad: "Cant.",
+  precio: "Precio",
+  total: "Total",
+  lote: "Lote",
+  caducidad: "Caducidad",
+  barcode: "Código de barras",
+  producto: "Producto FarmaLEM",
+  factor: "Factor",
+  piezas: "Piezas",
+  costo: "Costo/pza",
+  precioVenta: "Precio venta",
+};
+
+// Columnas que se pueden ocultar para que la tabla quepa mejor; las demás (código de
+// barras, producto, cantidad/precio/precio de venta) son las que hacen falta para completar un renglón.
+const OPTIONAL_COLUMNS: ColumnKey[] = ["claveProv", "descTicket", "lote", "caducidad", "factor", "piezas", "costo"];
+
+function sortValue(l: DraftLine, key: ColumnKey): string | number {
+  switch (key) {
+    case "estado":
+      return l.match;
+    case "claveProv":
+      return l.supplierCode.toLowerCase();
+    case "descTicket":
+      return l.ticketDescription.toLowerCase();
+    case "cantidad":
+      return l.quantity;
+    case "precio":
+      return l.unitPrice;
+    case "total":
+      return l.quantity * l.unitPrice;
+    case "lote":
+      return l.lot.toLowerCase();
+    case "caducidad":
+      return l.expiresOn;
+    case "barcode":
+      return l.barcode.toLowerCase();
+    case "producto":
+      return l.description.toLowerCase();
+    case "factor":
+      return l.packFactor;
+    case "piezas":
+      return l.quantity * l.packFactor;
+    case "costo":
+      return l.packFactor ? l.unitPrice / l.packFactor : 0;
+    case "precioVenta":
+      return l.salePrice ?? -1;
+  }
+}
+
+function Th({
+  colKey,
+  align = "left",
+  sort,
+  onSort,
+  hidden,
+}: {
+  colKey: ColumnKey;
+  align?: "left" | "right";
+  sort: { key: ColumnKey; dir: "asc" | "desc" } | null;
+  onSort: (key: ColumnKey) => void;
+  hidden?: boolean;
+}) {
+  if (hidden) return null;
+  const active = sort?.key === colKey;
+  return (
+    <th
+      className={`cursor-pointer select-none px-2 py-2 font-medium hover:text-admin-ink ${align === "right" ? "text-right" : ""}`}
+      onClick={() => onSort(colKey)}
+    >
+      {COLUMN_LABELS[colKey]}
+      {active && <span className="ml-0.5">{sort!.dir === "asc" ? "▲" : "▼"}</span>}
+    </th>
+  );
+}
+
 export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   const router = useRouter();
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? "");
@@ -109,6 +191,10 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   const [ticketSavings, setTicketSavings] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<DraftLine[]>([]);
+  const [filterMatch, setFilterMatch] = useState<"todos" | Match>("todos");
+  const [hiddenColumns, setHiddenColumns] = useState<Set<ColumnKey>>(new Set());
+  const [sort, setSort] = useState<{ key: ColumnKey; dir: "asc" | "desc" } | null>(null);
+  const [showColumnPicker, setShowColumnPicker] = useState(false);
 
   useEffect(() => {
     if (!supplierId) return;
@@ -189,6 +275,44 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   }, [lines, ticketTotal, ticketPieces]);
 
   const pendientes = lines.filter((l) => !l.barcode.trim() || !l.description.trim() || l.salePrice == null || l.quantity <= 0);
+
+  const counts = useMemo(
+    () => ({
+      todos: lines.length,
+      catalogo: lines.filter((l) => l.match === "catalogo").length,
+      producto: lines.filter((l) => l.match === "producto").length,
+      nuevo: lines.filter((l) => l.match === "nuevo").length,
+    }),
+    [lines]
+  );
+
+  const displayedLines = useMemo(() => {
+    const arr = filterMatch === "todos" ? lines : lines.filter((l) => l.match === filterMatch);
+    if (!sort) return arr;
+    return [...arr].sort((a, b) => {
+      const va = sortValue(a, sort.key);
+      const vb = sortValue(b, sort.key);
+      const cmp = typeof va === "number" && typeof vb === "number" ? va - vb : String(va).localeCompare(String(vb));
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+  }, [lines, filterMatch, sort]);
+
+  function toggleSort(key: ColumnKey) {
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: "asc" };
+      if (prev.dir === "asc") return { key, dir: "desc" };
+      return null;
+    });
+  }
+
+  function toggleColumn(key: ColumnKey) {
+    setHiddenColumns((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   async function guardar() {
     setError(null);
@@ -365,30 +489,66 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
               </span>
             </p>
 
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap gap-2">
+                {(["todos", "catalogo", "producto", "nuevo"] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setFilterMatch(m)}
+                    className={`rounded-full px-3 py-1.5 text-[0.78rem] font-semibold ${
+                      filterMatch === m ? "bg-admin-primary text-white" : "border border-admin-border text-admin-ink-soft"
+                    }`}
+                  >
+                    {m === "todos" ? "Todos" : MATCH_LABEL[m]} ({counts[m]})
+                  </button>
+                ))}
+              </div>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowColumnPicker((v) => !v)}
+                  className="rounded-full border border-admin-border px-3 py-1.5 text-[0.78rem] font-semibold text-admin-ink"
+                >
+                  Columnas
+                </button>
+                {showColumnPicker && (
+                  <div className="absolute right-0 z-10 mt-2 w-56 rounded-xl border border-admin-border bg-admin-surface p-3 shadow-lg">
+                    {OPTIONAL_COLUMNS.map((key) => (
+                      <label key={key} className="flex items-center gap-2 py-1 text-[0.8rem] text-admin-ink">
+                        <input type="checkbox" checked={!hiddenColumns.has(key)} onChange={() => toggleColumn(key)} />
+                        {COLUMN_LABELS[key]}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[1400px] text-left text-[0.84rem]">
+              <table className="w-full min-w-[1200px] text-left text-[0.84rem]">
                 <thead>
                   <tr className="border-b border-admin-border text-admin-ink-soft">
                     <th className="px-2 py-2 font-medium">#</th>
-                    <th className="px-2 py-2 font-medium">Estado</th>
-                    <th className="px-2 py-2 font-medium">Clave prov.</th>
-                    <th className="px-2 py-2 font-medium">Descripción ticket</th>
-                    <th className="px-2 py-2 text-right font-medium">Cant.</th>
-                    <th className="px-2 py-2 text-right font-medium">Precio</th>
-                    <th className="px-2 py-2 text-right font-medium">Total</th>
-                    <th className="px-2 py-2 font-medium">Lote</th>
-                    <th className="px-2 py-2 font-medium">Caducidad</th>
-                    <th className="px-2 py-2 font-medium">Código de barras</th>
-                    <th className="px-2 py-2 font-medium">Producto FarmaLEM</th>
-                    <th className="px-2 py-2 text-right font-medium">Factor</th>
-                    <th className="px-2 py-2 text-right font-medium">Piezas</th>
-                    <th className="px-2 py-2 text-right font-medium">Costo/pza</th>
-                    <th className="px-2 py-2 text-right font-medium">Precio venta</th>
+                    <Th colKey="estado" sort={sort} onSort={toggleSort} />
+                    <Th colKey="claveProv" sort={sort} onSort={toggleSort} hidden={hiddenColumns.has("claveProv")} />
+                    <Th colKey="descTicket" sort={sort} onSort={toggleSort} hidden={hiddenColumns.has("descTicket")} />
+                    <Th colKey="cantidad" align="right" sort={sort} onSort={toggleSort} />
+                    <Th colKey="precio" align="right" sort={sort} onSort={toggleSort} />
+                    <Th colKey="total" align="right" sort={sort} onSort={toggleSort} />
+                    <Th colKey="lote" sort={sort} onSort={toggleSort} hidden={hiddenColumns.has("lote")} />
+                    <Th colKey="caducidad" sort={sort} onSort={toggleSort} hidden={hiddenColumns.has("caducidad")} />
+                    <Th colKey="barcode" sort={sort} onSort={toggleSort} />
+                    <Th colKey="producto" sort={sort} onSort={toggleSort} />
+                    <Th colKey="factor" align="right" sort={sort} onSort={toggleSort} hidden={hiddenColumns.has("factor")} />
+                    <Th colKey="piezas" align="right" sort={sort} onSort={toggleSort} hidden={hiddenColumns.has("piezas")} />
+                    <Th colKey="costo" align="right" sort={sort} onSort={toggleSort} hidden={hiddenColumns.has("costo")} />
+                    <Th colKey="precioVenta" align="right" sort={sort} onSort={toggleSort} />
                     <th className="px-2 py-2"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {lines.map((l, idx) => (
+                  {displayedLines.map((l, idx) => (
                     <tr key={l.key} className="border-b border-admin-border last:border-0">
                       <td className="px-2 py-1.5 text-admin-ink-soft">{idx + 1}</td>
                       <td className="px-2 py-1.5">
@@ -399,12 +559,16 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
                           </span>
                         )}
                       </td>
-                      <td className="px-2 py-1.5">
-                        <input className={`${inputClass} w-[90px]`} value={l.supplierCode} onChange={(e) => onSupplierCode(l, e.target.value)} />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <input className={`${inputClass} w-[220px]`} value={l.ticketDescription} onChange={(e) => update(l.key, { ticketDescription: e.target.value })} />
-                      </td>
+                      {!hiddenColumns.has("claveProv") && (
+                        <td className="px-2 py-1.5">
+                          <input className={`${inputClass} w-[90px]`} value={l.supplierCode} onChange={(e) => onSupplierCode(l, e.target.value)} />
+                        </td>
+                      )}
+                      {!hiddenColumns.has("descTicket") && (
+                        <td className="px-2 py-1.5">
+                          <input className={`${inputClass} w-[220px]`} value={l.ticketDescription} onChange={(e) => update(l.key, { ticketDescription: e.target.value })} />
+                        </td>
+                      )}
                       <td className="px-2 py-1.5">
                         <input
                           className={`${inputClass} w-[70px] text-right`}
@@ -426,12 +590,16 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
                         />
                       </td>
                       <td className="px-2 py-1.5 text-right font-data tabular-nums text-admin-ink">{money(round2(l.quantity * l.unitPrice))}</td>
-                      <td className="px-2 py-1.5">
-                        <input className={`${inputClass} w-[90px]`} value={l.lot} onChange={(e) => update(l.key, { lot: e.target.value })} />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <input type="date" className={`${inputClass} w-[140px]`} value={l.expiresOn} onChange={(e) => update(l.key, { expiresOn: e.target.value })} />
-                      </td>
+                      {!hiddenColumns.has("lote") && (
+                        <td className="px-2 py-1.5">
+                          <input className={`${inputClass} w-[90px]`} value={l.lot} onChange={(e) => update(l.key, { lot: e.target.value })} />
+                        </td>
+                      )}
+                      {!hiddenColumns.has("caducidad") && (
+                        <td className="px-2 py-1.5">
+                          <input type="date" className={`${inputClass} w-[140px]`} value={l.expiresOn} onChange={(e) => update(l.key, { expiresOn: e.target.value })} />
+                        </td>
+                      )}
                       <td className="px-2 py-1.5">
                         <input
                           className={`${inputClass} w-[130px]`}
@@ -451,18 +619,24 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
                           placeholder="Descripción FarmaLEM"
                         />
                       </td>
-                      <td className="px-2 py-1.5">
-                        <input
-                          className={`${inputClass} w-[60px] text-right`}
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={l.packFactor}
-                          onChange={(e) => update(l.key, { packFactor: Math.max(1, Math.round(Number(e.target.value) || 1)) })}
-                        />
-                      </td>
-                      <td className="px-2 py-1.5 text-right font-data tabular-nums text-admin-ink">{l.quantity * l.packFactor}</td>
-                      <td className="px-2 py-1.5 text-right font-data tabular-nums text-admin-ink-soft">{money(l.packFactor ? l.unitPrice / l.packFactor : 0)}</td>
+                      {!hiddenColumns.has("factor") && (
+                        <td className="px-2 py-1.5">
+                          <input
+                            className={`${inputClass} w-[60px] text-right`}
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={l.packFactor}
+                            onChange={(e) => update(l.key, { packFactor: Math.max(1, Math.round(Number(e.target.value) || 1)) })}
+                          />
+                        </td>
+                      )}
+                      {!hiddenColumns.has("piezas") && (
+                        <td className="px-2 py-1.5 text-right font-data tabular-nums text-admin-ink">{l.quantity * l.packFactor}</td>
+                      )}
+                      {!hiddenColumns.has("costo") && (
+                        <td className="px-2 py-1.5 text-right font-data tabular-nums text-admin-ink-soft">{money(l.packFactor ? l.unitPrice / l.packFactor : 0)}</td>
+                      )}
                       <td className="px-2 py-1.5">
                         <input
                           className={`${inputClass} w-[90px] text-right`}

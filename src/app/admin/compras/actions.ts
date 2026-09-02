@@ -6,7 +6,7 @@ import { logAction } from "@/lib/history";
 import type { ParsedTicket } from "@/lib/ticket-types";
 import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-products";
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
-import { saveReceipt, type SaveReceiptLine } from "@/lib/purchase-receipts";
+import { saveReceipt, deleteReceipt, type SaveReceiptLine } from "@/lib/purchase-receipts";
 
 export async function fetchSupplierCatalogAction(supplierId: string): Promise<SupplierProduct[]> {
   await requireAdminSession();
@@ -90,5 +90,24 @@ export async function saveReceiptAction(formData: FormData): Promise<SaveReceipt
     return { ok: true, id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo guardar la recepción." };
+  }
+}
+
+export interface DeleteReceiptResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Borra una recepción (renglones, fotos y encabezado) — para quitar pruebas. */
+export async function deleteReceiptAction(id: string): Promise<DeleteReceiptResult> {
+  const session = await requireAdminSession();
+  try {
+    await deleteReceipt(id);
+    await logAction(session.uid, "Borró recepción de mercancía", `#${id.slice(0, 8).toUpperCase()}`);
+    revalidatePath("/admin/compras");
+    revalidatePath("/admin/inventario");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar la recepción." };
   }
 }

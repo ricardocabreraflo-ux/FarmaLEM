@@ -133,3 +133,27 @@ export async function saveReceipt(input: SaveReceiptInput, photos: File[], creat
 
   return receiptId;
 }
+
+/**
+ * Borra una recepción de prueba: sus renglones en purchases (para que dejen
+ * de contar en Inventario), sus fotos, y el encabezado. No deshace las
+ * equivalencias que haya aprendido en supplier_products — si alguna quedó
+ * mal, se corrige a mano la próxima vez que aparezca esa clave.
+ */
+export async function deleteReceipt(id: string): Promise<void> {
+  const db = supabaseAdmin();
+
+  const receipt = await getReceipt(id);
+  if (!receipt) throw new Error("Recepción no encontrada.");
+
+  const { error: purchasesErr } = await db.from("purchases").delete().eq("receipt_id", id);
+  if (purchasesErr) throw new Error(`No se pudieron borrar los renglones: ${purchasesErr.message}`);
+
+  if (receipt.photo_paths.length > 0) {
+    const { error: storageErr } = await db.storage.from(PHOTO_BUCKET).remove(receipt.photo_paths);
+    if (storageErr) console.error("[deleteReceipt] no se pudieron borrar las fotos:", storageErr.message);
+  }
+
+  const { error: receiptErr } = await db.from("purchase_receipts").delete().eq("id", id);
+  if (receiptErr) throw new Error(`No se pudo borrar la recepción: ${receiptErr.message}`);
+}

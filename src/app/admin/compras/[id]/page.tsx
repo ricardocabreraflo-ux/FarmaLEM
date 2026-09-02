@@ -7,6 +7,7 @@ import { listSuppliers } from "@/lib/suppliers";
 import { getReceipt, getReceiptPhotoUrls } from "@/lib/purchase-receipts";
 import { listPurchasesForReceipt } from "@/lib/purchases";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { DeleteReceiptButton } from "@/components/admin/DeleteReceiptButton";
 
 export const metadata: Metadata = { title: "Detalle de recepción" };
 export const dynamic = "force-dynamic";
@@ -51,6 +52,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
           <Link href={`/admin/compras/${id}/export/sicarx`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
             Excel SICAR X
           </Link>
+          <DeleteReceiptButton id={id} />
         </div>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">{fmtDate(receipt.ticket_date)}</p>
