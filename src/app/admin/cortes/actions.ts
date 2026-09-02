@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { createCut, approveCut, updateCut, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
 import { createWithdrawal } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
@@ -31,7 +32,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   const employeeId = session.role === "admin" && requestedEmployeeId ? requestedEmployeeId : session.uid;
 
   if (!cutDate || !shift) return { error: "Fecha y turno son obligatorios." };
-  if (session.role !== "admin" && cutDate < new Date().toISOString().slice(0, 7) + "-01") {
+  if (session.role !== "admin" && cutDate < mexicoCityToday().slice(0, 7) + "-01") {
     return { error: "Ya no puedes capturar un corte de un mes anterior — pídele a administración que lo agregue." };
   }
   if (Math.abs(cash + card - total) >= 0.01) return { error: "Efectivo + tarjeta debe ser igual a la venta total." };

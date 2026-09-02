@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listShiftScheduleForMonth, listWeekLabels } from "@/lib/shift-schedule";
 import { buildMonthWeeks } from "@/lib/calendar-weeks";
@@ -24,7 +25,7 @@ function nextMonth(month: string) {
 export default async function CalendarioTurnosPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, employees, assignments, weekLabels] = await Promise.all([
     getProfileById(session.uid),

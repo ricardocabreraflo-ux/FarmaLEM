@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listCutsForMonth, getCutPhotoUrl } from "@/lib/cuts";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -18,7 +19,7 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
   const session = await requireSession();
   const isAdmin = session.role === "admin";
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, cuts, employees] = await Promise.all([
     getProfileById(session.uid),

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { listProfiles } from "@/lib/profiles";
 import { listAttendanceForMonth } from "@/lib/attendance";
 import { listBonusWeeks, listBonusTiers, earnedBonus, targetForWeek } from "@/lib/bonuses";
@@ -23,7 +24,7 @@ function monthLabel(month: string) {
 export default async function ComprobantePage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [employees, attendance, weeks, tiers] = await Promise.all([
     listProfiles(),

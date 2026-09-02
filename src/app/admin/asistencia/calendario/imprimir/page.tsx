@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { listProfiles } from "@/lib/profiles";
 import { listShiftScheduleForMonth, listWeekLabels } from "@/lib/shift-schedule";
 import { buildMonthWeeks } from "@/lib/calendar-weeks";
@@ -18,7 +19,7 @@ function monthLabel(month: string) {
 export default async function ImprimirCalendarioPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [employees, assignments, weekLabels] = await Promise.all([listProfiles(), listShiftScheduleForMonth(month), listWeekLabels()]);
   const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);

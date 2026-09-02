@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { listBonusTiers } from "@/lib/bonuses";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { MonthPicker } from "@/components/admin/MonthPicker";
@@ -24,7 +25,7 @@ function monthLabel(month: string) {
 export default async function PiramideMetasPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const tiers = await listBonusTiers(month);
   const find = (shift: "Matutino" | "Vespertino", level: number) => tiers.find((t) => t.shift === shift && t.level === level);

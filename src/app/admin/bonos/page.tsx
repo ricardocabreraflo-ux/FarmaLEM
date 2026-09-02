@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listBonusTiers, listBonusWeeks, earnedBonus, targetForWeek } from "@/lib/bonuses";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -16,7 +17,7 @@ function fmtMoney(n: number) {
 export default async function BonosPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, employees, weeks, tiers] = await Promise.all([
     getProfileById(session.uid),

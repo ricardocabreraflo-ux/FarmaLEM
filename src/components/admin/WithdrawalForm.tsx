@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { createWithdrawalForm, type WithdrawalFormState } from "@/app/admin/salidas/actions";
+import { mexicoCityToday } from "@/lib/dates";
 import type { Supplier } from "@/lib/suppliers";
 import type { Profile } from "@/lib/profiles";
 
@@ -17,7 +18,7 @@ export function WithdrawalForm({ isAdmin, suppliers, employees }: { isAdmin: boo
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Fecha
-          <input name="withdrawalDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          <input name="withdrawalDate" type="date" required defaultValue={mexicoCityToday()} className={inputClass} />
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">

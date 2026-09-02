@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
 import { getMonthlyFinancials } from "@/lib/financials";
 import { getBreakevenMargin } from "@/lib/breakeven";
@@ -21,9 +22,10 @@ function fmtPct(n: number) {
 export default async function PuntoEquilibrioPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const now = new Date();
-  const month = mes || now.toISOString().slice(0, 7);
-  const isCurrentMonth = month === now.toISOString().slice(0, 7);
+  const today = mexicoCityToday();
+  const currentMonth = today.slice(0, 7);
+  const month = mes || currentMonth;
+  const isCurrentMonth = month === currentMonth;
 
   const [profile, financials, marginPercent] = await Promise.all([getProfileById(session.uid), getMonthlyFinancials(month), getBreakevenMargin()]);
 
@@ -32,7 +34,7 @@ export default async function PuntoEquilibrioPage({ searchParams }: { searchPara
   const breakeven = marginPercent > 0 ? fixedCosts / marginPercent : 0;
   const [y, m] = month.split("-").map(Number);
   const daysInMonth = new Date(y, m, 0).getDate();
-  const daysElapsed = isCurrentMonth ? now.getDate() : daysInMonth;
+  const daysElapsed = isCurrentMonth ? Number(today.slice(8, 10)) : daysInMonth;
   const projectedByMonthEnd = daysElapsed > 0 ? (sales / daysElapsed) * daysInMonth : 0;
   const projectedProfit = sales * marginPercent - fixedCosts;
   const belowBreakeven = sales < breakeven;

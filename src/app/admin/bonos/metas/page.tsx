@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
 import { listBonusTiers } from "@/lib/bonuses";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function BonusTiersPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, tiers] = await Promise.all([getProfileById(session.uid), listBonusTiers(month)]);
 

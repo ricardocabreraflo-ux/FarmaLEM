@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { BonusWeekForm } from "@/components/admin/BonusWeekForm";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function NewBonusWeekPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, employees] = await Promise.all([getProfileById(session.uid), listProfiles()]);
   const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);

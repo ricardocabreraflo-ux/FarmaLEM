@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { compressToBase64 } from "@/lib/client-image";
 import { fetchSupplierCatalogAction, findByBarcodeAction, parseTicketPhotosAction, saveReceiptAction } from "@/app/admin/compras/actions";
+import { mexicoCityToday } from "@/lib/dates";
 import type { ParsedLine, ParsedTicket } from "@/lib/ticket-parser";
 import type { SupplierProduct } from "@/lib/supplier-products";
 import type { Supplier } from "@/lib/suppliers";
@@ -39,10 +40,6 @@ function money(n: number | null | undefined) {
 function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function emptyLine(): DraftLine {
   return {
     key: newKey(),
@@ -105,7 +102,7 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   const [error, setError] = useState<string | null>(null);
   const [parsed, setParsed] = useState<ParsedTicket | null>(null);
   const [ticketNumber, setTicketNumber] = useState("");
-  const [ticketDate, setTicketDate] = useState(today());
+  const [ticketDate, setTicketDate] = useState(mexicoCityToday());
   const [ticketTotal, setTicketTotal] = useState("");
   const [ticketPieces, setTicketPieces] = useState("");
   const [ticketSavings, setTicketSavings] = useState("");

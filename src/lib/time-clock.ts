@@ -1,7 +1,10 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { upsertAttendance } from "@/lib/attendance";
+import { mexicoCityToday } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
+
+export { mexicoCityToday };
 
 export type ClockEventType = "Entrada" | "Salida";
 
@@ -10,14 +13,6 @@ export interface TimeClockEvent {
   employee_id: string;
   event_type: ClockEventType;
   occurred_at: string;
-}
-
-// El servidor corre en UTC; "hoy" y los límites del día se calculan en hora de
-// Ciudad de México (fija en UTC-6 desde que México quitó el horario de verano
-// en 2022) para que un registro de la tarde/noche no se cuente en el día
-// equivocado.
-export function mexicoCityToday(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date());
 }
 
 function dayRange(date: string) {

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { upsertAttendanceForm, type AttendanceFormState } from "@/app/admin/asistencia/actions";
+import { mexicoCityToday } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
 
 const inputClass =
@@ -20,7 +21,7 @@ export function AttendanceForm({ employees, month }: { employees: Profile[]; mon
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Fecha
-          <input name="workDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          <input name="workDate" type="date" required defaultValue={mexicoCityToday()} className={inputClass} />
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">

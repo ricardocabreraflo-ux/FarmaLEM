@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FinanceMovementForm } from "@/components/admin/FinanceMovementForm";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function NewFinanceMovementPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
   const profile = await getProfileById(session.uid);
 
   return (

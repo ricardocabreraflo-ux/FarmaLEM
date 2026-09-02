@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CutForm } from "@/components/admin/CutForm";
@@ -16,7 +17,7 @@ export default async function NewCutPage() {
 
   const canChooseShift = session.role === "admin" || !profile?.shift || profile.shift === "Administración";
   const defaultShift = profile?.shift && profile.shift !== "Administración" ? profile.shift : "Matutino";
-  const minDate = session.role === "admin" ? undefined : new Date().toISOString().slice(0, 7) + "-01";
+  const minDate = session.role === "admin" ? undefined : mexicoCityToday().slice(0, 7) + "-01";
 
   return (
     <AdminShell activeHref="/admin/cortes" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>

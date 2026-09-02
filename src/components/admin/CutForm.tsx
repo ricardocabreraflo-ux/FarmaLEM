@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { createCutForm, type CutFormState } from "@/app/admin/cortes/actions";
 import { DenominationsModal } from "@/components/admin/DenominationsModal";
+import { mexicoCityToday } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
 
 const inputClass =
@@ -21,7 +22,7 @@ export function CutForm({
   minDate?: string;
 }) {
   const [state, formAction, pending] = useActionState<CutFormState | undefined, FormData>(createCutForm, undefined);
-  const [cutDate, setCutDate] = useState(new Date().toISOString().slice(0, 10));
+  const [cutDate, setCutDate] = useState(mexicoCityToday());
   const [total, setTotal] = useState("");
   const [card, setCard] = useState("");
   const [cashDelivered, setCashDelivered] = useState("");

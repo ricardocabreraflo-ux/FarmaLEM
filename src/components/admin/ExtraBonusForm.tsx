@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { saveExtraBonusForm, type ExtraBonusFormState } from "@/app/admin/bonos-extra/actions";
+import { mexicoCityToday } from "@/lib/dates";
 import type { ExtraBonus } from "@/lib/extra-bonuses";
 import type { Profile } from "@/lib/profiles";
 
@@ -18,7 +19,7 @@ export function ExtraBonusForm({ employees, bonus }: { employees: Profile[]; bon
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Mes
-          <input name="month" type="month" required defaultValue={bonus?.month ?? new Date().toISOString().slice(0, 7)} className={inputClass} />
+          <input name="month" type="month" required defaultValue={bonus?.month ?? mexicoCityToday().slice(0, 7)} className={inputClass} />
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { createStockExitForm, type StockExitFormState } from "@/app/admin/inventario/actions";
+import { mexicoCityToday } from "@/lib/dates";
 import type { InventoryRow } from "@/lib/inventory";
 
 const inputClass =
@@ -16,7 +17,7 @@ export function StockExitForm({ products }: { products: InventoryRow[] }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Fecha
-          <input name="exitDate" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className={inputClass} />
+          <input name="exitDate" type="date" required defaultValue={mexicoCityToday()} className={inputClass} />
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink">

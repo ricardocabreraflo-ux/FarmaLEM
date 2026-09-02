@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { listProfiles } from "@/lib/profiles";
 import { listBonusTiers, listBonusWeeks, earnedBonus, targetForWeek } from "@/lib/bonuses";
 import { PrintButton } from "@/components/admin/PrintButton";
@@ -21,7 +22,7 @@ function monthLabel(month: string) {
 export default async function ReporteBonosPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [employees, weeksDesc, tiers] = await Promise.all([listProfiles(), listBonusWeeks(month), listBonusTiers(month)]);
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));

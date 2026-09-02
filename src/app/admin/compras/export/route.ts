@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { listPurchases } from "@/lib/purchases";
 
 function csvQuote(value: string | number | null | undefined): string {
@@ -23,7 +24,7 @@ export async function GET() {
   ]);
 
   const csv = "﻿" + [headers, ...rows].map((row) => row.map(csvQuote).join(",")).join("\r\n");
-  const filename = `compras-farmalem-${new Date().toISOString().slice(0, 10)}.csv`;
+  const filename = `compras-farmalem-${mexicoCityToday()}.csv`;
 
   return new NextResponse(csv, {
     headers: {

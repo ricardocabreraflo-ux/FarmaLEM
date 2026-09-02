@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listWithdrawalsForMonth, type WithdrawalType } from "@/lib/withdrawals";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -20,7 +21,7 @@ export default async function SalidasPage({ searchParams }: { searchParams: Prom
   const session = await requireAdminSession();
   const isAdmin = session.role === "admin";
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, withdrawals, employees] = await Promise.all([
     getProfileById(session.uid),

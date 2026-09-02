@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
 import { listFinanceMovementsForMonth } from "@/lib/finance-movements";
 import { getMonthlyFinancials } from "@/lib/financials";
@@ -22,7 +23,7 @@ function monthLabel(month: string) {
 export default async function FinanzasPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, movements, financials] = await Promise.all([getProfileById(session.uid), listFinanceMovementsForMonth(month), getMonthlyFinancials(month)]);
   const {

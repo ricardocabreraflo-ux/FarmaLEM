@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
+import { mexicoCityToday } from "@/lib/dates";
 import { listProfiles } from "@/lib/profiles";
 import { listCutsForMonth } from "@/lib/cuts";
 import { listWithdrawalsForMonth } from "@/lib/withdrawals";
@@ -26,7 +27,7 @@ function monthLabel(month: string) {
 export default async function ReporteCortesPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   await requireAdminSession();
   const { mes } = await searchParams;
-  const month = mes || new Date().toISOString().slice(0, 7);
+  const month = mes || mexicoCityToday().slice(0, 7);
 
   const [employees, cuts, withdrawals] = await Promise.all([listProfiles(), listCutsForMonth(month), listWithdrawalsForMonth(month)]);
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
