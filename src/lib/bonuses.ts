@@ -101,10 +101,13 @@ export async function saveBonusWeek(input: BonusWeekInput, id?: string): Promise
  * rango. Un cierre no planeado (status "Cerrado") cuenta igual que una falta
  * para el bono; un "Día festivo" (cierre planeado) no lo afecta.
  */
-export async function computeWeekFromRecords(employeeId: string, startDate: string, endDate: string) {
+export async function computeWeekFromRecords(employeeId: string, startDate: string, endDate: string, opts?: { includePending?: boolean }) {
   const db = supabaseAdmin();
+  let cutsQuery = db.from("cuts").select("total").eq("employee_id", employeeId).gte("cut_date", startDate).lte("cut_date", endDate);
+  cutsQuery = opts?.includePending ? cutsQuery.neq("status", "Rechazado") : cutsQuery.eq("status", "Aprobado");
+
   const [{ data: cuts, error: cutsError }, { data: att, error: attError }] = await Promise.all([
-    db.from("cuts").select("total").eq("employee_id", employeeId).eq("status", "Aprobado").gte("cut_date", startDate).lte("cut_date", endDate),
+    cutsQuery,
     db.from("attendance").select("status").eq("employee_id", employeeId).in("status", ["Falta", "Cerrado"]).gte("work_date", startDate).lte("work_date", endDate),
   ]);
   if (cutsError) throw new Error(cutsError.message);

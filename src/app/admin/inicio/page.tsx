@@ -90,7 +90,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
   const [profile, last, weekSales, bonusTiers, weekAttendance] = await Promise.all([
     getProfileById(uid),
     lastEventToday(uid),
-    computeWeekFromRecords(uid, monday, sunday),
+    computeWeekFromRecords(uid, monday, sunday, { includePending: true }),
     listBonusTiers(today.slice(0, 7)),
     listAttendanceForRange(monday, sunday),
   ]);
@@ -116,6 +116,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
               <span className="font-display text-[2.1rem] font-extrabold text-admin-ink">{fmtMoney(weekSales.sales)}</span>
               {tiers.nextTier && <span className="text-admin-ink-soft">de {fmtMoney(tiers.nextTier.goal)}</span>}
             </div>
+            <p className="mt-1 text-[0.76rem] text-admin-ink-soft">Incluye los cortes de esta semana aunque Administración todavía no los apruebe.</p>
           </div>
           {tiers.currentTier && (
             <span className="rounded-full bg-admin-ok-bg px-3 py-1.5 text-[0.78rem] font-bold text-admin-ok-text">Nivel {tiers.currentTier.level} alcanzado</span>
