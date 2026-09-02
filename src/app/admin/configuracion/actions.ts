@@ -136,10 +136,10 @@ export async function duplicateRoleAction(id: string): Promise<RoleActionResult>
   return afterRoleChange(session, "Duplicó un rol", id);
 }
 
-export async function deleteRoleAction(id: string): Promise<RoleActionResult> {
+export async function deleteRoleAction(id: string, pin: string): Promise<RoleActionResult> {
   const session = await requireAdminSession();
   try {
-    await deleteRole(id);
+    await deleteRole(id, pin);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo eliminar el rol." };
   }

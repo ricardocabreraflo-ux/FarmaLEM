@@ -40,7 +40,7 @@ function IconTrash() {
   );
 }
 
-export function RolesPanel({ initialRoles }: { initialRoles: Role[] }) {
+export function RolesPanel({ initialRoles, pinConfigured }: { initialRoles: Role[]; pinConfigured: boolean }) {
   const [roles, setRoles] = useState(initialRoles);
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -48,6 +48,8 @@ export function RolesPanel({ initialRoles }: { initialRoles: Role[] }) {
   const [editingName, setEditingName] = useState("");
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletePin, setDeletePin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -58,6 +60,22 @@ export function RolesPanel({ initialRoles }: { initialRoles: Role[] }) {
       const res = await action();
       if (res.ok && res.roles) setRoles(res.roles);
       else if (!res.ok) setError(res.error ?? "No se pudo completar la acción.");
+      setBusyId(null);
+    });
+  }
+
+  function confirmDelete(role: Role) {
+    setBusyId(role.id);
+    setError(null);
+    startTransition(async () => {
+      const res = await deleteRoleAction(role.id, deletePin);
+      if (res.ok && res.roles) {
+        setRoles(res.roles);
+        setDeletingId(null);
+        setDeletePin("");
+      } else if (!res.ok) {
+        setError(res.error ?? "No se pudo eliminar el rol.");
+      }
       setBusyId(null);
     });
   }
@@ -121,7 +139,8 @@ export function RolesPanel({ initialRoles }: { initialRoles: Role[] }) {
         {filtered.map((role) => {
           const busy = busyId === role.id;
           return (
-            <div key={role.id} className="flex items-center justify-between gap-3 px-4 py-3">
+            <div key={role.id} className="flex flex-col gap-2 px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
               {editingId === role.id ? (
                 <form
                   onSubmit={(e) => {
@@ -181,7 +200,9 @@ export function RolesPanel({ initialRoles }: { initialRoles: Role[] }) {
                         title="Eliminar"
                         aria-label={`Eliminar ${role.name}`}
                         onClick={() => {
-                          if (window.confirm(`¿Eliminar el rol "${role.name}"?`)) run(role.id, () => deleteRoleAction(role.id));
+                          setDeletingId(role.id);
+                          setDeletePin("");
+                          setError(null);
                         }}
                         className="text-admin-bad-text hover:opacity-70 disabled:opacity-40"
                       >
@@ -190,6 +211,53 @@ export function RolesPanel({ initialRoles }: { initialRoles: Role[] }) {
                     )}
                   </div>
                 </>
+              )}
+              </div>
+
+              {deletingId === role.id && (
+                <div className="rounded-lg border border-admin-bad-text bg-admin-bad-bg p-3">
+                  <p className="text-[0.8rem] font-semibold text-admin-bad-text">Vas a eliminar el rol &quot;{role.name}&quot; de forma permanente.</p>
+                  {!pinConfigured ? (
+                    <p className="mt-2 text-[0.78rem] text-admin-bad-text">Primero configura el PIN de eliminación en Configuración.</p>
+                  ) : (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        confirmDelete(role);
+                      }}
+                      className="mt-2 flex flex-wrap items-end gap-2"
+                    >
+                      <label className="text-[0.8rem] font-semibold text-admin-bad-text">
+                        PIN
+                        <input
+                          autoFocus
+                          type="password"
+                          inputMode="numeric"
+                          value={deletePin}
+                          onChange={(e) => setDeletePin(e.target.value)}
+                          className="mt-1 block w-28 rounded-lg border border-admin-bad-text bg-admin-surface px-3 py-1.5 text-admin-ink outline-none"
+                        />
+                      </label>
+                      <button
+                        type="submit"
+                        disabled={busy || !deletePin}
+                        className="rounded-full bg-admin-bad-text px-4 py-2 text-[0.8rem] font-semibold text-white disabled:opacity-60"
+                      >
+                        {busy ? "Eliminando…" : "Confirmar eliminación"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeletingId(null);
+                          setDeletePin("");
+                        }}
+                        className="rounded-full border border-admin-border px-4 py-2 text-[0.8rem] font-semibold text-admin-ink-soft"
+                      >
+                        Cancelar
+                      </button>
+                    </form>
+                  )}
+                </div>
               )}
             </div>
           );

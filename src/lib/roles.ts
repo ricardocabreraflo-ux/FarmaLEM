@@ -1,5 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { getDeletePinHash } from "@/lib/security-settings";
+import { verifyPassword } from "@/lib/password";
 
 export interface Role {
   id: string;
@@ -64,11 +66,16 @@ export async function duplicateRole(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export async function deleteRole(id: string): Promise<void> {
+export async function deleteRole(id: string, pin: string): Promise<void> {
   const roles = await listRoles();
   const target = roles.find((r) => r.id === id);
   if (!target) throw new Error("Rol desconocido.");
   if (target.locked) throw new Error("Este rol no se puede eliminar.");
+
+  const pinHash = await getDeletePinHash();
+  if (!pinHash) throw new Error("Todavía no configuras el PIN de eliminación en Configuración.");
+  if (!pin || !verifyPassword(pin, pinHash)) throw new Error("PIN incorrecto.");
+
   const { error } = await supabaseAdmin().from("roles").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
