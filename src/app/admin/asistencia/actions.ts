@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { upsertAttendance, deleteAttendance, generateAttendanceFromCuts, type AttendanceStatus, type GenerateAttendanceResult } from "@/lib/attendance";
+import {
+  upsertAttendance,
+  deleteAttendance,
+  generateAttendanceFromCuts,
+  planAttendanceFromCuts,
+  type AttendanceStatus,
+  type GenerateAttendanceResult,
+  type AttendancePlanCell,
+} from "@/lib/attendance";
 import { logAction } from "@/lib/history";
 
 export interface AttendanceFormState {
@@ -49,6 +57,23 @@ export async function deleteAttendanceAction(id: string) {
   await deleteAttendance(id);
   await logAction(session.uid, "Quitó asistencia", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/asistencia");
+}
+
+export interface PlanAttendanceActionResult {
+  ok: boolean;
+  cells?: AttendancePlanCell[];
+  error?: string;
+}
+
+/** Vista previa de "Generar asistencia desde los cortes" — no escribe nada. */
+export async function planAttendanceFromCutsAction(month: string): Promise<PlanAttendanceActionResult> {
+  await requireAdminSession();
+  try {
+    const cells = await planAttendanceFromCuts(month);
+    return { ok: true, cells };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo calcular la vista previa." };
+  }
 }
 
 export interface GenerateAttendanceActionResult {
