@@ -84,7 +84,7 @@ function CutsStreak({ monday, workedDates, capturedDates }: { monday: string; wo
   const capturedCount = days.filter((d) => workedDates.has(d) && capturedDates.has(d)).length;
 
   return (
-    <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3 sm:col-span-2">
+    <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
       <span className="text-[0.78rem] text-admin-ink-soft">Cortes capturados esta semana</span>
       <div className="mt-2 flex justify-between gap-1">
         {days.map((d, i) => {
@@ -121,20 +121,37 @@ function SalesByDayChart({ monday, salesByDate, goal }: { monday: string; salesB
   const values = days.map((d) => salesByDate.get(d) ?? 0);
   const max = Math.max(...values, 1);
   const acumulado = values.reduce((sum, v) => sum + v, 0);
+  // Mismo criterio que la Pirámide de Metas (meta semanal ÷ 7) — es solo de
+  // referencia para ver el ritmo del día, no una meta oficial aparte.
+  const dailyGoal = goal != null ? goal / 7 : null;
 
   return (
     <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
       <h2 className="font-display text-base text-admin-ink">Ventas por día</h2>
+      {dailyGoal != null && (
+        <p className="mt-1 text-[0.78rem] text-admin-ink-soft">
+          Referencia diaria (meta actual entre 7): <b className="font-data text-admin-ink">{fmtMoney(dailyGoal)}</b> — solo para ver cómo vas, no es una meta
+          aparte.
+        </p>
+      )}
       <div className="mt-4 flex h-32 items-end justify-between gap-2">
         {days.map((d, i) => {
           const v = values[i];
           const heightPct = v > 0 ? Math.max(6, Math.round((v / max) * 100)) : 0;
+          const reachedDaily = dailyGoal != null && v >= dailyGoal;
+          const diff = dailyGoal != null && v > 0 ? v - dailyGoal : null;
           return (
             <div key={d} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
               <span className="text-[0.68rem] font-semibold text-admin-ink-soft">{v > 0 ? fmtMoney(v) : ""}</span>
+              {diff != null && (
+                <span className={`text-[0.66rem] font-bold ${diff >= 0 ? "text-admin-ok-text" : "text-admin-bad-text"}`}>
+                  {diff >= 0 ? "+" : "-"}
+                  {fmtMoney(Math.abs(diff))}
+                </span>
+              )}
               <div className="flex w-full flex-1 items-end">
                 <div
-                  className={`w-full rounded-md ${v > 0 ? "bg-admin-primary" : "border border-dashed border-admin-border"}`}
+                  className={`w-full rounded-md ${v === 0 ? "border border-dashed border-admin-border" : reachedDaily ? "bg-admin-ok-text" : "bg-admin-primary"}`}
                   style={{ height: v > 0 ? `${heightPct}%` : "4px" }}
                 />
               </div>
@@ -149,7 +166,7 @@ function SalesByDayChart({ monday, salesByDate, goal }: { monday: string; salesB
         </span>
         {goal != null && (
           <span className="text-admin-ink-soft">
-            Meta: <b className="font-data text-admin-ink">{fmtMoney(goal)}</b>
+            Meta semanal: <b className="font-data text-admin-ink">{fmtMoney(goal)}</b>
           </span>
         )}
       </div>
@@ -219,16 +236,18 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <GoalNote sales={weekSales.sales} tiers={tiers} />
         </p>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
-            <span className="text-[0.78rem] text-admin-ink-soft">Última marca</span>
-            <p className="mt-0.5 font-display font-semibold text-admin-ink">{last ? `${last.event_type} · ${fmtTime(last.occurred_at)}` : "Aún no marcas hoy"}</p>
-          </div>
-          <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
-            <span className="text-[0.78rem] text-admin-ink-soft">Días trabajados esta semana</span>
-            <p className="mt-0.5 font-display font-semibold text-admin-ink">{daysWorked}</p>
-          </div>
+        <div className="mt-4 grid grid-cols-1 gap-3">
           <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
+              <span className="text-[0.78rem] text-admin-ink-soft">Última marca</span>
+              <p className="mt-0.5 font-display font-semibold text-admin-ink">{last ? `${last.event_type} · ${fmtTime(last.occurred_at)}` : "Aún no marcas hoy"}</p>
+            </div>
+            <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
+              <span className="text-[0.78rem] text-admin-ink-soft">Días trabajados esta semana</span>
+              <p className="mt-0.5 font-display font-semibold text-admin-ink">{daysWorked}</p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
