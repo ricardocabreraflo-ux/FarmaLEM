@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm run lint)",
+      "Bash(npx eslint *)",
+      "Bash(git fetch *)",
+      "mcp__Supabase__list_tables",
+      "mcp__Supabase__list_projects",
+      "mcp__Supabase__get_publishable_keys",
+      "mcp__Netlify__netlify-project-services-reader"
+    ]
+  }
+}
