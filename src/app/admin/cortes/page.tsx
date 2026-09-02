@@ -61,22 +61,22 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
 
       <MonthPicker month={month} basePath="/admin/cortes" />
 
-      <section className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+      <section className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Venta total</p>
-          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalVentas)}</p>
+          <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalVentas)}</p>
         </div>
-        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Efectivo</p>
-          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalEfectivo)}</p>
+          <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalEfectivo)}</p>
         </div>
-        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Tarjeta</p>
-          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalTarjeta)}</p>
+          <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalTarjeta)}</p>
         </div>
-        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Efectivo entregado</p>
-          <p className="mt-1 font-data text-lg font-bold tabular-nums text-admin-ink">{fmtMoney(totalEntregado)}</p>
+          <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalEntregado)}</p>
         </div>
       </section>
 
