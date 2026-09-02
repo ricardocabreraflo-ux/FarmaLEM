@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/admin/ThemeToggle";
 import type { ProfileRole } from "@/lib/admin-auth";
 import {
   IconAsistencia,
+  IconAyuda,
   IconBalance,
   IconBonoExtra,
   IconBonoSemanal,
@@ -108,6 +109,7 @@ const NAV: NavEntry[] = [
       leaf("/admin/punto-equilibrio/simulador", "Simulador de escenarios", IconSliders, true),
     ],
   },
+  leaf("/admin/ayuda", "Ayuda", IconAyuda),
   leaf("/admin/historial", "Historial", IconHistorial, true),
   leaf("/admin/configuracion", "Configuración", IconSettings, true),
 ];
