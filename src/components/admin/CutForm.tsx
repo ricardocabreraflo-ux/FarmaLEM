@@ -157,6 +157,18 @@ export function CutForm({
           <input name="photo" type="file" accept="image/*" capture="environment" className={`${inputClass} py-2`} />
           <span className="mt-1 block font-normal text-admin-ink-soft">En el celular abre la cámara directamente.</span>
         </label>
+
+        {isAdmin && (
+          <label className="flex items-start gap-2.5 text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
+            <input type="checkbox" name="markPending" value="1" className="mt-0.5" />
+            <span>
+              Dejarlo &quot;Por revisar&quot;, como si lo hubiera capturado ella
+              <span className="mt-0.5 block font-normal text-admin-ink-soft">
+                Útil al migrar cortes atrasados: queda pendiente de aprobar en vez de aprobarse solo por ser tú quien lo captura.
+              </span>
+            </span>
+          </label>
+        )}
       </div>
 
       <DenominationsModal

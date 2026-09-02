@@ -25,6 +25,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   const card = Number(formData.get("card") ?? 0);
   const cashDelivered = Number(formData.get("cashDelivered") ?? 0);
   const nomina = Number(formData.get("nomina") ?? 0);
+  const markPending = formData.get("markPending") === "1";
   const photo = formData.get("photo");
 
   // Una empleada solo puede capturar su propio corte; solo administración
@@ -56,7 +57,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
       card,
       cashDelivered,
       createdBy: session.uid,
-      status: session.role === "admin" ? "Aprobado" : "Por revisar",
+      status: session.role === "admin" && !markPending ? "Aprobado" : "Por revisar",
       photoPath,
     });
   } catch (err) {
