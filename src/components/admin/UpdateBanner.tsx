@@ -3,13 +3,19 @@
 import { useEffect, useState } from "react";
 
 const CURRENT_BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID;
-const CHECK_INTERVAL_MS = 5 * 60 * 1000;
+const CHECK_INTERVAL_MS = 45 * 1000;
 
 /**
  * Avisa cuando ya se publicó una versión nueva del panel, para no depender de
  * cerrar y volver a abrir la app instalada. Compara el build con el que se
  * cargó en este navegador contra el que está corriendo ahorita en el
- * servidor (/api/version), revisando cada 5 min y al volver a esta ventana.
+ * servidor (/api/version), revisando cada 45 s y al volver a esta ventana.
+ *
+ * El intervalo es corto a propósito: si alguien deja el panel abierto
+ * capturando algo justo cuando se publica una actualización, el código
+ * viejo que ya tiene cargado puede fallar al guardar (la Server Action ya
+ * no existe en el servidor nuevo). Revisar seguido reduce esa ventana para
+ * que le dé tiempo de ver el aviso y recargar antes de que le pase.
  */
 export function UpdateBanner() {
   const [available, setAvailable] = useState(false);
