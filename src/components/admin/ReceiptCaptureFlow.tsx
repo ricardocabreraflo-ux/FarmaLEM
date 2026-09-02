@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { compressToBase64 } from "@/lib/client-image";
@@ -108,7 +108,6 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   const [ticketSavings, setTicketSavings] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<DraftLine[]>([]);
-  const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!supplierId) return;
@@ -259,14 +258,13 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
 
         {step === "fotos" && (
           <>
-            <button
-              type="button"
-              onClick={() => fileInput.current?.click()}
-              className="mt-4 flex w-full flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-admin-border px-6 py-8 text-center text-[0.85rem] text-admin-ink-soft hover:border-admin-primary hover:text-admin-primary-deep"
+            <label
+              htmlFor="ticket-photos"
+              className="mt-4 flex w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-admin-border px-6 py-8 text-center text-[0.85rem] text-admin-ink-soft hover:border-admin-primary hover:text-admin-primary-deep"
             >
-              <input ref={fileInput} type="file" accept="image/*" multiple onChange={onFiles} className="hidden" />
               Toma o sube las fotos del ticket (de arriba hacia abajo). Puedes subir varias; se aceptan hasta 8.
-            </button>
+            </label>
+            <input id="ticket-photos" type="file" accept="image/*" multiple onChange={onFiles} className="hidden" />
             {photos.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-3">
                 {photos.map((p, i) => (
