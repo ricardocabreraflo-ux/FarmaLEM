@@ -7,6 +7,7 @@ import { saveDeletePinHash } from "@/lib/security-settings";
 import { hashPassword } from "@/lib/password";
 import { logAction } from "@/lib/history";
 import { getModuleEditorStructure, movePanelModule, updatePanelModule, type ModuleEditorEntry } from "@/lib/panel-modules";
+import { createRole, deleteRole, duplicateRole, listRoles, renameRole, type Role } from "@/lib/roles";
 
 export interface BreakevenMarginFormState {
   error?: string;
@@ -90,4 +91,57 @@ export async function moveModuleAction(key: string, direction: "up" | "down"): P
   revalidatePath("/admin/configuracion");
   const entries = await getModuleEditorStructure();
   return { ok: true, entries };
+}
+
+export interface RoleActionResult {
+  ok: boolean;
+  error?: string;
+  roles?: Role[];
+}
+
+async function afterRoleChange(session: Awaited<ReturnType<typeof requireAdminSession>>, action: string, detail: string): Promise<RoleActionResult> {
+  await logAction(session.uid, action, detail);
+  revalidatePath("/admin/configuracion");
+  const roles = await listRoles();
+  return { ok: true, roles };
+}
+
+export async function createRoleAction(name: string): Promise<RoleActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await createRole(name);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo crear el rol." };
+  }
+  return afterRoleChange(session, "Creó un rol", name);
+}
+
+export async function renameRoleAction(id: string, name: string): Promise<RoleActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await renameRole(id, name);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo renombrar el rol." };
+  }
+  return afterRoleChange(session, "Renombró un rol", name);
+}
+
+export async function duplicateRoleAction(id: string): Promise<RoleActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await duplicateRole(id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo duplicar el rol." };
+  }
+  return afterRoleChange(session, "Duplicó un rol", id);
+}
+
+export async function deleteRoleAction(id: string): Promise<RoleActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await deleteRole(id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo eliminar el rol." };
+  }
+  return afterRoleChange(session, "Eliminó un rol", id);
 }
