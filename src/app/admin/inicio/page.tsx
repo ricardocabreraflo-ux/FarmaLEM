@@ -116,45 +116,72 @@ function CutsStreak({ monday, workedDates, capturedDates }: { monday: string; wo
   );
 }
 
-function SalesByDayChart({ monday, salesByDate, goal }: { monday: string; salesByDate: Map<string, number>; goal: number | null }) {
+function SalesByDayChart({ monday, salesByDate, tiers }: { monday: string; salesByDate: Map<string, number>; tiers: BonusTier[] }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const values = days.map((d) => salesByDate.get(d) ?? 0);
-  const max = Math.max(...values, 1);
-  // Mismo criterio que la Pirámide de Metas (meta semanal ÷ 7) — es solo de
-  // referencia para ver el ritmo del día, no una meta oficial aparte.
-  const dailyGoal = goal != null ? goal / 7 : null;
+  // Mismo criterio que la Pirámide de Metas (cada nivel de la meta semanal ÷
+  // 7) — son líneas de referencia para ver en qué nivel va cayendo cada día,
+  // no una meta oficial aparte.
+  const dailyLevels = [...tiers].sort((a, b) => a.goal - b.goal).map((t) => ({ level: t.level, daily: t.goal / 7 }));
+  const highestDaily = dailyLevels.length > 0 ? dailyLevels[dailyLevels.length - 1].daily : 0;
+  const max = Math.max(...values, highestDaily, 1);
+
+  function levelReached(v: number): number | null {
+    let reached: number | null = null;
+    for (const t of dailyLevels) if (v >= t.daily) reached = t.level;
+    return reached;
+  }
 
   return (
     <>
       <h2 className="font-display text-base text-admin-ink">Ventas por día</h2>
-      {dailyGoal != null && (
-        <p className="mt-1 text-[0.78rem] text-admin-ink-soft">
-          Referencia diaria (meta actual entre 7): <b className="font-data text-admin-ink">{fmtMoney(dailyGoal)}</b> — solo para ver cómo vas, no es una meta
-          aparte.
-        </p>
-      )}
-      <div className="mt-4 flex h-32 items-end justify-between gap-2">
-        {days.map((d, i) => {
-          const v = values[i];
-          const heightPct = v > 0 ? Math.max(6, Math.round((v / max) * 100)) : 0;
-          const reachedDaily = dailyGoal != null && v >= dailyGoal;
-          const diff = dailyGoal != null && v > 0 ? v - dailyGoal : null;
+      <p className="mt-1 text-[0.78rem] text-admin-ink-soft">
+        {dailyLevels.length > 0
+          ? "Líneas punteadas: promedio diario de cada nivel de la meta (igual que la Pirámide) — de referencia, para ver en cuál va cayendo cada día."
+          : "Aún no hay metas configuradas para este turno este mes."}
+      </p>
+
+      <div className="relative mt-6 h-40">
+        {dailyLevels.map((t) => {
+          const pct = Math.min(100, Math.round((t.daily / max) * 100));
           return (
-            <div key={d} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
-              <span className="text-[0.68rem] font-semibold text-admin-ink-soft">{v > 0 ? fmtMoney(v) : ""}</span>
-              {diff != null && (
-                <span className={`text-[0.66rem] font-bold ${diff >= 0 ? "text-admin-ok-text" : "text-admin-bad-text"}`}>
-                  {diff >= 0 ? "+" : "-"}
-                  {fmtMoney(Math.abs(diff))}
-                </span>
-              )}
-              <div className="flex w-full flex-1 items-end">
+            <div key={t.level} className="absolute inset-x-0 border-t border-dashed border-admin-ink-soft/40" style={{ bottom: `${pct}%` }}>
+              <span className="absolute -top-3.5 right-0 whitespace-nowrap text-[0.62rem] font-semibold text-admin-ink-soft">
+                Meta {t.level} &middot; {fmtMoney(t.daily)}
+              </span>
+            </div>
+          );
+        })}
+        <div className="absolute inset-0 flex items-end justify-between gap-2">
+          {days.map((d, i) => {
+            const v = values[i];
+            const heightPct = v > 0 ? Math.max(3, Math.round((v / max) * 100)) : 0;
+            return (
+              <div key={d} className="flex h-full flex-1 flex-col items-end justify-end">
                 <div
-                  className={`w-full rounded-md ${v === 0 ? "border border-dashed border-admin-border" : reachedDaily ? "bg-admin-ok-text" : "bg-admin-primary"}`}
-                  style={{ height: v > 0 ? `${heightPct}%` : "4px" }}
+                  title={v > 0 ? fmtMoney(v) : undefined}
+                  className={`w-full rounded-t-md ${v > 0 ? "bg-admin-primary" : "border border-dashed border-admin-border"}`}
+                  style={{ height: v > 0 ? `${heightPct}%` : "3px" }}
                 />
               </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-1.5 flex justify-between gap-2">
+        {days.map((d, i) => {
+          const v = values[i];
+          const level = v > 0 ? levelReached(v) : null;
+          return (
+            <div key={d} className="flex flex-1 flex-col items-center gap-0.5">
+              <span className="text-[0.66rem] font-semibold text-admin-ink-soft">{v > 0 ? fmtMoney(v) : ""}</span>
               <span className="text-[0.7rem] font-bold text-admin-ink-soft">{DAY_LABELS[i]}</span>
+              {v > 0 && (
+                <span className={`text-[0.62rem] font-bold ${level ? "text-admin-ok-text" : "text-admin-ink-soft"}`}>
+                  {level ? `Nivel ${level}` : "Sin nivel"}
+                </span>
+              )}
             </div>
           );
         })}
@@ -238,7 +265,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
       </section>
 
       <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
-        <SalesByDayChart monday={monday} salesByDate={salesByDate} goal={tiers.nextTier?.goal ?? tiers.currentTier?.goal ?? null} />
+        <SalesByDayChart monday={monday} salesByDate={salesByDate} tiers={tiers.ordered} />
 
         <div className="mt-4">
           <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
