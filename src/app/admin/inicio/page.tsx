@@ -120,13 +120,12 @@ function SalesByDayChart({ monday, salesByDate, goal }: { monday: string; salesB
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const values = days.map((d) => salesByDate.get(d) ?? 0);
   const max = Math.max(...values, 1);
-  const acumulado = values.reduce((sum, v) => sum + v, 0);
   // Mismo criterio que la Pirámide de Metas (meta semanal ÷ 7) — es solo de
   // referencia para ver el ritmo del día, no una meta oficial aparte.
   const dailyGoal = goal != null ? goal / 7 : null;
 
   return (
-    <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+    <>
       <h2 className="font-display text-base text-admin-ink">Ventas por día</h2>
       {dailyGoal != null && (
         <p className="mt-1 text-[0.78rem] text-admin-ink-soft">
@@ -160,17 +159,7 @@ function SalesByDayChart({ monday, salesByDate, goal }: { monday: string; salesB
           );
         })}
       </div>
-      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-admin-border pt-3 text-[0.82rem]">
-        <span className="text-admin-ink-soft">
-          Acumulado: <b className="font-data text-admin-ink">{fmtMoney(acumulado)}</b>
-        </span>
-        {goal != null && (
-          <span className="text-admin-ink-soft">
-            Meta semanal: <b className="font-data text-admin-ink">{fmtMoney(goal)}</b>
-          </span>
-        )}
-      </div>
-    </section>
+    </>
   );
 }
 
@@ -236,18 +225,34 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <GoalNote sales={weekSales.sales} tiers={tiers} />
         </p>
 
-        <div className="mt-4 grid grid-cols-1 gap-3">
-          <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
-              <span className="text-[0.78rem] text-admin-ink-soft">Última marca</span>
-              <p className="mt-0.5 font-display font-semibold text-admin-ink">{last ? `${last.event_type} · ${fmtTime(last.occurred_at)}` : "Aún no marcas hoy"}</p>
-            </div>
-            <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
-              <span className="text-[0.78rem] text-admin-ink-soft">Días trabajados esta semana</span>
-              <p className="mt-0.5 font-display font-semibold text-admin-ink">{daysWorked}</p>
-            </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
+            <span className="text-[0.78rem] text-admin-ink-soft">Última marca</span>
+            <p className="mt-0.5 font-display font-semibold text-admin-ink">{last ? `${last.event_type} · ${fmtTime(last.occurred_at)}` : "Aún no marcas hoy"}</p>
           </div>
+          <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
+            <span className="text-[0.78rem] text-admin-ink-soft">Días trabajados esta semana</span>
+            <p className="mt-0.5 font-display font-semibold text-admin-ink">{daysWorked}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+        <SalesByDayChart monday={monday} salesByDate={salesByDate} goal={tiers.nextTier?.goal ?? tiers.currentTier?.goal ?? null} />
+
+        <div className="mt-4">
+          <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-admin-border pt-3 text-[0.82rem]">
+          <span className="text-admin-ink-soft">
+            Acumulado: <b className="font-data text-admin-ink">{fmtMoney(weekSales.sales)}</b>
+          </span>
+          {tiers.nextTier && (
+            <span className="text-admin-ink-soft">
+              Meta semanal: <b className="font-data text-admin-ink">{fmtMoney(tiers.nextTier.goal)}</b>
+            </span>
+          )}
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
@@ -262,8 +267,6 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           </Link>
         </div>
       </section>
-
-      <SalesByDayChart monday={monday} salesByDate={salesByDate} goal={tiers.nextTier?.goal ?? tiers.currentTier?.goal ?? null} />
 
       {tiers.ordered.length > 0 && (
         <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
