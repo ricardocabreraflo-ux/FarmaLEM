@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { createCutForm, type CutFormState } from "@/app/admin/cortes/actions";
 import { DenominationsModal } from "@/components/admin/DenominationsModal";
@@ -9,6 +9,17 @@ import type { Profile } from "@/lib/profiles";
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-admin-border bg-admin-input-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
+
+const DRAFT_KEY = "farmalem-cutform-draft";
+
+interface CutDraft {
+  cutDate: string;
+  total: string;
+  card: string;
+  cashDelivered: string;
+  nomina: string;
+  hasCounted: boolean;
+}
 
 export function CutForm({
   employees,
@@ -31,6 +42,43 @@ export function CutForm({
   const [nomina, setNomina] = useState("");
   const [hasCounted, setHasCounted] = useState(false);
   const [showDenomModal, setShowDenomModal] = useState(false);
+  const [restoredDraft, setRestoredDraft] = useState(false);
+  const hydratedRef = useRef(false);
+
+  // Recupera lo que ya se había escrito si la página se tuvo que recargar a
+  // medio capturar (p.ej. por una actualización del panel) — para no hacer
+  // que vuelvan a teclear todo. localStorage no existe en el servidor, así
+  // que esto solo se puede leer ya montado en el cliente: es justo el caso
+  // que react-hooks/set-state-in-effect no puede distinguir de un mal uso.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw) as Partial<CutDraft>;
+        if (draft.cutDate) setCutDate(draft.cutDate);
+        if (draft.total) setTotal(draft.total);
+        if (draft.card) setCard(draft.card);
+        if (draft.cashDelivered) setCashDelivered(draft.cashDelivered);
+        if (draft.nomina) setNomina(draft.nomina);
+        if (draft.hasCounted) setHasCounted(true);
+        if (draft.total || draft.card || draft.cashDelivered) setRestoredDraft(true);
+      }
+    } catch {
+      // sin localStorage disponible: no pasa nada, solo no hay respaldo
+    }
+    hydratedRef.current = true;
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ cutDate, total, card, cashDelivered, nomina, hasCounted }));
+    } catch {
+      // localStorage lleno o no disponible: no hay respaldo, pero no rompe la captura
+    }
+  }, [cutDate, total, card, cashDelivered, nomina, hasCounted]);
 
   const weekday = new Date(`${cutDate}T12:00:00`).getDay();
   const isWeekend = weekday === 0 || weekday === 6;
@@ -56,6 +104,11 @@ export function CutForm({
 
   return (
     <form action={formAction} className="mt-6 flex flex-col gap-4">
+      {restoredDraft && (
+        <p className="rounded-lg bg-admin-pending-bg px-4 py-3 text-[0.85rem] text-admin-pending-text">
+          Recuperamos lo que tenías escrito de un intento anterior — revísalo antes de guardar.
+        </p>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block text-[0.85rem] font-semibold text-admin-ink">
           Fecha

@@ -60,7 +60,11 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Un registro por trabajador y turno.</p>
 
       {guardado === "1" && (
-        <p className="mt-4 rounded-xl bg-admin-ok-bg px-4 py-3 text-[0.85rem] font-semibold text-admin-ok-text">✓ Corte guardado correctamente.</p>
+        <>
+          <p className="mt-4 rounded-xl bg-admin-ok-bg px-4 py-3 text-[0.85rem] font-semibold text-admin-ok-text">✓ Corte guardado correctamente.</p>
+          {/* Ya se guardó bien, así que el borrador local del formulario de captura ya no sirve de nada. */}
+          <script dangerouslySetInnerHTML={{ __html: `try{localStorage.removeItem("farmalem-cutform-draft")}catch(e){}` }} />
+        </>
       )}
 
       <MonthPicker month={month} basePath="/admin/cortes" />
