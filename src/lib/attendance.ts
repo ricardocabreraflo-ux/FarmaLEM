@@ -30,7 +30,11 @@ export async function listAttendanceForMonth(month: string): Promise<AttendanceR
     .select()
     .gte("work_date", start)
     .lt("work_date", end)
-    .order("work_date", { ascending: false });
+    // Del día 1 hacia adelante, y dentro del mismo día Matutino antes que
+    // Vespertino ("Fin de semana matutino" < "Fin de semana vespertino" por
+    // orden alfabético también, así que aplica igual en fin de semana).
+    .order("work_date", { ascending: true })
+    .order("shift", { ascending: true });
   if (error) throw new Error(`No se pudo leer la asistencia: ${error.message}`);
   return data as AttendanceRow[];
 }
