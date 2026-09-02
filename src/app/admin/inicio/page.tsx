@@ -145,7 +145,7 @@ function SalesByDayChart({ monday, salesByDate, tiers }: { monday: string; sales
         {dailyLevels.map((t) => {
           const pct = Math.min(100, Math.round((t.daily / max) * 100));
           return (
-            <div key={t.level} className="absolute inset-x-0 border-t border-dashed border-admin-ink-soft/40" style={{ bottom: `${pct}%` }}>
+            <div key={t.level} className="absolute inset-x-0" style={{ bottom: `${pct}%`, borderTop: "1.5px dashed var(--color-admin-border)" }}>
               <span className="absolute -top-3.5 right-0 whitespace-nowrap text-[0.62rem] font-semibold text-admin-ink-soft">
                 Meta {t.level} &middot; {fmtMoney(t.daily)}
               </span>
