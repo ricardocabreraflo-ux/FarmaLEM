@@ -91,7 +91,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   });
 
   revalidatePath("/admin/cortes");
-  redirect("/admin/cortes");
+  redirect("/admin/cortes?guardado=1");
 }
 
 export async function updateCutForm(_prevState: CutFormState | undefined, formData: FormData): Promise<CutFormState> {

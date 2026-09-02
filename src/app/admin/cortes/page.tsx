@@ -15,10 +15,10 @@ function fmtMoney(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 }
 
-export default async function CortesPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
+export default async function CortesPage({ searchParams }: { searchParams: Promise<{ mes?: string; guardado?: string }> }) {
   const session = await requireSession();
   const isAdmin = session.role === "admin";
-  const { mes } = await searchParams;
+  const { mes, guardado } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
 
   const [profile, cuts, employees] = await Promise.all([
@@ -58,6 +58,10 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
         </div>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Un registro por trabajador y turno.</p>
+
+      {guardado === "1" && (
+        <p className="mt-4 rounded-xl bg-admin-ok-bg px-4 py-3 text-[0.85rem] font-semibold text-admin-ok-text">✓ Corte guardado correctamente.</p>
+      )}
 
       <MonthPicker month={month} basePath="/admin/cortes" />
 
