@@ -317,3 +317,13 @@ export function IconGastos({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function IconAyuda({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.3a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 1.9-2.4 3.5" />
+      <circle cx="12" cy="16.8" r="0.35" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

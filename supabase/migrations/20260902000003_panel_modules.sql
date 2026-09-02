@@ -36,6 +36,7 @@ insert into farmalem.panel_modules (key, enabled, visible_employee, sort_order) 
   ('/admin/finanzas/gastos', true, false, 30),
   ('/admin/punto-equilibrio', true, false, 40),
   ('/admin/punto-equilibrio/simulador', true, false, 50),
+  ('/admin/ayuda', true, true, 65),
   ('/admin/historial', true, false, 70),
   ('/admin/configuracion', true, false, 80)
 on conflict (key) do nothing;

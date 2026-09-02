@@ -63,6 +63,7 @@ export const NAV_STRUCTURE: NavEntryDef[] = [
     leaf("/admin/punto-equilibrio", "Punto de equilibrio", "IconBalance", true),
     leaf("/admin/punto-equilibrio/simulador", "Simulador de escenarios", "IconSliders", true),
   ]),
+  leaf("/admin/ayuda", "Ayuda", "IconAyuda"),
   leaf("/admin/historial", "Historial", "IconHistorial", true),
   leaf("/admin/configuracion", "Configuración", "IconSettings", true, true),
 ];

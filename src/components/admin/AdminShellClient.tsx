@@ -9,6 +9,7 @@ import type { ProfileRole } from "@/lib/admin-auth";
 import type { ResolvedGroup, ResolvedNavEntry } from "@/lib/panel-modules";
 import {
   IconAsistencia,
+  IconAyuda,
   IconBalance,
   IconBonoExtra,
   IconBonoSemanal,
@@ -40,6 +41,7 @@ type IconComponent = (props: { className?: string }) => React.ReactElement;
 
 const ICONS: Record<string, IconComponent> = {
   IconAsistencia,
+  IconAyuda,
   IconBalance,
   IconBonoExtra,
   IconBonoSemanal,
