@@ -12,6 +12,9 @@ export interface TutorialStep {
   title: string;
   body: string;
   image?: string;
+  imageDesktop?: string;
+  /** Alto real (px) de imageDesktop — todas se capturaron a 1440 de ancho, cada una con su propio alto. */
+  imageDesktopHeight?: number;
   imageAlt?: string;
   cue?: string;
   cueTone?: "ok" | "warn";
@@ -41,6 +44,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "Elige tu turno",
         body: "Al abrir el acceso directo aparece esta pantalla con los dos turnos de la farmacia. Cada botón muestra el nombre de quien está asignado a ese turno.",
         image: "/tutoriales/entrar-01-elegir-turno.png",
+        imageDesktop: "/tutoriales/entrar-01-elegir-turno-desktop.png",
+        imageDesktopHeight: 900,
         imageAlt: "Pantalla para elegir tu turno",
         cue: "Toca tu turno, por ejemplo “MATUTINO”",
       },
@@ -48,6 +53,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "Primera vez en esa computadora: tu contraseña",
         body: "Solo la primera vez. Escribes tu contraseña normal para que esa computadora “aprenda” quién marca ese turno — no hace falta repetirlo después.",
         image: "/tutoriales/entrar-03-contrasena-lista.png",
+        imageDesktop: "/tutoriales/entrar-03-contrasena-lista-desktop.png",
+        imageDesktopHeight: 900,
         imageAlt: "Pantalla pidiendo la contraseña",
         cue: "Escribe tu contraseña y toca “Entrar”",
       },
@@ -55,6 +62,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "Llegas a Inicio",
         body: "Tu meta de ventas de la semana, tu última marca del reloj y un botón directo para ir a marcar.",
         image: "/tutoriales/entrar-04-inicio.png",
+        imageDesktop: "/tutoriales/entrar-04-inicio-desktop.png",
+        imageDesktopHeight: 760,
         imageAlt: "Pantalla de Inicio",
         cue: "Toca “Ir al reloj checador” o “Capturar corte”",
       },
@@ -62,6 +71,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "La próxima vez: solo tu PIN",
         body: "Esa misma computadora ya “reconoce” tu turno después de la primera vez: en vez de tu contraseña completa, solo pide tu PIN corto (el mismo del reloj checador).",
         image: "/tutoriales/entrar-05-pin-reconocida.png",
+        imageDesktop: "/tutoriales/entrar-05-pin-reconocida-desktop.png",
+        imageDesktopHeight: 900,
         imageAlt: "Pantalla de PIN, computadora ya reconocida",
         cue: "Marca tu PIN y toca “OK”",
       },
@@ -78,6 +89,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "Antes de marcar",
         body: "La pantalla te dice claramente si ya marcaste hoy o no. El botón siempre dice qué vas a marcar a continuación.",
         image: "/tutoriales/reloj-01-antes-de-marcar.png",
+        imageDesktop: "/tutoriales/reloj-01-antes-de-marcar-desktop.png",
+        imageDesktopHeight: 434,
         imageAlt: "Reloj checador antes de marcar",
         cue: "Toca “Marcar mi Entrada”",
       },
@@ -85,6 +98,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "Entrada registrada",
         body: "Confirma tu nombre y la hora exacta. El botón cambia solo a “Marcar mi Salida” para cuando termines tu turno.",
         image: "/tutoriales/reloj-02-entrada-marcada.png",
+        imageDesktop: "/tutoriales/reloj-02-entrada-marcada-desktop.png",
+        imageDesktopHeight: 434,
         imageAlt: "Entrada registrada",
         cue: "Tu asistencia del día ya quedó como “Asistió”",
         cueTone: "ok",
@@ -93,6 +108,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "Al terminar tu turno: marca tu salida",
         body: "Mismo botón, mismo lugar. Si no marcas tu salida, tu horario del día queda incompleto en los reportes.",
         image: "/tutoriales/reloj-03-salida-marcada.png",
+        imageDesktop: "/tutoriales/reloj-03-salida-marcada-desktop.png",
+        imageDesktopHeight: 434,
         imageAlt: "Salida registrada",
         cue: "No cierres el turno sin marcarla",
         cueTone: "warn",
@@ -110,18 +127,24 @@ const TUTORIALS: TutorialContent[] = [
         title: "Abre Capturar corte",
         body: "La fecha ya viene en hoy y tu turno ya viene puesto — no necesitas elegir nada.",
         image: "/tutoriales/corte-01-formulario-vacio.png",
+        imageDesktop: "/tutoriales/corte-01-formulario-vacio-desktop.png",
+        imageDesktopHeight: 702,
         imageAlt: "Formulario de Capturar corte vacío",
       },
       {
         title: "Venta total y tarjeta",
         body: "Escribe la venta total del día y cuánto fue con tarjeta o transferencia. El efectivo se calcula solo.",
         image: "/tutoriales/corte-02-venta-y-tarjeta.png",
+        imageDesktop: "/tutoriales/corte-02-venta-y-tarjeta-desktop.png",
+        imageDesktopHeight: 702,
         imageAlt: "Venta total y tarjeta capturados",
       },
       {
         title: "Cuenta el efectivo por denominación",
         body: "Es obligatorio: el botón de guardar no se activa hasta que cuentes billete por billete y moneda por moneda.",
         image: "/tutoriales/corte-04-contar-efectivo-lleno.png",
+        imageDesktop: "/tutoriales/corte-04-contar-efectivo-lleno-desktop.png",
+        imageDesktopHeight: 746,
         imageAlt: "Ventana de contar efectivo llena",
         cue: "Coincide con lo esperado",
         cueTone: "ok",
@@ -130,6 +153,8 @@ const TUTORIALS: TutorialContent[] = [
         title: "Guarda el corte",
         body: "Queda registrado con estado “Por revisar” hasta que administración lo apruebe.",
         image: "/tutoriales/corte-06-guardado-en-lista.png",
+        imageDesktop: "/tutoriales/corte-06-guardado-en-lista-desktop.png",
+        imageDesktopHeight: 562,
         imageAlt: "Corte guardado en la lista de Cortes",
       },
     ],

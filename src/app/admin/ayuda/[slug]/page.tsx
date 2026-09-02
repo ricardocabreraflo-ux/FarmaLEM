@@ -49,8 +49,19 @@ export default async function TutorialPage({ params }: { params: Promise<{ slug:
             </div>
             <p className="text-[0.9rem] text-admin-ink-soft">{step.body}</p>
             {step.image && (
-              <div className="max-w-[260px] rounded-2xl border border-admin-border bg-admin-bg p-2 shadow-sm">
+              <div className="max-w-[260px] rounded-2xl border border-admin-border bg-admin-bg p-2 shadow-sm sm:hidden">
                 <Image src={step.image} alt={step.imageAlt ?? step.title} width={420} height={860} className="w-full rounded-xl" />
+              </div>
+            )}
+            {step.imageDesktop && (
+              <div className="hidden max-w-[520px] rounded-2xl border border-admin-border bg-admin-bg p-2 shadow-sm sm:block">
+                <Image
+                  src={step.imageDesktop}
+                  alt={step.imageAlt ?? step.title}
+                  width={1440}
+                  height={step.imageDesktopHeight ?? 900}
+                  className="w-full rounded-xl"
+                />
               </div>
             )}
             {step.cue && (
