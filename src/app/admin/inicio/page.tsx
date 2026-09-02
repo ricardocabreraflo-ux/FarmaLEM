@@ -116,6 +116,47 @@ function CutsStreak({ monday, workedDates, capturedDates }: { monday: string; wo
   );
 }
 
+function SalesByDayChart({ monday, salesByDate, goal }: { monday: string; salesByDate: Map<string, number>; goal: number | null }) {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+  const values = days.map((d) => salesByDate.get(d) ?? 0);
+  const max = Math.max(...values, 1);
+  const acumulado = values.reduce((sum, v) => sum + v, 0);
+
+  return (
+    <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+      <h2 className="font-display text-base text-admin-ink">Ventas por día</h2>
+      <div className="mt-4 flex h-32 items-end justify-between gap-2">
+        {days.map((d, i) => {
+          const v = values[i];
+          const heightPct = v > 0 ? Math.max(6, Math.round((v / max) * 100)) : 0;
+          return (
+            <div key={d} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
+              <span className="text-[0.68rem] font-semibold text-admin-ink-soft">{v > 0 ? fmtMoney(v) : ""}</span>
+              <div className="flex w-full flex-1 items-end">
+                <div
+                  className={`w-full rounded-md ${v > 0 ? "bg-admin-primary" : "border border-dashed border-admin-border"}`}
+                  style={{ height: v > 0 ? `${heightPct}%` : "4px" }}
+                />
+              </div>
+              <span className="text-[0.7rem] font-bold text-admin-ink-soft">{DAY_LABELS[i]}</span>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-admin-border pt-3 text-[0.82rem]">
+        <span className="text-admin-ink-soft">
+          Acumulado: <b className="font-data text-admin-ink">{fmtMoney(acumulado)}</b>
+        </span>
+        {goal != null && (
+          <span className="text-admin-ink-soft">
+            Meta: <b className="font-data text-admin-ink">{fmtMoney(goal)}</b>
+          </span>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default async function InicioPage() {
   const session = await requireSession();
   return session.role === "admin" ? <AdminInicio uid={session.uid} role={session.role} /> : <EmployeeInicio uid={session.uid} role={session.role} />;
@@ -140,6 +181,11 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
   const workedDates = new Set(weekAttendance.filter((a) => a.employee_id === uid && PAID_STATUSES.has(a.status)).map((a) => a.work_date));
   const capturedDates = new Set(weekCuts.map((c) => c.cut_date));
   const daysWorked = workedDates.size;
+  const salesByDate = new Map<string, number>();
+  for (const c of weekCuts) {
+    if (c.status === "Rechazado") continue;
+    salesByDate.set(c.cut_date, (salesByDate.get(c.cut_date) ?? 0) + c.total);
+  }
   const barGoal = tiers.nextTier?.goal ?? tiers.currentTier?.goal ?? Math.max(weekSales.sales, 1);
   const barPct = Math.min(100, Math.round((weekSales.sales / barGoal) * 100));
 
@@ -197,6 +243,8 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           </Link>
         </div>
       </section>
+
+      <SalesByDayChart monday={monday} salesByDate={salesByDate} goal={tiers.nextTier?.goal ?? tiers.currentTier?.goal ?? null} />
 
       {tiers.ordered.length > 0 && (
         <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
