@@ -53,6 +53,15 @@ export async function listCutsForMonth(month: string, onlyEmployeeId?: string): 
   return data as Cut[];
 }
 
+/** Cortes en un rango de fechas explícito (p.ej. una semana que cruza de mes) — a diferencia de listCutsForMonth. */
+export async function listCutsForRange(startDate: string, endDate: string, onlyEmployeeId?: string): Promise<Cut[]> {
+  let query = supabaseAdmin().from("cuts").select().gte("cut_date", startDate).lte("cut_date", endDate).order("cut_date", { ascending: true });
+  if (onlyEmployeeId) query = query.eq("employee_id", onlyEmployeeId);
+  const { data, error } = await query;
+  if (error) throw new Error(`No se pudieron leer los cortes: ${error.message}`);
+  return data as Cut[];
+}
+
 export async function getCut(id: string): Promise<Cut | null> {
   const { data, error } = await supabaseAdmin().from("cuts").select().eq("id", id).single();
   if (error) return null;

@@ -4,7 +4,7 @@ import { requireSession } from "@/lib/admin-auth";
 import { getProfileById, getActiveEmployeeByShift, type Profile } from "@/lib/profiles";
 import { listAttendanceForRange } from "@/lib/attendance";
 import { computeWeekFromRecords, listBonusTiers, tierProgress, type BonusTier } from "@/lib/bonuses";
-import { listCutsForMonth, type Cut } from "@/lib/cuts";
+import { listCutsForMonth, listCutsForRange, type Cut } from "@/lib/cuts";
 import { listOrders } from "@/lib/orders";
 import { lastEventToday, mexicoCityToday, type TimeClockEvent } from "@/lib/time-clock";
 import { addDays, mondayOf } from "@/lib/dates";
@@ -15,6 +15,7 @@ export const dynamic = "force-dynamic";
 
 const PAID_STATUSES = new Set(["Asistió", "Cubrió turno"]);
 const SHIFTS = ["Matutino", "Vespertino"] as const;
+const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 function fmtMoney(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n);
@@ -77,6 +78,44 @@ function Ladder({ sales, tiers }: { sales: number; tiers: Tiers }) {
   );
 }
 
+function CutsStreak({ monday, workedDates, capturedDates }: { monday: string; workedDates: Set<string>; capturedDates: Set<string> }) {
+  const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+  const workedCount = days.filter((d) => workedDates.has(d)).length;
+  const capturedCount = days.filter((d) => workedDates.has(d) && capturedDates.has(d)).length;
+
+  return (
+    <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3 sm:col-span-2">
+      <span className="text-[0.78rem] text-admin-ink-soft">Cortes capturados esta semana</span>
+      <div className="mt-2 flex justify-between gap-1">
+        {days.map((d, i) => {
+          const worked = workedDates.has(d);
+          const captured = capturedDates.has(d);
+          const state = !worked ? "none" : captured ? "ok" : "missing";
+          return (
+            <div key={d} className="flex flex-col items-center gap-1">
+              <span className="text-[0.68rem] font-semibold text-admin-ink-soft">{DAY_LABELS[i]}</span>
+              <span
+                className={`grid h-7 w-7 place-items-center rounded-full text-[0.8rem] font-bold ${
+                  state === "ok"
+                    ? "bg-admin-ok-bg text-admin-ok-text"
+                    : state === "missing"
+                      ? "bg-admin-bad-bg text-admin-bad-text"
+                      : "bg-admin-bg text-admin-ink-soft"
+                }`}
+              >
+                {state === "ok" ? "✓" : state === "missing" ? "!" : "–"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[0.78rem] font-semibold text-admin-ink">
+        {capturedCount} de {workedCount} turnos capturados
+      </p>
+    </div>
+  );
+}
+
 export default async function InicioPage() {
   const session = await requireSession();
   return session.role === "admin" ? <AdminInicio uid={session.uid} role={session.role} /> : <EmployeeInicio uid={session.uid} role={session.role} />;
@@ -87,17 +126,20 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
   const monday = mondayOf(today);
   const sunday = addDays(monday, 6);
 
-  const [profile, last, weekSales, bonusTiers, weekAttendance] = await Promise.all([
+  const [profile, last, weekSales, bonusTiers, weekAttendance, weekCuts] = await Promise.all([
     getProfileById(uid),
     lastEventToday(uid),
     computeWeekFromRecords(uid, monday, sunday, { includePending: true }),
     listBonusTiers(today.slice(0, 7)),
     listAttendanceForRange(monday, sunday),
+    listCutsForRange(monday, sunday, uid),
   ]);
 
   const shift = profile?.shift ?? "";
   const tiers = tierProgress(weekSales.sales, shift, bonusTiers);
-  const daysWorked = weekAttendance.filter((a) => a.employee_id === uid && PAID_STATUSES.has(a.status)).length;
+  const workedDates = new Set(weekAttendance.filter((a) => a.employee_id === uid && PAID_STATUSES.has(a.status)).map((a) => a.work_date));
+  const capturedDates = new Set(weekCuts.map((c) => c.cut_date));
+  const daysWorked = workedDates.size;
   const barGoal = tiers.nextTier?.goal ?? tiers.currentTier?.goal ?? Math.max(weekSales.sales, 1);
   const barPct = Math.min(100, Math.round((weekSales.sales / barGoal) * 100));
 
@@ -140,6 +182,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
             <span className="text-[0.78rem] text-admin-ink-soft">Días trabajados esta semana</span>
             <p className="mt-0.5 font-display font-semibold text-admin-ink">{daysWorked}</p>
           </div>
+          <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
