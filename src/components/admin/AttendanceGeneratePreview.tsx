@@ -113,77 +113,99 @@ export function AttendanceGeneratePreview({ month }: { month: string }) {
       )}
 
       {cells && (
-        <div className="mt-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2 text-[0.76rem] font-semibold">
-              <span className="rounded-full bg-admin-ok-bg px-3 py-1 text-admin-ok-text">{counts.asistencia ?? 0} asistencia</span>
-              <span className="rounded-full bg-admin-bad-bg px-3 py-1 text-admin-bad-text">{counts.falta ?? 0} falta</span>
-              <span className="rounded-full bg-admin-pending-bg px-3 py-1 text-admin-pending-text">{counts.pendiente ?? 0} pendiente</span>
-              <span className="rounded-full border border-admin-border px-3 py-1 text-admin-ink-soft">{counts.ya_capturado ?? 0} ya capturado</span>
-            </div>
-            <div className="flex gap-2">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setCells(null)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Vista previa de asistencia"
+            onClick={(e) => e.stopPropagation()}
+            className="flex max-h-[90vh] w-full max-w-[880px] flex-col overflow-hidden rounded-2xl bg-admin-surface shadow-lg"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-admin-border px-5 py-4">
+              <div>
+                <h2 className="font-display text-lg text-admin-ink capitalize">Vista previa · {monthLabel(month)}</h2>
+                <div className="mt-1.5 flex flex-wrap gap-2 text-[0.76rem] font-semibold">
+                  <span className="rounded-full bg-admin-ok-bg px-3 py-1 text-admin-ok-text">{counts.asistencia ?? 0} asistencia</span>
+                  <span className="rounded-full bg-admin-bad-bg px-3 py-1 text-admin-bad-text">{counts.falta ?? 0} falta</span>
+                  <span className="rounded-full bg-admin-pending-bg px-3 py-1 text-admin-pending-text">{counts.pendiente ?? 0} pendiente</span>
+                  <span className="rounded-full border border-admin-border px-3 py-1 text-admin-ink-soft">{counts.ya_capturado ?? 0} ya capturado</span>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setCells(null)}
-                className="rounded-full border border-admin-border px-4 py-2 text-[0.82rem] font-semibold text-admin-ink-soft"
+                aria-label="Cerrar"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-admin-ink-soft hover:bg-admin-bg"
               >
-                Cerrar vista previa
+                ✕
+              </button>
+            </div>
+
+            <div className="overflow-auto px-5 py-4">
+              <div className="overflow-x-auto rounded-2xl border border-admin-border bg-admin-surface">
+                <table className="w-full min-w-[760px] border-collapse text-[0.76rem]">
+                  <thead>
+                    <tr className="border-b border-admin-border bg-admin-bg text-admin-ink-soft">
+                      <th className="w-10 px-2 py-2 text-left font-medium"></th>
+                      {WEEKDAY_LABELS.map((label) => (
+                        <th key={label} className="px-2 py-2 text-left font-medium">
+                          {label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weeks.map((week) => (
+                      <Fragment key={week.label}>
+                        {SHIFTS.map((shift, shiftIdx) => (
+                          <tr key={`${week.label}-${shift}`} className={`border-b border-admin-border ${shiftIdx === 0 ? "border-t-2 border-t-admin-border" : ""}`}>
+                            {shiftIdx === 0 && (
+                              <td rowSpan={2} className="border-r border-admin-border px-2 py-2 align-top text-[0.68rem] font-bold text-admin-ink-soft">
+                                {week.days[0].dayNum}
+                              </td>
+                            )}
+                            {week.days.map((day) => {
+                              const cell = byKey.get(`${day.date}-${shift}`);
+                              return (
+                                <td key={day.date} className={`px-1.5 py-1.5 align-top ${day.inMonth ? "" : "opacity-30"}`}>
+                                  {cell ? (
+                                    <div className={`flex w-full flex-col items-start rounded-lg px-2 py-1.5 leading-tight ${OUTCOME_STYLE[cell.outcome]}`}>
+                                      <span className="text-[0.6rem] font-semibold opacity-70">{shift === "Matutino" ? "M" : "V"}</span>
+                                      <span className="font-bold">{OUTCOME_LABEL[cell.outcome]}</span>
+                                      {cell.employeeName && <span className="text-[0.66rem] font-semibold opacity-80">{firstName(cell.employeeName)}</span>}
+                                    </div>
+                                  ) : (
+                                    <div className="px-2 py-1.5 text-admin-ink-soft">—</div>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-admin-border px-5 py-4">
+              <button
+                type="button"
+                onClick={() => setCells(null)}
+                className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink-soft"
+              >
+                Cancelar
               </button>
               <button
                 type="button"
                 onClick={confirmGenerate}
                 disabled={generating || pendingToWrite === 0}
-                className="rounded-full bg-admin-primary px-5 py-2 text-[0.82rem] font-semibold text-white disabled:opacity-60"
+                className="rounded-full bg-admin-primary px-6 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
               >
                 {generating ? "Generando…" : `Confirmar y generar (${pendingToWrite})`}
               </button>
             </div>
-          </div>
-
-          <div className="mt-3 overflow-x-auto rounded-2xl border border-admin-border bg-admin-surface">
-            <table className="w-full min-w-[760px] border-collapse text-[0.76rem]">
-              <thead>
-                <tr className="border-b border-admin-border bg-admin-bg text-admin-ink-soft">
-                  <th className="w-10 px-2 py-2 text-left font-medium"></th>
-                  {WEEKDAY_LABELS.map((label) => (
-                    <th key={label} className="px-2 py-2 text-left font-medium">
-                      {label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {weeks.map((week) => (
-                  <Fragment key={week.label}>
-                    {SHIFTS.map((shift, shiftIdx) => (
-                      <tr key={`${week.label}-${shift}`} className={`border-b border-admin-border ${shiftIdx === 0 ? "border-t-2 border-t-admin-border" : ""}`}>
-                        {shiftIdx === 0 && (
-                          <td rowSpan={2} className="border-r border-admin-border px-2 py-2 align-top text-[0.68rem] font-bold text-admin-ink-soft">
-                            {week.days[0].dayNum}
-                          </td>
-                        )}
-                        {week.days.map((day) => {
-                          const cell = byKey.get(`${day.date}-${shift}`);
-                          return (
-                            <td key={day.date} className={`px-1.5 py-1.5 align-top ${day.inMonth ? "" : "opacity-30"}`}>
-                              {cell ? (
-                                <div className={`flex w-full flex-col items-start rounded-lg px-2 py-1.5 leading-tight ${OUTCOME_STYLE[cell.outcome]}`}>
-                                  <span className="text-[0.6rem] font-semibold opacity-70">{shift === "Matutino" ? "M" : "V"}</span>
-                                  <span className="font-bold">{OUTCOME_LABEL[cell.outcome]}</span>
-                                  {cell.employeeName && <span className="text-[0.66rem] font-semibold opacity-80">{firstName(cell.employeeName)}</span>}
-                                </div>
-                              ) : (
-                                <div className="px-2 py-1.5 text-admin-ink-soft">—</div>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </Fragment>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       )}
