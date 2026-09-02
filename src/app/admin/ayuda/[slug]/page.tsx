@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { getTutorial } from "@/lib/tutorials";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { TutorialStepImage } from "@/components/admin/TutorialStepImage";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,10 @@ export default async function TutorialPage({ params }: { params: Promise<{ slug:
         </p>
       )}
 
+      <p className="mt-3 max-w-[640px] rounded-lg bg-admin-primary-soft px-3 py-2 text-[0.8rem] font-semibold text-admin-primary-deep">
+        Las capturas son para ubicarte rápido — léelo completo. El detalle que necesitas a veces está en el texto, no en la foto.
+      </p>
+
       <div className="mt-6 flex max-w-[640px] flex-col gap-8">
         {tutorial.steps.map((step, i) => (
           <div key={step.title} className="flex flex-col gap-3">
@@ -48,22 +52,12 @@ export default async function TutorialPage({ params }: { params: Promise<{ slug:
               <h2 className="font-display text-[1.05rem] text-admin-ink">{step.title}</h2>
             </div>
             <p className="text-[0.9rem] text-admin-ink-soft">{step.body}</p>
-            {step.image && (
-              <div className="max-w-[260px] rounded-2xl border border-admin-border bg-admin-bg p-2 shadow-sm sm:hidden">
-                <Image src={step.image} alt={step.imageAlt ?? step.title} width={420} height={860} className="w-full rounded-xl" />
-              </div>
-            )}
-            {step.imageDesktop && (
-              <div className="hidden max-w-[520px] rounded-2xl border border-admin-border bg-admin-bg p-2 shadow-sm sm:block">
-                <Image
-                  src={step.imageDesktop}
-                  alt={step.imageAlt ?? step.title}
-                  width={1440}
-                  height={step.imageDesktopHeight ?? 900}
-                  className="w-full rounded-xl"
-                />
-              </div>
-            )}
+            <TutorialStepImage
+              image={step.image}
+              imageDesktop={step.imageDesktop}
+              imageDesktopHeight={step.imageDesktopHeight}
+              imageAlt={step.imageAlt ?? step.title}
+            />
             {step.cue && (
               <span
                 className={`inline-block w-fit rounded-lg px-3 py-1.5 text-[0.8rem] font-semibold ${
