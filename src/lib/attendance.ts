@@ -106,6 +106,14 @@ export interface AttendancePlanCell {
   existingStatus?: AttendanceStatus;
 }
 
+/** "Matutino", "Fin de semana matutino" → "Matutino" (y lo mismo para Vespertino) — para comparar turnos sin importar cómo se haya capturado. */
+function normalizeShift(shift: string): "Matutino" | "Vespertino" | null {
+  const s = shift.trim().toLowerCase();
+  if (s.endsWith("matutino")) return "Matutino";
+  if (s.endsWith("vespertino")) return "Vespertino";
+  return null;
+}
+
 /**
  * Calcula qué le pondría "Generar asistencia desde los cortes" a cada
  * turno del mes, sin escribir nada — para la vista previa. Entre semana la
@@ -136,8 +144,16 @@ export async function planAttendanceFromCuts(month: string): Promise<AttendanceP
   const rateById = new Map((employees ?? []).map((e) => [e.id, e.daily_rate as number]));
   const cutEmployeeByKey = new Map<string, string>();
   for (const c of cuts ?? []) cutEmployeeByKey.set(`${c.cut_date}-${c.shift}`, c.employee_id);
+  // La captura manual de fin de semana usa "Fin de semana matutino/vespertino"
+  // como turno, distinto de como lo guardan los cortes y el resto de la app
+  // ("Matutino"/"Vespertino") — se normaliza para que ambas formas cuenten
+  // como el mismo turno ya capturado.
   const existingByKey = new Map<string, { employee_id: string; status: AttendanceStatus }>();
-  for (const a of existing ?? []) existingByKey.set(`${a.work_date}-${a.shift}`, { employee_id: a.employee_id, status: a.status as AttendanceStatus });
+  for (const a of existing ?? []) {
+    const normalized = normalizeShift(a.shift);
+    if (!normalized) continue;
+    existingByKey.set(`${a.work_date}-${normalized}`, { employee_id: a.employee_id, status: a.status as AttendanceStatus });
+  }
 
   const defaultByShift: Record<"Matutino" | "Vespertino", { id: string } | undefined> = {
     Matutino: (employees ?? []).find((e) => e.shift === "Matutino"),
