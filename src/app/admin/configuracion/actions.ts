@@ -6,6 +6,7 @@ import { saveBreakevenMargin } from "@/lib/breakeven";
 import { saveDeletePinHash } from "@/lib/security-settings";
 import { hashPassword } from "@/lib/password";
 import { logAction } from "@/lib/history";
+import { getModuleEditorStructure, movePanelModule, updatePanelModule, type ModuleEditorEntry } from "@/lib/panel-modules";
 
 export interface BreakevenMarginFormState {
   error?: string;
@@ -52,4 +53,41 @@ export async function saveDeletePinForm(_prevState: DeletePinFormState | undefin
   await logAction(session.uid, "Actualizó el PIN de eliminación", "");
   revalidatePath("/admin/configuracion");
   return { saved: true };
+}
+
+export interface ModuleActionResult {
+  ok: boolean;
+  error?: string;
+  entries?: ModuleEditorEntry[];
+}
+
+const FIELD_LABEL: Record<"enabled" | "visibleEmployee", string> = {
+  enabled: "activo",
+  visibleEmployee: "visible para vendedor",
+};
+
+export async function toggleModuleAction(key: string, field: "enabled" | "visibleEmployee", value: boolean): Promise<ModuleActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await updatePanelModule(key, field === "enabled" ? { enabled: value } : { visibleEmployee: value });
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar el módulo." };
+  }
+  await logAction(session.uid, "Configuró el panel", `${key} · ${FIELD_LABEL[field]}: ${value ? "sí" : "no"}`);
+  revalidatePath("/admin/configuracion");
+  const entries = await getModuleEditorStructure();
+  return { ok: true, entries };
+}
+
+export async function moveModuleAction(key: string, direction: "up" | "down"): Promise<ModuleActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await movePanelModule(key, direction);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo mover el módulo." };
+  }
+  await logAction(session.uid, "Reordenó el panel", `${key} ${direction === "up" ? "subió" : "bajó"}`);
+  revalidatePath("/admin/configuracion");
+  const entries = await getModuleEditorStructure();
+  return { ok: true, entries };
 }
