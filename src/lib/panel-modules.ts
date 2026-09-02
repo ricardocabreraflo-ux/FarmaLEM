@@ -9,16 +9,25 @@ export interface PanelModuleRow {
   sort_order: number;
 }
 
-const DEFAULT_ROW: Omit<PanelModuleRow, "key"> = { enabled: true, visible_employee: true, sort_order: 0 };
-
+/**
+ * Lee la configuración guardada. Si la tabla todavía no existe (la
+ * migración supabase/migrations/20260902000003_panel_modules.sql no se ha
+ * aplicado), el panel sigue funcionando con su comportamiento de siempre
+ * en vez de romperse — cada módulo cae de vuelta a su valor por defecto
+ * (activo, visible según defaultAdminOnly).
+ */
 async function getPanelModuleRows(): Promise<Map<string, PanelModuleRow>> {
-  const { data, error } = await supabaseAdmin().from("panel_modules").select("key, enabled, visible_employee, sort_order");
-  if (error) throw new Error(error.message);
-  return new Map((data ?? []).map((r) => [r.key, r as PanelModuleRow]));
+  try {
+    const { data, error } = await supabaseAdmin().from("panel_modules").select("key, enabled, visible_employee, sort_order");
+    if (error) throw new Error(error.message);
+    return new Map((data ?? []).map((r) => [r.key, r as PanelModuleRow]));
+  } catch {
+    return new Map();
+  }
 }
 
-function rowFor(rows: Map<string, PanelModuleRow>, key: string): PanelModuleRow {
-  return rows.get(key) ?? { key, ...DEFAULT_ROW };
+function rowFor(rows: Map<string, PanelModuleRow>, key: string, fallbackVisibleEmployee = true): PanelModuleRow {
+  return rows.get(key) ?? { key, enabled: true, visible_employee: fallbackVisibleEmployee, sort_order: 0 };
 }
 
 function isLeafVisible(leaf: NavLeafDef, rows: Map<string, PanelModuleRow>, isAdmin: boolean): boolean {
@@ -27,7 +36,7 @@ function isLeafVisible(leaf: NavLeafDef, rows: Map<string, PanelModuleRow>, isAd
     return rowFor(rows, leaf.key).enabled;
   }
   if (leaf.locked) return !leaf.defaultAdminOnly;
-  const row = rowFor(rows, leaf.key);
+  const row = rowFor(rows, leaf.key, !leaf.defaultAdminOnly);
   return row.enabled && row.visible_employee;
 }
 
@@ -69,7 +78,7 @@ export async function getResolvedNav(isAdmin: boolean): Promise<ResolvedNavEntry
     if (!groupRow.enabled) continue;
     const items = entry.items
       .filter((item) => isLeafVisible(item, rows, isAdmin))
-      .sort((a, b) => rowFor(rows, a.key).sort_order - rowFor(rows, b.key).sort_order)
+      .sort((a, b) => rowFor(rows, a.key, !a.defaultAdminOnly).sort_order - rowFor(rows, b.key, !b.defaultAdminOnly).sort_order)
       .map(toResolvedLeaf);
     if (items.length === 0) continue;
     scored.push({ order: groupRow.sort_order, entry: { type: "group", key: entry.key, label: entry.label, iconKey: entry.iconKey, items } });
@@ -102,7 +111,7 @@ export interface ModuleEditorGroup {
 export type ModuleEditorEntry = ModuleEditorLeaf | ModuleEditorGroup;
 
 function toEditorLeaf(leaf: NavLeafDef, rows: Map<string, PanelModuleRow>): ModuleEditorLeaf {
-  const row = rowFor(rows, leaf.key);
+  const row = rowFor(rows, leaf.key, !leaf.defaultAdminOnly);
   return {
     type: "leaf",
     key: leaf.key,
@@ -127,7 +136,7 @@ export async function getModuleEditorStructure(): Promise<ModuleEditorEntry[]> {
         label: entry.label,
         enabled: row.enabled,
         items: [...entry.items]
-          .sort((a, b) => rowFor(rows, a.key).sort_order - rowFor(rows, b.key).sort_order)
+          .sort((a, b) => rowFor(rows, a.key, !a.defaultAdminOnly).sort_order - rowFor(rows, b.key, !b.defaultAdminOnly).sort_order)
           .map((item) => toEditorLeaf(item, rows)),
       },
     };
