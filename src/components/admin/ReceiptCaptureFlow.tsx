@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { compressToBase64 } from "@/lib/client-image";
-import { fetchSupplierCatalogAction, findByBarcodeAction, parseTicketPhotosAction, saveReceiptAction } from "@/app/admin/compras/actions";
+import { fetchSupplierCatalogAction, findByBarcodeAction, saveReceiptAction } from "@/app/admin/compras/actions";
+import { parseTicketPhotosClient } from "@/lib/ticket-parser-client";
 import { mexicoCityToday } from "@/lib/dates";
-import type { ParsedLine, ParsedTicket } from "@/lib/ticket-parser";
+import type { ParsedLine, ParsedTicket } from "@/lib/ticket-types";
 import type { SupplierProduct } from "@/lib/supplier-products";
 import type { Supplier } from "@/lib/suppliers";
 
@@ -131,13 +132,14 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   async function leerTicket() {
     setError(null);
     setStep("leyendo");
-    const res = await parseTicketPhotosAction(photos.map((p) => ({ mediaType: "image/jpeg", data: p.base64 })));
-    if (!res.ok || !res.ticket) {
-      setError(`No se pudo leer el ticket: ${res.error ?? "error desconocido"}`);
+    let ticket: ParsedTicket;
+    try {
+      ticket = await parseTicketPhotosClient(photos.map((p) => ({ mediaType: "image/jpeg", data: p.base64 })));
+    } catch (err) {
+      setError(`No se pudo leer el ticket: ${err instanceof Error ? err.message : "la conexión se interrumpió o tardó demasiado"}.`);
       setStep("fotos");
       return;
     }
-    const ticket = res.ticket;
     setParsed(ticket);
     if (ticket.ticket_numero) setTicketNumber(ticket.ticket_numero);
     if (ticket.fecha) setTicketDate(ticket.fecha);

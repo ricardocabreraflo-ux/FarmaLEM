@@ -2,7 +2,7 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { createPurchasesFromReceipt, type ReceiptLineInput } from "@/lib/purchases";
 import { upsertEquivalences } from "@/lib/supplier-products";
-import type { ParsedTicket } from "@/lib/ticket-parser";
+import type { ParsedTicket } from "@/lib/ticket-types";
 
 export interface PurchaseReceipt {
   id: string;

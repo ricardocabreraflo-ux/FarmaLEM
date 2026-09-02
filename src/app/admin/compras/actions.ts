@@ -3,27 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { logAction } from "@/lib/history";
-import { parseTicketPhotos, type ParsedTicket, type TicketImage } from "@/lib/ticket-parser";
+import type { ParsedTicket } from "@/lib/ticket-types";
 import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-products";
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
 import { saveReceipt, type SaveReceiptLine } from "@/lib/purchase-receipts";
-
-export interface ParseTicketResult {
-  ok: boolean;
-  ticket?: ParsedTicket;
-  error?: string;
-}
-
-/** Lee las fotos del ticket con Claude (corre en el servidor; usa ANTHROPIC_API_KEY). */
-export async function parseTicketPhotosAction(images: TicketImage[]): Promise<ParseTicketResult> {
-  await requireAdminSession();
-  try {
-    const ticket = await parseTicketPhotos(images);
-    return { ok: true, ticket };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "No se pudo leer el ticket." };
-  }
-}
 
 export async function fetchSupplierCatalogAction(supplierId: string): Promise<SupplierProduct[]> {
   await requireAdminSession();
