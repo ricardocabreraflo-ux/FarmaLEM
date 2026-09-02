@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { upsertAttendance, deleteAttendance, type AttendanceStatus } from "@/lib/attendance";
+import { upsertAttendance, deleteAttendance, generateAttendanceFromCuts, type AttendanceStatus, type GenerateAttendanceResult } from "@/lib/attendance";
 import { logAction } from "@/lib/history";
 
 export interface AttendanceFormState {
@@ -49,4 +49,24 @@ export async function deleteAttendanceAction(id: string) {
   await deleteAttendance(id);
   await logAction(session.uid, "Quitó asistencia", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/asistencia");
+}
+
+export interface GenerateAttendanceActionResult {
+  ok: boolean;
+  result?: GenerateAttendanceResult;
+  error?: string;
+}
+
+/** Rellena la asistencia del mes a partir de los cortes ya capturados — para migrar un mes atrasado. */
+export async function generateAttendanceFromCutsAction(month: string): Promise<GenerateAttendanceActionResult> {
+  const session = await requireAdminSession();
+  try {
+    const result = await generateAttendanceFromCuts(month, session.uid);
+    await logAction(session.uid, "Generó asistencia desde cortes", `${month} · ${result.created} registros`);
+    revalidatePath("/admin/asistencia");
+    revalidatePath("/admin/sueldos");
+    return { ok: true, result };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo generar la asistencia." };
+  }
 }

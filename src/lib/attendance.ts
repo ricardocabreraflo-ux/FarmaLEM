@@ -88,3 +88,86 @@ export async function deleteAttendance(id: string): Promise<void> {
   const { error } = await supabaseAdmin().from("attendance").delete().eq("id", id);
   if (error) throw new Error(`No se pudo quitar el registro: ${error.message}`);
 }
+
+export interface GenerateAttendanceResult {
+  created: number;
+  weekendPending: string[];
+}
+
+/**
+ * Rellena la asistencia de un mes a partir de los cortes ya capturados, para
+ * cuando se migra un mes completo (cortes) sin haber ido marcando asistencia
+ * día a día. Entre semana la regla es mecánica: si hay corte de ese turno
+ * ese día, Asistió (con quien lo haya capturado); si no lo hay, Falta para
+ * quien tiene fijo ese turno. Fin de semana solo hay un turno (alterna entre
+ * las dos) — si tiene corte, se usa quién lo capturó; si no lo tiene, no se
+ * puede saber a quién marcarle la falta sin el calendario de turnos, así que
+ * esa fecha se deja pendiente en vez de adivinar.
+ */
+export async function generateAttendanceFromCuts(month: string, createdBy: string): Promise<GenerateAttendanceResult> {
+  const db = supabaseAdmin();
+  const { start, end } = monthRange(month);
+  const [y, m] = month.split("-").map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+
+  const [{ data: cuts, error: cutsErr }, { data: employees, error: empErr }] = await Promise.all([
+    db.from("cuts").select("cut_date, shift, employee_id").gte("cut_date", start).lt("cut_date", end),
+    db.from("profiles").select("id, shift, daily_rate").eq("role", "employee").eq("active", true),
+  ]);
+  if (cutsErr) throw new Error(`No se pudieron leer los cortes: ${cutsErr.message}`);
+  if (empErr) throw new Error(`No se pudieron leer los empleados: ${empErr.message}`);
+
+  const cutEmployeeByKey = new Map<string, string>();
+  for (const c of cuts ?? []) cutEmployeeByKey.set(`${c.cut_date}-${c.shift}`, c.employee_id);
+
+  const rateById = new Map((employees ?? []).map((e) => [e.id, e.daily_rate as number]));
+  const defaultByShift: Record<"Matutino" | "Vespertino", { id: string } | undefined> = {
+    Matutino: (employees ?? []).find((e) => e.shift === "Matutino"),
+    Vespertino: (employees ?? []).find((e) => e.shift === "Vespertino"),
+  };
+
+  let created = 0;
+  const weekendPending: string[] = [];
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${month}-${String(day).padStart(2, "0")}`;
+    const dow = new Date(y, m - 1, day).getDay(); // 0 domingo … 6 sábado
+    const isWeekend = dow === 0 || dow === 6;
+    // Convención ya usada en CutForm: sábado cuenta como Matutino, domingo como Vespertino.
+    const shiftsToday: Array<"Matutino" | "Vespertino"> = isWeekend ? [dow === 6 ? "Matutino" : "Vespertino"] : ["Matutino", "Vespertino"];
+
+    for (const shift of shiftsToday) {
+      const cutEmployeeId = cutEmployeeByKey.get(`${dateStr}-${shift}`);
+      if (cutEmployeeId) {
+        await upsertAttendance({
+          workDate: dateStr,
+          employeeId: cutEmployeeId,
+          shift,
+          status: "Asistió",
+          rate: rateById.get(cutEmployeeId) ?? 0,
+          note: null,
+          createdBy,
+        });
+        created++;
+      } else if (isWeekend) {
+        weekendPending.push(dateStr);
+      } else {
+        const defaultEmployee = defaultByShift[shift];
+        if (defaultEmployee) {
+          await upsertAttendance({
+            workDate: dateStr,
+            employeeId: defaultEmployee.id,
+            shift,
+            status: "Falta",
+            rate: 0,
+            note: "Generado desde cortes: sin corte capturado ese turno.",
+            createdBy,
+          });
+          created++;
+        }
+      }
+    }
+  }
+
+  return { created, weekendPending };
+}

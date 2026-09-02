@@ -6,6 +6,7 @@ import { listAttendanceForMonth } from "@/lib/attendance";
 import { mexicoCityToday } from "@/lib/time-clock";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttendanceList } from "@/components/admin/AttendanceList";
+import { GenerateAttendanceFromCutsButton } from "@/components/admin/GenerateAttendanceFromCutsButton";
 import { MonthPicker } from "@/components/admin/MonthPicker";
 
 export const metadata: Metadata = { title: "Asistencia" };
@@ -51,6 +52,10 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
       </div>
 
       <MonthPicker month={month} basePath="/admin/asistencia" />
+
+      <div className="mt-3">
+        <GenerateAttendanceFromCutsButton month={month} />
+      </div>
 
       <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {activeEmployees.map((e) => {
