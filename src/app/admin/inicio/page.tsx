@@ -4,7 +4,7 @@ import { requireSession } from "@/lib/admin-auth";
 import { getProfileById, getActiveEmployeeByShift, type Profile } from "@/lib/profiles";
 import { listAttendanceForRange } from "@/lib/attendance";
 import { computeWeekFromRecords, listBonusTiers, tierProgress, type BonusTier } from "@/lib/bonuses";
-import { listCutsForMonth } from "@/lib/cuts";
+import { listCutsForMonth, type Cut } from "@/lib/cuts";
 import { listOrders } from "@/lib/orders";
 import { lastEventToday, mexicoCityToday, type TimeClockEvent } from "@/lib/time-clock";
 import { addDays, mondayOf } from "@/lib/dates";
@@ -173,21 +173,21 @@ interface ShiftSnapshot {
   sales: number;
   tiers: Tiers;
   last: TimeClockEvent | null;
-  cutToday: boolean;
+  todaysCut: Cut | null;
 }
 
-async function loadShiftSnapshot(shift: string, monday: string, sunday: string, bonusTiers: BonusTier[], todaysCuts: { shift: string }[]): Promise<ShiftSnapshot> {
+async function loadShiftSnapshot(shift: string, monday: string, sunday: string, bonusTiers: BonusTier[], todaysCuts: Cut[]): Promise<ShiftSnapshot> {
   const employee = await getActiveEmployeeByShift(shift);
-  if (!employee) return { shift, employee: null, sales: 0, tiers: { ordered: [], currentTier: null, nextTier: null }, last: null, cutToday: false };
+  if (!employee) return { shift, employee: null, sales: 0, tiers: { ordered: [], currentTier: null, nextTier: null }, last: null, todaysCut: null };
 
   const [weekSales, last] = await Promise.all([computeWeekFromRecords(employee.id, monday, sunday), lastEventToday(employee.id)]);
   const tiers = tierProgress(weekSales.sales, shift, bonusTiers);
-  const cutToday = todaysCuts.some((c) => c.shift === shift);
-  return { shift, employee, sales: weekSales.sales, tiers, last, cutToday };
+  const todaysCut = todaysCuts.find((c) => c.shift === shift) ?? null;
+  return { shift, employee, sales: weekSales.sales, tiers, last, todaysCut };
 }
 
 function ShiftCard({ snapshot }: { snapshot: ShiftSnapshot }) {
-  const { shift, employee, sales, tiers, last, cutToday } = snapshot;
+  const { shift, employee, sales, tiers, last, todaysCut } = snapshot;
   if (!employee) {
     return (
       <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
@@ -224,14 +224,28 @@ function ShiftCard({ snapshot }: { snapshot: ShiftSnapshot }) {
       <p className="mt-2 text-[0.82rem] text-admin-ink-soft">
         <GoalNote sales={sales} tiers={tiers} />
       </p>
+      {todaysCut?.status === "Por revisar" && (
+        <p className="mt-1 text-[0.82rem] text-admin-pending-text">
+          El corte de hoy ({fmtMoney(todaysCut.total)}) todavía no cuenta aquí — falta{" "}
+          <Link href="/admin/cortes" className="font-semibold underline">
+            aprobarlo en Cortes
+          </Link>
+          .
+        </p>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-2 text-[0.78rem]">
         <span className="rounded-full border border-admin-border px-2.5 py-1 text-admin-ink-soft">
           {last ? `${last.event_type} · ${fmtTime(last.occurred_at)}` : "Sin marcar hoy"}
         </span>
-        <span className={`rounded-full px-2.5 py-1 font-semibold ${cutToday ? "bg-admin-ok-bg text-admin-ok-text" : "bg-admin-pending-bg text-admin-pending-text"}`}>
-          {cutToday ? "Corte de hoy capturado" : "Corte de hoy pendiente"}
-        </span>
+        {!todaysCut && <span className="rounded-full bg-admin-pending-bg px-2.5 py-1 font-semibold text-admin-pending-text">Corte de hoy pendiente</span>}
+        {todaysCut?.status === "Aprobado" && <span className="rounded-full bg-admin-ok-bg px-2.5 py-1 font-semibold text-admin-ok-text">Corte de hoy aprobado</span>}
+        {todaysCut?.status === "Por revisar" && (
+          <Link href="/admin/cortes" className="rounded-full bg-admin-pending-bg px-2.5 py-1 font-semibold text-admin-pending-text">
+            Corte de hoy sin aprobar
+          </Link>
+        )}
+        {todaysCut?.status === "Rechazado" && <span className="rounded-full bg-admin-bad-bg px-2.5 py-1 font-semibold text-admin-bad-text">Corte de hoy rechazado</span>}
       </div>
 
       <Ladder sales={sales} tiers={tiers} />
@@ -249,6 +263,7 @@ async function AdminInicio({ uid, role }: { uid: string; role: "admin" | "employ
   const todaysCuts = monthCuts.filter((c) => c.cut_date === today);
   const pendingOrders = orders.filter((o) => o.status === "pagado" || o.status === "listo_para_recoger").length;
   const ventasHoy = todaysCuts.filter((c) => c.status === "Aprobado").reduce((sum, c) => sum + c.total, 0);
+  const ventasHoySinAprobar = todaysCuts.filter((c) => c.status === "Por revisar").reduce((sum, c) => sum + c.total, 0);
 
   const [matutino, vespertino] = await Promise.all(SHIFTS.map((shift) => loadShiftSnapshot(shift, monday, sunday, bonusTiers, todaysCuts)));
 
@@ -263,8 +278,13 @@ async function AdminInicio({ uid, role }: { uid: string; role: "admin" | "employ
           <p className="mt-1 font-display text-lg text-admin-ink">{pendingOrders}</p>
         </div>
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
-          <span className="text-[0.78rem] text-admin-ink-soft">Ventas de hoy</span>
+          <span className="text-[0.78rem] text-admin-ink-soft">Ventas de hoy (aprobadas)</span>
           <p className="mt-1 font-display text-lg text-admin-ink">{fmtMoney(ventasHoy)}</p>
+          {ventasHoySinAprobar > 0 && (
+            <Link href="/admin/cortes" className="mt-0.5 block text-[0.76rem] font-semibold text-admin-pending-text hover:underline">
+              + {fmtMoney(ventasHoySinAprobar)} sin aprobar
+            </Link>
+          )}
         </div>
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
           <span className="text-[0.78rem] text-admin-ink-soft">Cortes capturados hoy</span>
