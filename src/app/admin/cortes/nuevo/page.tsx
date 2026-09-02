@@ -22,7 +22,7 @@ export default async function NewCutPage() {
   return (
     <AdminShell activeHref="/admin/cortes" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <h1 className="font-display text-2xl text-admin-ink">Capturar corte</h1>
-      <CutForm employees={employees} defaultShift={defaultShift} canChooseShift={canChooseShift} minDate={minDate} />
+      <CutForm employees={employees} defaultShift={defaultShift} canChooseShift={canChooseShift} minDate={minDate} isAdmin={session.role === "admin"} />
     </AdminShell>
   );
 }

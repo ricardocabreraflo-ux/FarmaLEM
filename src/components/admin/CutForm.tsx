@@ -15,11 +15,13 @@ export function CutForm({
   defaultShift,
   canChooseShift,
   minDate,
+  isAdmin,
 }: {
   employees: Profile[];
   defaultShift: string;
   canChooseShift: boolean;
   minDate?: string;
+  isAdmin?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<CutFormState | undefined, FormData>(createCutForm, undefined);
   const [cutDate, setCutDate] = useState(mexicoCityToday());
@@ -124,11 +126,14 @@ export function CutForm({
             <input
               name="cashDelivered"
               type="number"
-              readOnly
+              min="0"
+              step="0.01"
+              readOnly={!isAdmin}
               required
               placeholder="Sin contar"
               value={cashDelivered}
-              className={`${inputClass} mt-0 cursor-not-allowed bg-admin-bg/60 text-admin-ink-soft`}
+              onChange={isAdmin ? (e) => setCashDelivered(e.target.value) : undefined}
+              className={`${inputClass} mt-0 ${!isAdmin ? "cursor-not-allowed bg-admin-bg/60 text-admin-ink-soft" : ""}`}
             />
             <button
               type="button"
@@ -138,7 +143,13 @@ export function CutForm({
               Contar efectivo
             </button>
           </div>
-          {!hasCounted && <span className="mt-1 block font-normal text-admin-bad-text">Obligatorio: cuenta el efectivo por denominación.</span>}
+          {isAdmin ? (
+            <span className="mt-1 block font-normal text-admin-ink-soft">
+              Puedes escribirlo directo (por ejemplo al capturar un corte atrasado sin el efectivo físico), o usar &quot;Contar efectivo&quot; si sí lo tienes a la mano.
+            </span>
+          ) : (
+            !hasCounted && <span className="mt-1 block font-normal text-admin-bad-text">Obligatorio: cuenta el efectivo por denominación.</span>
+          )}
         </label>
 
         <label className="block text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
@@ -187,7 +198,7 @@ export function CutForm({
         </Link>
         <button
           type="submit"
-          disabled={pending || cardExceedsTotal || !hasCounted}
+          disabled={pending || cardExceedsTotal || (!isAdmin && !hasCounted) || (isAdmin && !hasDeliveredValue)}
           className="rounded-full bg-admin-primary px-6 py-2.5 text-[0.86rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
         >
           {pending ? "Guardando…" : "Guardar corte"}
