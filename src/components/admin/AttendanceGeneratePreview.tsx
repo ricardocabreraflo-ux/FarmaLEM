@@ -14,6 +14,7 @@ const OUTCOME_STYLE: Record<AttendancePlanOutcome, string> = {
   falta: "bg-admin-bad-bg text-admin-bad-text",
   pendiente: "bg-admin-pending-bg text-admin-pending-text",
   ya_capturado: "bg-admin-bg text-admin-ink-soft",
+  corregir_tarifa: "bg-admin-primary-soft text-admin-primary-deep",
 };
 
 const OUTCOME_LABEL: Record<AttendancePlanOutcome, string> = {
@@ -21,6 +22,7 @@ const OUTCOME_LABEL: Record<AttendancePlanOutcome, string> = {
   falta: "FALTA",
   pendiente: "PENDIENTE",
   ya_capturado: "YA CAPTURADO",
+  corregir_tarifa: "CORREGIR 2X",
 };
 
 function firstName(name: string | null) {
@@ -51,7 +53,7 @@ export function AttendanceGeneratePreview({ month }: { month: string }) {
     acc[c.outcome] = (acc[c.outcome] ?? 0) + 1;
     return acc;
   }, {});
-  const pendingToWrite = (cells ?? []).filter((c) => c.outcome === "asistencia" || c.outcome === "falta").length;
+  const pendingToWrite = (cells ?? []).filter((c) => c.outcome === "asistencia" || c.outcome === "falta" || c.outcome === "corregir_tarifa").length;
 
   async function loadPreview() {
     setLoadingPreview(true);
@@ -128,6 +130,7 @@ export function AttendanceGeneratePreview({ month }: { month: string }) {
                   <span className="rounded-full bg-admin-ok-bg px-3 py-1 text-admin-ok-text">{counts.asistencia ?? 0} asistencia</span>
                   <span className="rounded-full bg-admin-bad-bg px-3 py-1 text-admin-bad-text">{counts.falta ?? 0} falta</span>
                   <span className="rounded-full bg-admin-pending-bg px-3 py-1 text-admin-pending-text">{counts.pendiente ?? 0} pendiente</span>
+                  <span className="rounded-full bg-admin-primary-soft px-3 py-1 text-admin-primary-deep">{counts.corregir_tarifa ?? 0} por corregir a 2x</span>
                   <span className="rounded-full border border-admin-border px-3 py-1 text-admin-ink-soft">{counts.ya_capturado ?? 0} ya capturado</span>
                 </div>
               </div>

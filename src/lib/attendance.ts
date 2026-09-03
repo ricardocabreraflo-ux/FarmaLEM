@@ -98,7 +98,7 @@ export interface GenerateAttendanceResult {
   weekendPending: string[];
 }
 
-export type AttendancePlanOutcome = "asistencia" | "falta" | "pendiente" | "ya_capturado";
+export type AttendancePlanOutcome = "asistencia" | "falta" | "pendiente" | "ya_capturado" | "corregir_tarifa";
 
 export interface AttendancePlanCell {
   date: string;
@@ -108,6 +108,8 @@ export interface AttendancePlanCell {
   employeeName: string | null;
   rate: number;
   existingStatus?: AttendanceStatus;
+  /** Turno tal cual está guardado ("Fin de semana matutino", etc.) — para corregir la misma fila en vez de crear una nueva. */
+  rawShift?: string;
 }
 
 /** "Matutino", "Fin de semana matutino" → "Matutino" (y lo mismo para Vespertino) — para comparar turnos sin importar cómo se haya capturado. */
@@ -138,7 +140,7 @@ export async function planAttendanceFromCuts(month: string): Promise<AttendanceP
   const [{ data: cuts, error: cutsErr }, { data: employees, error: empErr }, { data: existing, error: attErr }] = await Promise.all([
     db.from("cuts").select("cut_date, shift, employee_id").gte("cut_date", start).lt("cut_date", end),
     db.from("profiles").select("id, full_name, shift, daily_rate").eq("role", "employee").eq("active", true),
-    db.from("attendance").select("work_date, shift, employee_id, status").gte("work_date", start).lt("work_date", end),
+    db.from("attendance").select("work_date, shift, employee_id, status, rate").gte("work_date", start).lt("work_date", end),
   ]);
   if (cutsErr) throw new Error(`No se pudieron leer los cortes: ${cutsErr.message}`);
   if (empErr) throw new Error(`No se pudieron leer los empleados: ${empErr.message}`);
@@ -152,11 +154,16 @@ export async function planAttendanceFromCuts(month: string): Promise<AttendanceP
   // como turno, distinto de como lo guardan los cortes y el resto de la app
   // ("Matutino"/"Vespertino") — se normaliza para que ambas formas cuenten
   // como el mismo turno ya capturado.
-  const existingByKey = new Map<string, { employee_id: string; status: AttendanceStatus }>();
+  const existingByKey = new Map<string, { employee_id: string; status: AttendanceStatus; rate: number; rawShift: string }>();
   for (const a of existing ?? []) {
     const normalized = normalizeShift(a.shift);
     if (!normalized) continue;
-    existingByKey.set(`${a.work_date}-${normalized}`, { employee_id: a.employee_id, status: a.status as AttendanceStatus });
+    existingByKey.set(`${a.work_date}-${normalized}`, {
+      employee_id: a.employee_id,
+      status: a.status as AttendanceStatus,
+      rate: a.rate as number,
+      rawShift: a.shift,
+    });
   }
 
   const defaultByShift: Record<"Matutino" | "Vespertino", { id: string } | undefined> = {
@@ -177,6 +184,26 @@ export async function planAttendanceFromCuts(month: string): Promise<AttendanceP
       const key = `${dateStr}-${shift}`;
       const existingRow = existingByKey.get(key);
       if (existingRow) {
+        const isPaid = existingRow.status === "Asistió" || existingRow.status === "Cubrió turno";
+        // Fin de semana ya capturado: si es un día pagado, debió quedar a
+        // 2x la tarifa diaria (turno doble) — si quedó a 1x, se ofrece
+        // corregirlo en vez de darlo por bueno.
+        if (isWeekend && isPaid) {
+          const expectedRate = (rateById.get(existingRow.employee_id) ?? 0) * 2;
+          if (existingRow.rate !== expectedRate) {
+            cells.push({
+              date: dateStr,
+              shift,
+              outcome: "corregir_tarifa",
+              employeeId: existingRow.employee_id,
+              employeeName: nameById.get(existingRow.employee_id) ?? null,
+              rate: expectedRate,
+              existingStatus: existingRow.status,
+              rawShift: existingRow.rawShift,
+            });
+            continue;
+          }
+        }
         cells.push({
           date: dateStr,
           shift,
@@ -191,13 +218,16 @@ export async function planAttendanceFromCuts(month: string): Promise<AttendanceP
 
       const cutEmployeeId = cutEmployeeByKey.get(key);
       if (cutEmployeeId) {
+        // Fin de semana: quien cubre hace el día completo sola (la otra
+        // descansa) — se paga turno doble, 2x la tarifa diaria.
+        const baseRate = rateById.get(cutEmployeeId) ?? 0;
         cells.push({
           date: dateStr,
           shift,
           outcome: "asistencia",
           employeeId: cutEmployeeId,
           employeeName: nameById.get(cutEmployeeId) ?? null,
-          rate: rateById.get(cutEmployeeId) ?? 0,
+          rate: isWeekend ? baseRate * 2 : baseRate,
         });
       } else if (isWeekend) {
         cells.push({ date: dateStr, shift, outcome: "pendiente", employeeId: null, employeeName: null, rate: 0 });
@@ -218,7 +248,7 @@ export async function planAttendanceFromCuts(month: string): Promise<AttendanceP
   return cells;
 }
 
-/** Aplica el plan de planAttendanceFromCuts: escribe asistencia/falta, deja los "pendiente" en la lista y no toca los "ya_capturado". */
+/** Aplica el plan de planAttendanceFromCuts: escribe asistencia/falta, corrige tarifas de fin de semana, deja los "pendiente" en la lista y no toca los "ya_capturado". */
 export async function generateAttendanceFromCuts(month: string, createdBy: string): Promise<GenerateAttendanceResult> {
   const plan = await planAttendanceFromCuts(month);
   let created = 0;
@@ -231,6 +261,22 @@ export async function generateAttendanceFromCuts(month: string, createdBy: strin
       continue;
     }
     if (!cell.employeeId) continue;
+
+    if (cell.outcome === "corregir_tarifa") {
+      // Usa el turno tal cual estaba guardado (puede ser "Fin de semana
+      // matutino") para corregir esa misma fila, no crear una nueva.
+      await upsertAttendance({
+        workDate: cell.date,
+        employeeId: cell.employeeId,
+        shift: cell.rawShift ?? cell.shift,
+        status: cell.existingStatus ?? "Asistió",
+        rate: cell.rate,
+        note: "Corregido: turno doble de fin de semana (2x tarifa).",
+        createdBy,
+      });
+      created++;
+      continue;
+    }
 
     await upsertAttendance({
       workDate: cell.date,
