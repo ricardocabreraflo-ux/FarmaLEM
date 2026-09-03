@@ -76,6 +76,20 @@ function monthLabel(month: string) {
   return new Date(y, m - 1, 1).toLocaleDateString("es-MX", { month: "long", year: "numeric" });
 }
 
+function Cell({ value, approved, onChange }: { value: string; approved: boolean; onChange: (value: string) => void }) {
+  if (approved) return <span className="font-data tabular-nums text-admin-ink">{fmtMoney(n(value))}</span>;
+  return (
+    <input
+      type="number"
+      step="0.01"
+      placeholder="0.00"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-28 rounded-lg border border-admin-border bg-admin-input-bg px-2 py-1.5 text-right font-data text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary"
+    />
+  );
+}
+
 export function HistoricalIncomeStatementGrid({
   months,
   initialStatements,
@@ -174,20 +188,6 @@ export function HistoricalIncomeStatementGrid({
     }
   }
 
-  function Cell({ idx, field }: { idx: number; field: FieldKey }) {
-    if (approved[idx]) return <span className="font-data tabular-nums text-admin-ink">{fmtMoney(n(values[idx][field]))}</span>;
-    return (
-      <input
-        type="number"
-        step="0.01"
-        placeholder="0.00"
-        value={values[idx][field]}
-        onChange={(e) => setField(idx, field, e.target.value)}
-        className="w-28 rounded-lg border border-admin-border bg-admin-input-bg px-2 py-1.5 text-right font-data text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-admin-primary"
-      />
-    );
-  }
-
   return (
     <div className="overflow-x-auto rounded-2xl border border-admin-border bg-admin-surface">
       <table className="w-full min-w-[900px] border-collapse text-[0.82rem]">
@@ -243,7 +243,7 @@ export function HistoricalIncomeStatementGrid({
             <td className="px-3 py-2 font-bold text-admin-ink">VENTAS</td>
             {months.map((month, idx) => (
               <td key={month} className="px-3 py-2 text-right">
-                <Cell idx={idx} field="ventas" />
+                <Cell value={values[idx].ventas} approved={approved[idx]} onChange={(v) => setField(idx, "ventas", v)} />
               </td>
             ))}
           </tr>
@@ -251,7 +251,7 @@ export function HistoricalIncomeStatementGrid({
             <td className="px-3 py-2 font-bold text-admin-ink">COSTOS</td>
             {months.map((month, idx) => (
               <td key={month} className="px-3 py-2 text-right">
-                <Cell idx={idx} field="costos" />
+                <Cell value={values[idx].costos} approved={approved[idx]} onChange={(v) => setField(idx, "costos", v)} />
               </td>
             ))}
           </tr>
@@ -292,7 +292,7 @@ export function HistoricalIncomeStatementGrid({
               <td className="px-3 py-2 text-admin-ink-soft">{row.label}</td>
               {months.map((month, idx) => (
                 <td key={month} className="px-3 py-2 text-right">
-                  <Cell idx={idx} field={row.key} />
+                  <Cell value={values[idx][row.key]} approved={approved[idx]} onChange={(v) => setField(idx, row.key, v)} />
                 </td>
               ))}
             </tr>
@@ -315,7 +315,7 @@ export function HistoricalIncomeStatementGrid({
             <td className="px-3 py-2 font-bold text-admin-ink">PÉRDIDAS MERMA</td>
             {months.map((month, idx) => (
               <td key={month} className="px-3 py-2 text-right">
-                <Cell idx={idx} field="perdidasMerma" />
+                <Cell value={values[idx].perdidasMerma} approved={approved[idx]} onChange={(v) => setField(idx, "perdidasMerma", v)} />
               </td>
             ))}
           </tr>
