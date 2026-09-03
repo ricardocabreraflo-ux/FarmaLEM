@@ -292,3 +292,61 @@ export async function generateAttendanceFromCuts(month: string, createdBy: strin
 
   return { created, weekendPending };
 }
+
+export type AttendanceCalendarOutcome = AttendanceStatus | "sin_capturar";
+
+export interface AttendanceCalendarCell {
+  date: string;
+  shift: "Matutino" | "Vespertino";
+  outcome: AttendanceCalendarOutcome;
+  employeeName: string | null;
+}
+
+/**
+ * Calendario de solo lectura con lo que ya está realmente capturado en
+ * Asistencia — a diferencia de planAttendanceFromCuts, aquí no se asume
+ * "Falta" cuando no hay nada capturado: un turno sin capturar se queda
+ * como "sin_capturar". Pensado para meses en curso donde ya se va
+ * capturando la asistencia día a día (no para migrar un mes atrasado).
+ */
+export async function getAttendanceCalendar(month: string): Promise<AttendanceCalendarCell[]> {
+  const db = supabaseAdmin();
+  const { start, end } = monthRange(month);
+  const [y, m] = month.split("-").map(Number);
+  const daysInMonth = new Date(y, m, 0).getDate();
+
+  const [{ data: rows, error: attErr }, { data: employees, error: empErr }] = await Promise.all([
+    db.from("attendance").select("work_date, shift, employee_id, status").gte("work_date", start).lt("work_date", end),
+    db.from("profiles").select("id, full_name"),
+  ]);
+  if (attErr) throw new Error(`No se pudo leer la asistencia: ${attErr.message}`);
+  if (empErr) throw new Error(`No se pudieron leer los empleados: ${empErr.message}`);
+
+  const nameById = new Map((employees ?? []).map((e) => [e.id, e.full_name as string]));
+  const byKey = new Map<string, { employeeId: string; status: AttendanceStatus }>();
+  for (const r of rows ?? []) {
+    const normalized = normalizeShift(r.shift);
+    if (!normalized) continue;
+    byKey.set(`${r.work_date}-${normalized}`, { employeeId: r.employee_id, status: r.status as AttendanceStatus });
+  }
+
+  const cells: AttendanceCalendarCell[] = [];
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${month}-${String(day).padStart(2, "0")}`;
+    const dow = new Date(y, m - 1, day).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const shiftsToday: Array<"Matutino" | "Vespertino"> = isWeekend ? [dow === 6 ? "Matutino" : "Vespertino"] : ["Matutino", "Vespertino"];
+
+    for (const shift of shiftsToday) {
+      const found = byKey.get(`${dateStr}-${shift}`);
+      cells.push({
+        date: dateStr,
+        shift,
+        outcome: found ? found.status : "sin_capturar",
+        employeeName: found ? (nameById.get(found.employeeId) ?? null) : null,
+      });
+    }
+  }
+
+  return cells;
+}

@@ -1,29 +1,34 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { useRouter } from "next/navigation";
-import { planAttendanceFromCutsAction, generateAttendanceFromCutsAction } from "@/app/admin/asistencia/actions";
+import { getAttendanceCalendarAction } from "@/app/admin/asistencia/actions";
 import { buildMonthWeeks } from "@/lib/calendar-weeks";
-import type { AttendancePlanCell, AttendancePlanOutcome, GenerateAttendanceResult } from "@/lib/attendance";
+import type { AttendanceCalendarCell, AttendanceCalendarOutcome } from "@/lib/attendance";
 
 const SHIFTS: Array<"Matutino" | "Vespertino"> = ["Matutino", "Vespertino"];
 const WEEKDAY_LABELS = ["LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO", "DOMINGO"];
 
-const OUTCOME_STYLE: Record<AttendancePlanOutcome, string> = {
-  asistencia: "bg-admin-ok-bg text-admin-ok-text",
-  falta: "bg-admin-bad-bg text-admin-bad-text",
-  pendiente: "bg-admin-pending-bg text-admin-pending-text",
-  ya_capturado: "bg-admin-bg text-admin-ink-soft",
-  corregir_tarifa: "bg-admin-primary-soft text-admin-primary-deep",
+const OUTCOME_STYLE: Record<AttendanceCalendarOutcome, string> = {
+  Asistió: "bg-admin-ok-bg text-admin-ok-text",
+  "Cubrió turno": "bg-admin-primary-soft text-admin-primary-deep",
+  Falta: "bg-admin-bad-bg text-admin-bad-text",
+  Descanso: "bg-admin-bg text-admin-ink-soft",
+  Cerrado: "bg-admin-bg text-admin-ink-soft",
+  "Día festivo": "bg-admin-pending-bg text-admin-pending-text",
+  sin_capturar: "text-admin-ink-soft",
 };
 
-const OUTCOME_LABEL: Record<AttendancePlanOutcome, string> = {
-  asistencia: "ASISTENCIA",
-  falta: "FALTA",
-  pendiente: "PENDIENTE",
-  ya_capturado: "YA CAPTURADO",
-  corregir_tarifa: "CORREGIR 2X",
+const OUTCOME_LABEL: Record<AttendanceCalendarOutcome, string> = {
+  Asistió: "ASISTENCIA",
+  "Cubrió turno": "CUBRIÓ TURNO",
+  Falta: "FALTA",
+  Descanso: "DESCANSO",
+  Cerrado: "CERRADO",
+  "Día festivo": "DÍA FESTIVO",
+  sin_capturar: "SIN CAPTURAR",
 };
+
+const COUNT_ORDER: AttendanceCalendarOutcome[] = ["Asistió", "Cubrió turno", "Falta", "Día festivo", "Descanso", "Cerrado", "sin_capturar"];
 
 function firstName(name: string | null) {
   if (!name) return "";
@@ -35,17 +40,10 @@ function monthLabel(month: string) {
   return new Date(y, m - 1, 1).toLocaleDateString("es-MX", { month: "long", year: "numeric" });
 }
 
-function fmtDate(v: string) {
-  return new Date(`${v}T12:00:00`).toLocaleDateString("es-MX", { weekday: "long", day: "2-digit", month: "short" });
-}
-
-export function AttendanceGeneratePreview({ month }: { month: string }) {
-  const router = useRouter();
-  const [cells, setCells] = useState<AttendancePlanCell[] | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const [generating, setGenerating] = useState(false);
+export function AttendanceCalendarView({ month }: { month: string }) {
+  const [cells, setCells] = useState<AttendanceCalendarCell[] | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<GenerateAttendanceResult | null>(null);
 
   const weeks = buildMonthWeeks(month);
   const byKey = new Map((cells ?? []).map((c) => [`${c.date}-${c.shift}`, c]));
@@ -53,73 +51,35 @@ export function AttendanceGeneratePreview({ month }: { month: string }) {
     acc[c.outcome] = (acc[c.outcome] ?? 0) + 1;
     return acc;
   }, {});
-  const pendingToWrite = (cells ?? []).filter((c) => c.outcome === "asistencia" || c.outcome === "falta" || c.outcome === "corregir_tarifa").length;
 
-  async function loadPreview() {
-    setLoadingPreview(true);
+  async function open() {
+    setLoading(true);
     setError(null);
-    setResult(null);
-    const outcome = await planAttendanceFromCutsAction(month);
-    setLoadingPreview(false);
+    const outcome = await getAttendanceCalendarAction(month);
+    setLoading(false);
     if (outcome.ok && outcome.cells) setCells(outcome.cells);
-    else setError(outcome.error ?? "No se pudo calcular la vista previa.");
-  }
-
-  async function confirmGenerate() {
-    const ok = window.confirm(`¿Guardar ${pendingToWrite} registros de asistencia de ${monthLabel(month)} según esta vista previa?`);
-    if (!ok) return;
-    setGenerating(true);
-    setError(null);
-    const outcome = await generateAttendanceFromCutsAction(month);
-    setGenerating(false);
-    if (outcome.ok && outcome.result) {
-      setResult(outcome.result);
-      setCells(null);
-      router.refresh();
-    } else {
-      setError(outcome.error ?? "No se pudo generar la asistencia.");
-    }
+    else setError(outcome.error ?? "No se pudo calcular el calendario.");
   }
 
   return (
     <div>
-      {!cells && (
-        <button
-          type="button"
-          onClick={loadPreview}
-          disabled={loadingPreview}
-          className="text-[0.82rem] font-semibold text-admin-ink-soft underline decoration-dotted disabled:opacity-60"
-        >
-          {loadingPreview ? "Calculando…" : "¿Mes atrasado? Generar asistencia desde los cortes"}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={open}
+        disabled={loading}
+        className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
+      >
+        {loading ? "Calculando…" : "Vista previa del mes"}
+      </button>
 
       {error && <p className="mt-3 rounded-lg bg-admin-bad-bg px-4 py-3 text-[0.82rem] font-semibold text-admin-bad-text">{error}</p>}
-
-      {result && (
-        <div className="mt-3 rounded-lg bg-admin-ok-bg px-4 py-3 text-[0.82rem] font-semibold text-admin-ok-text">
-          <p>Listo — se guardaron {result.created} registros de asistencia.</p>
-          {result.weekendPending.length > 0 && (
-            <div className="mt-2 font-normal">
-              <p>Estos fines de semana no tenían corte capturado, así que no se supo a quién marcarle falta — captúralos a mano:</p>
-              <ul className="mt-1 list-disc pl-5">
-                {result.weekendPending.map((d) => (
-                  <li key={d} className="capitalize">
-                    {fmtDate(d)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
 
       {cells && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setCells(null)}>
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Vista previa de asistencia"
+            aria-label="Calendario de asistencia"
             onClick={(e) => e.stopPropagation()}
             className="flex max-h-[90vh] w-full max-w-[880px] flex-col overflow-hidden rounded-2xl bg-admin-surface shadow-lg"
           >
@@ -127,11 +87,11 @@ export function AttendanceGeneratePreview({ month }: { month: string }) {
               <div>
                 <h2 className="font-display text-lg text-admin-ink capitalize">Vista previa · {monthLabel(month)}</h2>
                 <div className="mt-1.5 flex flex-wrap gap-2 text-[0.76rem] font-semibold">
-                  <span className="rounded-full bg-admin-ok-bg px-3 py-1 text-admin-ok-text">{counts.asistencia ?? 0} asistencia</span>
-                  <span className="rounded-full bg-admin-bad-bg px-3 py-1 text-admin-bad-text">{counts.falta ?? 0} falta</span>
-                  <span className="rounded-full bg-admin-pending-bg px-3 py-1 text-admin-pending-text">{counts.pendiente ?? 0} pendiente</span>
-                  <span className="rounded-full bg-admin-primary-soft px-3 py-1 text-admin-primary-deep">{counts.corregir_tarifa ?? 0} por corregir a 2x</span>
-                  <span className="rounded-full border border-admin-border px-3 py-1 text-admin-ink-soft">{counts.ya_capturado ?? 0} ya capturado</span>
+                  {COUNT_ORDER.map((outcome) => (
+                    <span key={outcome} className={`rounded-full px-3 py-1 ${outcome === "sin_capturar" ? "border border-admin-border text-admin-ink-soft" : OUTCOME_STYLE[outcome]}`}>
+                      {counts[outcome] ?? 0} {OUTCOME_LABEL[outcome].toLowerCase()}
+                    </span>
+                  ))}
                 </div>
               </div>
               <button
@@ -192,21 +152,13 @@ export function AttendanceGeneratePreview({ month }: { month: string }) {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-admin-border px-5 py-4">
+            <div className="flex justify-end border-t border-admin-border px-5 py-4">
               <button
                 type="button"
                 onClick={() => setCells(null)}
                 className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink-soft"
               >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={confirmGenerate}
-                disabled={generating || pendingToWrite === 0}
-                className="rounded-full bg-admin-primary px-6 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
-              >
-                {generating ? "Generando…" : `Confirmar y generar (${pendingToWrite})`}
+                Cerrar
               </button>
             </div>
           </div>

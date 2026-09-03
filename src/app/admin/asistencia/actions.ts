@@ -8,9 +8,11 @@ import {
   deleteAttendance,
   generateAttendanceFromCuts,
   planAttendanceFromCuts,
+  getAttendanceCalendar,
   type AttendanceStatus,
   type GenerateAttendanceResult,
   type AttendancePlanCell,
+  type AttendanceCalendarCell,
 } from "@/lib/attendance";
 import { logAction } from "@/lib/history";
 
@@ -73,6 +75,23 @@ export async function planAttendanceFromCutsAction(month: string): Promise<PlanA
     return { ok: true, cells };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo calcular la vista previa." };
+  }
+}
+
+export interface AttendanceCalendarActionResult {
+  ok: boolean;
+  cells?: AttendanceCalendarCell[];
+  error?: string;
+}
+
+/** Calendario de solo lectura con lo que ya está capturado — no escribe nada, no asume faltas. */
+export async function getAttendanceCalendarAction(month: string): Promise<AttendanceCalendarActionResult> {
+  await requireAdminSession();
+  try {
+    const cells = await getAttendanceCalendar(month);
+    return { ok: true, cells };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo calcular el calendario." };
   }
 }
 

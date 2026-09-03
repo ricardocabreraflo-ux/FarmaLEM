@@ -6,6 +6,7 @@ import { listAttendanceForMonth } from "@/lib/attendance";
 import { mexicoCityToday } from "@/lib/time-clock";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttendanceList } from "@/components/admin/AttendanceList";
+import { AttendanceCalendarView } from "@/components/admin/AttendanceCalendarView";
 import { AttendanceGeneratePreview } from "@/components/admin/AttendanceGeneratePreview";
 import { MonthPicker } from "@/components/admin/MonthPicker";
 
@@ -53,7 +54,8 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
 
       <MonthPicker month={month} basePath="/admin/asistencia" />
 
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        <AttendanceCalendarView month={month} />
         <AttendanceGeneratePreview month={month} />
       </div>
 
