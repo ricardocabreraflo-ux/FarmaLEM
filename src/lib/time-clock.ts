@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { upsertAttendance } from "@/lib/attendance";
 import { mexicoCityToday } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
+import { sendPunchWhatsAppNotification } from "@/lib/whatsapp";
 
 export { mexicoCityToday };
 
@@ -70,6 +71,8 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
       createdBy,
     });
   }
+
+  await sendPunchWhatsAppNotification({ employeeName: employee.full_name, type, shift: employee.shift, occurredAt });
 
   return { type, occurredAt };
 }

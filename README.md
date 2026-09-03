@@ -41,6 +41,7 @@ Copia `.env.example` a `.env.local` y llena:
 | `WHATSAPP_NOTIFY_NUMBER` | Tu número (a donde llega el aviso), formato `521XXXXXXXXXX` sin "+" |
 | `WHATSAPP_TEMPLATE_NAME` | Nombre de tu plantilla aprobada (ver abajo). Vacío = `nuevo_pedido_farmalem` |
 | `WHATSAPP_CUT_TEMPLATE_NAME` | Plantilla del aviso de corte capturado (ver abajo). Vacío = `corte_capturado_farmalem` |
+| `WHATSAPP_PUNCH_TEMPLATE_NAME` | Plantilla del aviso de checada (ver abajo). Vacío = `checada_farmalem` |
 | `ADMIN_PASSWORD` | La eliges tú — es la contraseña para entrar a `/admin` |
 | `ADMIN_SESSION_SECRET` | Cadena aleatoria: `openssl rand -hex 32` |
 | `NEXT_PUBLIC_SITE_URL` | Tu dominio real una vez desplegado (ej. `https://farmalem.mx`). Vacío en local. |
@@ -115,6 +116,34 @@ ID y número de destino de arriba — solo necesitas una plantilla nueva:
 
 Igual que con los pedidos: mientras la plantilla no esté aprobada, el
 corte se guarda normalmente y el aviso solo se omite.
+
+### Aviso de "checada" (entrada/salida en el reloj checador)
+
+Mismo mecanismo, pero avisa a administración cada vez que alguien marca
+Entrada o Salida — tanto desde `/admin/reloj` (ya con sesión iniciada) como
+desde `/admin/turno/marcar` (la pantalla rápida sin abrir sesión). Usa el
+mismo token, phone number ID y número de destino de arriba — solo necesitas
+otra plantilla:
+
+1. En **WhatsApp Manager → Plantillas de mensaje**, crea otra:
+   - Nombre: `checada_farmalem`
+   - Categoría: **Utilidad**
+   - Idioma: Español (MX)
+   - Cuerpo del mensaje, con 4 variables en este orden exacto:
+     ```
+     Checada en FarmaLEM
+
+     Empleado: {{1}}
+     Movimiento: {{2}}
+     Turno: {{3}}
+     Hora: {{4}}
+     ```
+   - Envíala a revisión.
+2. Si usas un nombre distinto a `checada_farmalem`, ponlo en
+   `WHATSAPP_PUNCH_TEMPLATE_NAME`.
+
+Igual que los anteriores: mientras la plantilla no esté aprobada, la
+checada se guarda normalmente y el aviso solo se omite.
 
 ## Cómo funciona la tienda
 
