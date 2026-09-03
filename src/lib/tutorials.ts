@@ -12,8 +12,12 @@ export interface TutorialStep {
   title: string;
   body: string;
   image?: string;
+  /** Ancho/alto reales (px) de `image` — por default 420x860 (pantalla completa del celular); las capturas recortadas de una sola sección traen su propia medida. */
+  imageWidth?: number;
+  imageHeight?: number;
   imageDesktop?: string;
-  /** Alto real (px) de imageDesktop — todas se capturaron a 1440 de ancho, cada una con su propio alto. */
+  /** Ancho/alto reales (px) de imageDesktop — por default 1440x900 (pantalla completa); las capturas recortadas de una sola sección traen su propia medida. */
+  imageDesktopWidth?: number;
   imageDesktopHeight?: number;
   imageAlt?: string;
   cue?: string;
@@ -50,6 +54,10 @@ const TUTORIALS: TutorialContent[] = [
         cue: "Toca tu turno, por ejemplo “MATUTINO”",
       },
       {
+        title: "¿Ya llegaste pero aún no puedes entrar?",
+        body: "Justo debajo de los turnos hay un enlace “¿Ya llegaste pero aún no puedes entrar? Marca tu entrada aquí”. Es para cuando ya llegaste a trabajar pero, por ejemplo, tu compañera sigue usando la computadora para capturar su corte. Te lleva a una pantalla aparte donde marcas tu entrada con tu turno y tu PIN, sin necesidad de abrir tu sesión — el paso a paso completo está en el tutorial “Cómo usar el reloj checador”, en la sección “Marcar a otro turno”.",
+      },
+      {
         title: "Primera vez en esa computadora: tu contraseña",
         body: "Solo la primera vez. Escribes tu contraseña normal para que esa computadora “aprenda” quién marca ese turno — no hace falta repetirlo después.",
         image: "/tutoriales/entrar-03-contrasena-lista.png",
@@ -79,11 +87,68 @@ const TUTORIALS: TutorialContent[] = [
     ],
   },
   {
+    slug: "inicio",
+    title: "Cómo usar Inicio",
+    audience: "Mostrador",
+    summary: "La meta de la semana, tus ventas por día, tu racha de cortes y los niveles de bono.",
+    minutes: 2,
+    steps: [
+      {
+        title: "Meta de la semana",
+        body: "Arriba de todo ves cuánto llevas vendido esta semana (de lunes a domingo) contra la meta, incluyendo los cortes que ya capturaste aunque administración todavía no los apruebe. Debajo, tu última marca del reloj checador y cuántos días has trabajado esta semana.",
+        image: "/tutoriales/inicio-01-meta.png",
+        imageWidth: 312,
+        imageHeight: 497,
+        imageDesktop: "/tutoriales/inicio-01-meta-desktop.png",
+        imageDesktopWidth: 868,
+        imageDesktopHeight: 306,
+        imageAlt: "Sección Meta de la semana en Inicio",
+      },
+      {
+        title: "Ventas por día y racha de cortes",
+        body: "La gráfica muestra cuánto vendiste cada día y las líneas punteadas son el promedio diario que necesitas para cada nivel de bono. Debajo, “Cortes capturados esta semana” te dice de un vistazo qué días ya quedaron registrados: una palomita verde es que ya está capturado, un “!” rojo es un turno que ya se trabajó pero todavía no tiene corte.",
+        image: "/tutoriales/inicio-02-antes.png",
+        imageWidth: 312,
+        imageHeight: 794,
+        imageDesktop: "/tutoriales/inicio-02-antes-desktop.png",
+        imageDesktopWidth: 868,
+        imageDesktopHeight: 436,
+        imageAlt: "Ventas por día y racha de cortes, con un turno sin capturar",
+        cue: "El “!” en rojo significa: falta capturar ese corte",
+        cueTone: "warn",
+      },
+      {
+        title: "En cuanto capturas el corte, la racha se pone verde",
+        body: "Justo debajo está el reloj checador (para marcar tu entrada/salida o marcar a otro turno) y el botón “Capturar corte”. En cuanto guardas el corte del día, su casilla en la racha cambia a palomita verde de inmediato — así confirmas que ya quedó, sin tener que ir a la lista de Cortes a revisar.",
+        image: "/tutoriales/inicio-02-despues.png",
+        imageWidth: 312,
+        imageHeight: 794,
+        imageDesktop: "/tutoriales/inicio-02-despues-desktop.png",
+        imageDesktopWidth: 868,
+        imageDesktopHeight: 436,
+        imageAlt: "Racha de cortes ya completa, todos los turnos en verde",
+        cue: "4 de 4 turnos capturados",
+        cueTone: "ok",
+      },
+      {
+        title: "Niveles de bono",
+        body: "Aquí ves los dos niveles de bono de tu turno: cuánto hay que vender en la semana para alcanzar cada uno y cuánto es el bono. “Vas en el Nivel…” te dice dónde estás parada ahora mismo con lo que llevas vendido.",
+        image: "/tutoriales/inicio-03-bonos.png",
+        imageWidth: 312,
+        imageHeight: 188,
+        imageDesktop: "/tutoriales/inicio-03-bonos-desktop.png",
+        imageDesktopWidth: 868,
+        imageDesktopHeight: 169,
+        imageAlt: "Sección Niveles de bono en Inicio",
+      },
+    ],
+  },
+  {
     slug: "reloj-checador",
     title: "Cómo usar el reloj checador",
     audience: "Mostrador",
     summary: "Marcar tu entrada y tu salida — un solo botón, sin volver a pedir tu PIN.",
-    minutes: 1,
+    minutes: 2,
     steps: [
       {
         title: "Antes de marcar",
@@ -114,6 +179,34 @@ const TUTORIALS: TutorialContent[] = [
         cue: "No cierres el turno sin marcarla",
         cueTone: "warn",
       },
+      {
+        title: "¿Llegó tu compañera y tú sigues capturando? Marca a otro turno",
+        body: "Desde Inicio (o desde el enlace en la pantalla de turno) hay un botón “Marcar a otro turno”. Sirve para marcar la entrada o salida de alguien más sin cerrar tu sesión — por ejemplo si llega quien te releva y tú sigues capturando el corte. Solo pide qué turno llegó.",
+        image: "/tutoriales/marcar-01-elegir-turno.png",
+        imageDesktop: "/tutoriales/marcar-01-elegir-turno-desktop.png",
+        imageDesktopHeight: 900,
+        imageAlt: "Pantalla Marcar Entrada/Salida, elegir turno",
+        cue: "Toca el turno que llegó, por ejemplo “VESPERTINO”",
+      },
+      {
+        title: "Su PIN corto",
+        body: "Igual que en el reloj checador normal, solo pide el PIN corto de esa persona — no su contraseña ni la tuya.",
+        image: "/tutoriales/marcar-02-pin.png",
+        imageDesktop: "/tutoriales/marcar-02-pin-desktop.png",
+        imageDesktopHeight: 900,
+        imageAlt: "Pantalla pidiendo el PIN corto",
+        cue: "Marca su PIN y toca “OK”",
+      },
+      {
+        title: "Confirmación",
+        body: "Muestra su nombre, la hora y si quedó como entrada o salida. “Marcar otra persona” te regresa a elegir turno por si hace falta marcar a alguien más; “Regresar” te lleva de vuelta a la pantalla de turno sin afectar tu sesión.",
+        image: "/tutoriales/marcar-03-confirmacion.png",
+        imageDesktop: "/tutoriales/marcar-03-confirmacion-desktop.png",
+        imageDesktopHeight: 900,
+        imageAlt: "Confirmación de entrada registrada",
+        cue: "Quedó registrada, sin tocar tu propia sesión",
+        cueTone: "ok",
+      },
     ],
   },
   {
@@ -121,7 +214,7 @@ const TUTORIALS: TutorialContent[] = [
     title: "Cómo capturar el corte del día",
     audience: "Mostrador",
     summary: "Venta total, tarjeta, el conteo de efectivo por denominación y guardar.",
-    minutes: 3,
+    minutes: 4,
     steps: [
       {
         title: "Abre Capturar corte",
@@ -151,11 +244,15 @@ const TUTORIALS: TutorialContent[] = [
       },
       {
         title: "Guarda el corte",
-        body: "Queda registrado con estado “Por revisar” hasta que administración lo apruebe.",
+        body: "Verás “✓ Corte guardado correctamente.” arriba de la lista. Tu corte queda registrado con estado “Por revisar” hasta que administración lo apruebe.",
         image: "/tutoriales/corte-06-guardado-en-lista.png",
+        imageHeight: 1007,
         imageDesktop: "/tutoriales/corte-06-guardado-en-lista-desktop.png",
-        imageDesktopHeight: 562,
         imageAlt: "Corte guardado en la lista de Cortes",
+      },
+      {
+        title: "Si la pantalla se recarga a medio capturar",
+        body: "No pierdes lo que ya escribiste: FarmaLEM guarda un borrador en tu celular o computadora mientras capturas. Si la página se llega a recargar sola (por ejemplo por una actualización del panel), al volver a abrir “Capturar corte” verás el aviso “Recuperamos lo que tenías escrito de un intento anterior — revísalo antes de guardar.” con tus datos ya puestos.",
       },
     ],
   },

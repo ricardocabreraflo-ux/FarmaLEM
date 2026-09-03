@@ -5,12 +5,18 @@ import Image from "next/image";
 
 export function TutorialStepImage({
   image,
+  imageWidth,
+  imageHeight,
   imageDesktop,
+  imageDesktopWidth,
   imageDesktopHeight,
   imageAlt,
 }: {
   image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   imageDesktop?: string;
+  imageDesktopWidth?: number;
   imageDesktopHeight?: number;
   imageAlt?: string;
 }) {
@@ -35,7 +41,7 @@ export function TutorialStepImage({
             aria-label="Ampliar captura"
             className="block max-w-[260px] cursor-zoom-in rounded-2xl border border-admin-border bg-admin-bg p-2 shadow-sm transition-transform duration-150 ease-out active:scale-[0.98]"
           >
-            <Image src={image} alt={imageAlt ?? ""} width={420} height={860} className="w-full rounded-xl" />
+            <Image src={image} alt={imageAlt ?? ""} width={imageWidth ?? 420} height={imageHeight ?? 860} className="w-full rounded-xl" />
           </button>
           <span className="mt-1 block text-[0.74rem] text-admin-ink-soft">Toca la imagen para ampliarla</span>
         </div>
@@ -49,7 +55,7 @@ export function TutorialStepImage({
             aria-label="Ampliar captura"
             className="block max-w-[520px] cursor-zoom-in rounded-2xl border border-admin-border bg-admin-bg p-2 shadow-sm transition-transform duration-150 ease-out active:scale-[0.98]"
           >
-            <Image src={imageDesktop} alt={imageAlt ?? ""} width={1440} height={imageDesktopHeight ?? 900} className="w-full rounded-xl" />
+            <Image src={imageDesktop} alt={imageAlt ?? ""} width={imageDesktopWidth ?? 1440} height={imageDesktopHeight ?? 900} className="w-full rounded-xl" />
           </button>
           <span className="mt-1 block text-[0.74rem] text-admin-ink-soft">Toca la imagen para ampliarla</span>
         </div>

@@ -54,7 +54,10 @@ export default async function TutorialPage({ params }: { params: Promise<{ slug:
             <p className="text-[0.9rem] text-admin-ink-soft">{step.body}</p>
             <TutorialStepImage
               image={step.image}
+              imageWidth={step.imageWidth}
+              imageHeight={step.imageHeight}
               imageDesktop={step.imageDesktop}
+              imageDesktopWidth={step.imageDesktopWidth}
               imageDesktopHeight={step.imageDesktopHeight}
               imageAlt={step.imageAlt ?? step.title}
             />
