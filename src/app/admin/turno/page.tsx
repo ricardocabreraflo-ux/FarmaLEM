@@ -29,6 +29,11 @@ export default async function TurnoPage() {
   return (
     <div className="min-h-screen bg-admin-bg">
       <ShiftLoginScreen shifts={shifts} />
+      <p className="pb-2 text-center">
+        <Link href="/admin/turno/marcar" className="text-[0.8rem] font-semibold text-admin-ink-soft hover:underline">
+          ¿Ya llegaste pero aún no puedes entrar? Marca tu entrada aquí
+        </Link>
+      </p>
       <p className="pb-8 text-center">
         <Link href="/admin/login" className="text-[0.8rem] font-semibold text-admin-ink-soft hover:underline">
           ¿Eres administración? Entra aquí
