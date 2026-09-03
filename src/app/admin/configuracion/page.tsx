@@ -4,7 +4,6 @@ import { getProfileById } from "@/lib/profiles";
 import { getBreakevenMargin } from "@/lib/breakeven";
 import { hasDeletePin } from "@/lib/security-settings";
 import { getModuleEditorStructure } from "@/lib/panel-modules";
-import { listRoles } from "@/lib/roles";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { BreakevenMarginForm } from "@/components/admin/BreakevenMarginForm";
 import { DeletePinForm } from "@/components/admin/DeletePinForm";
@@ -16,13 +15,13 @@ export const dynamic = "force-dynamic";
 
 export default async function ConfiguracionPage() {
   const session = await requireAdminSession();
-  const [profile, marginPercent, pinSet, moduleEntries, roles] = await Promise.all([
+  const [profile, marginPercent, pinSet, moduleStructure] = await Promise.all([
     getProfileById(session.uid),
     getBreakevenMargin(),
     hasDeletePin(),
     getModuleEditorStructure(),
-    listRoles(),
   ]);
+  const { roles, entries: moduleEntries } = moduleStructure;
 
   return (
     <AdminShell activeHref="/admin/configuracion" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -67,7 +66,7 @@ export default async function ConfiguracionPage() {
           Qué pantallas se muestran, para quién y en qué orden. Se abre en una ventana aparte para no ocupar tanto espacio aquí.
         </p>
         <div className="mt-4">
-          <PanelModulesModal initialEntries={moduleEntries} />
+          <PanelModulesModal initialEntries={moduleEntries} initialRoles={roles} />
         </div>
       </section>
     </AdminShell>

@@ -60,24 +60,37 @@ export interface ModuleActionResult {
   ok: boolean;
   error?: string;
   entries?: ModuleEditorEntry[];
+  roles?: Role[];
 }
 
-const FIELD_LABEL: Record<"enabled" | "visibleEmployee", string> = {
-  enabled: "activo",
-  visibleEmployee: "visible para vendedor",
-};
+async function moduleResult(ok: true): Promise<ModuleActionResult> {
+  const { roles, entries } = await getModuleEditorStructure();
+  return { ok, entries, roles };
+}
 
-export async function toggleModuleAction(key: string, field: "enabled" | "visibleEmployee", value: boolean): Promise<ModuleActionResult> {
+export async function toggleModuleAction(key: string, enabled: boolean): Promise<ModuleActionResult> {
   const session = await requireAdminSession();
   try {
-    await updatePanelModule(key, field === "enabled" ? { enabled: value } : { visibleEmployee: value });
+    await updatePanelModule(key, { enabled });
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar el módulo." };
   }
-  await logAction(session.uid, "Configuró el panel", `${key} · ${FIELD_LABEL[field]}: ${value ? "sí" : "no"}`);
+  await logAction(session.uid, "Configuró el panel", `${key} · activo: ${enabled ? "sí" : "no"}`);
   revalidatePath("/admin/configuracion");
-  const entries = await getModuleEditorStructure();
-  return { ok: true, entries };
+  return moduleResult(true);
+}
+
+export async function toggleModuleRoleAction(key: string, currentRoleIds: string[], roleId: string, value: boolean): Promise<ModuleActionResult> {
+  const session = await requireAdminSession();
+  const nextRoleIds = value ? [...new Set([...currentRoleIds, roleId])] : currentRoleIds.filter((id) => id !== roleId);
+  try {
+    await updatePanelModule(key, { visibleRoleIds: nextRoleIds });
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar el módulo." };
+  }
+  await logAction(session.uid, "Configuró el panel", `${key} · rol ${roleId}: ${value ? "sí" : "no"}`);
+  revalidatePath("/admin/configuracion");
+  return moduleResult(true);
 }
 
 export async function moveModuleAction(key: string, direction: "up" | "down"): Promise<ModuleActionResult> {
@@ -89,8 +102,7 @@ export async function moveModuleAction(key: string, direction: "up" | "down"): P
   }
   await logAction(session.uid, "Reordenó el panel", `${key} ${direction === "up" ? "subió" : "bajó"}`);
   revalidatePath("/admin/configuracion");
-  const entries = await getModuleEditorStructure();
-  return { ok: true, entries };
+  return moduleResult(true);
 }
 
 export interface RoleActionResult {

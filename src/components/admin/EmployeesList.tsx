@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Profile } from "@/lib/profiles";
+import type { Role } from "@/lib/roles";
 import { EditEmployeeModal } from "@/components/admin/EditEmployeeModal";
 
 interface Row extends Profile {
@@ -9,7 +10,7 @@ interface Row extends Profile {
   sicadExamUrl: string | null;
 }
 
-export function EmployeesList({ employees, pinConfigured }: { employees: Row[]; pinConfigured: boolean }) {
+export function EmployeesList({ employees, roles, pinConfigured }: { employees: Row[]; roles: Role[]; pinConfigured: boolean }) {
   const [editing, setEditing] = useState<Row | null>(null);
 
   return (
@@ -53,7 +54,7 @@ export function EmployeesList({ employees, pinConfigured }: { employees: Row[]; 
         </table>
       </div>
 
-      {editing && <EditEmployeeModal profile={editing} pinConfigured={pinConfigured} onClose={() => setEditing(null)} />}
+      {editing && <EditEmployeeModal profile={editing} roles={roles} pinConfigured={pinConfigured} onClose={() => setEditing(null)} />}
     </section>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles, getEmployeeDocumentUrl } from "@/lib/profiles";
+import { listRoles } from "@/lib/roles";
 import { hasDeletePin } from "@/lib/security-settings";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { EmployeesList } from "@/components/admin/EmployeesList";
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EmployeesPage() {
   const session = await requireAdminSession();
-  const [profile, employees, pinConfigured] = await Promise.all([getProfileById(session.uid), listProfiles(), hasDeletePin()]);
+  const [profile, employees, roles, pinConfigured] = await Promise.all([getProfileById(session.uid), listProfiles(), listRoles(), hasDeletePin()]);
 
   const rows = await Promise.all(
     employees.map(async (e) => ({
@@ -34,7 +35,7 @@ export default async function EmployeesPage() {
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Edita turnos, accesos y estado sin perder el historial.</p>
 
-      <EmployeesList employees={rows} pinConfigured={pinConfigured} />
+      <EmployeesList employees={rows} roles={roles} pinConfigured={pinConfigured} />
     </AdminShell>
   );
 }

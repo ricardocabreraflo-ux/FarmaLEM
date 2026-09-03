@@ -4,10 +4,11 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import type { EmployeeFormState } from "@/app/admin/empleados/actions";
 import type { Profile } from "@/lib/profiles";
+import type { Role } from "@/lib/roles";
 
 type Action = (prevState: EmployeeFormState | undefined, formData: FormData) => Promise<EmployeeFormState>;
 
-export function EmployeeForm({ action, profile }: { action: Action; profile?: Profile }) {
+export function EmployeeForm({ action, profile, roles }: { action: Action; profile?: Profile; roles: Role[] }) {
   const [state, formAction, pending] = useActionState(action, undefined);
   const isEdit = Boolean(profile);
   const [dailyRate, setDailyRate] = useState(String(profile?.daily_rate ?? 150));
@@ -35,6 +36,16 @@ export function EmployeeForm({ action, profile }: { action: Action; profile?: Pr
           <select id="role" name="role" defaultValue={profile?.role ?? "employee"} className={inputClass}>
             <option value="employee">Empleado</option>
             <option value="admin">Administración</option>
+          </select>
+        </Field>
+        <Field label="Rol de permisos (qué ve en el menú)" htmlFor="roleId">
+          <select id="roleId" name="roleId" defaultValue={profile?.role_id ?? ""} className={inputClass}>
+            <option value="">Sin asignar</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
           </select>
         </Field>
         <Field label="Estado" htmlFor="active">

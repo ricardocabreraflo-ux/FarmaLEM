@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateEmployee, deleteEmployeeAction, type EmployeeFormState } from "@/app/admin/empleados/actions";
 import type { Profile } from "@/lib/profiles";
+import type { Role } from "@/lib/roles";
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-admin-border bg-admin-input-bg px-4 py-2.5 text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-primary";
@@ -13,7 +14,17 @@ interface Row extends Profile {
   sicadExamUrl: string | null;
 }
 
-export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile: Row; pinConfigured: boolean; onClose: () => void }) {
+export function EditEmployeeModal({
+  profile,
+  roles,
+  pinConfigured,
+  onClose,
+}: {
+  profile: Row;
+  roles: Role[];
+  pinConfigured: boolean;
+  onClose: () => void;
+}) {
   const boundAction = updateEmployee.bind(null, profile.id);
   const [state, formAction, pending] = useActionState<EmployeeFormState | undefined, FormData>(boundAction, undefined);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -66,6 +77,16 @@ export function EditEmployeeModal({ profile, pinConfigured, onClose }: { profile
               <select id="role" name="role" defaultValue={profile.role} className={inputClass}>
                 <option value="employee">Empleado</option>
                 <option value="admin">Administración</option>
+              </select>
+            </Field>
+            <Field label="Rol de permisos (qué ve en el menú)" htmlFor="roleId">
+              <select id="roleId" name="roleId" defaultValue={profile.role_id ?? ""} className={inputClass}>
+                <option value="">Sin asignar</option>
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label="Estado" htmlFor="active">

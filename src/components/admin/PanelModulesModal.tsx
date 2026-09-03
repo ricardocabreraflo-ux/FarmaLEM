@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { PanelModulesEditor } from "@/components/admin/PanelModulesEditor";
 import type { ModuleEditorEntry } from "@/lib/panel-modules";
+import type { Role } from "@/lib/roles";
 
-export function PanelModulesModal({ initialEntries }: { initialEntries: ModuleEditorEntry[] }) {
+export function PanelModulesModal({ initialEntries, initialRoles }: { initialEntries: ModuleEditorEntry[]; initialRoles: Role[] }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,10 +40,10 @@ export function PanelModulesModal({ initialEntries }: { initialEntries: ModuleEd
             </div>
             <div className="overflow-y-auto px-5 py-4">
               <p className="text-[0.84rem] text-admin-ink-soft">
-                Activa o desactiva cada pantalla, decide cuáles ve el vendedor además del administrador, y cambia el orden con las flechas. Inicio y
+                Activa o desactiva cada pantalla, marca qué rol la ve (administración siempre ve todo), y cambia el orden con las flechas. Inicio y
                 Configuración siempre están activos para no quedarte sin acceso al panel.
               </p>
-              <PanelModulesEditor initialEntries={initialEntries} />
+              <PanelModulesEditor initialEntries={initialEntries} initialRoles={initialRoles} />
             </div>
           </div>
         </div>

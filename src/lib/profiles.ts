@@ -20,6 +20,7 @@ export interface Profile {
   reference_letter_path: string | null;
   sicad_exam_path: string | null;
   clock_pin_hash: string | null;
+  role_id: string | null;
 }
 
 export async function getProfileByUsername(username: string): Promise<Profile | null> {
@@ -51,6 +52,7 @@ interface ProfileInput {
   username: string;
   fullName: string;
   role: ProfileRole;
+  roleId: string | null;
   shift: string;
   dailyRate: number;
   active: boolean;
@@ -73,6 +75,7 @@ function baseRow(input: ProfileInput) {
     username: input.username.toLowerCase(),
     full_name: input.fullName,
     role: input.role,
+    role_id: input.roleId,
     shift: input.shift,
     daily_rate: input.dailyRate,
     active: input.active,

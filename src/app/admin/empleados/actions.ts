@@ -17,6 +17,7 @@ function readFields(formData: FormData) {
     username: String(formData.get("username") ?? "").trim(),
     fullName: String(formData.get("fullName") ?? "").trim(),
     role: String(formData.get("role") ?? "employee") as ProfileRole,
+    roleId: String(formData.get("roleId") ?? "").trim() || null,
     shift: String(formData.get("shift") ?? "Matutino"),
     dailyRate: Number(formData.get("dailyRate") ?? 0),
     active: formData.get("active") === "true",
