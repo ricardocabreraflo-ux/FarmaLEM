@@ -7,6 +7,7 @@ import { listAttendanceForMonth } from "@/lib/attendance";
 import { listBonusWeeks, listBonusTiers, earnedBonus } from "@/lib/bonuses";
 import { listExtraBonuses } from "@/lib/extra-bonuses";
 import { listProfiles } from "@/lib/profiles";
+import { listHistoricalIncomeStatements, type HistoricalIncomeStatement } from "@/lib/historical-financials";
 
 const PAID_ATTENDANCE = new Set(["Asistió", "Cubrió turno"]);
 
@@ -31,8 +32,47 @@ export interface MonthlyFinancials {
   net: number;
 }
 
-/** Calcula el estado de resultados del mes. Fuente única para /admin/finanzas y /admin/punto-equilibrio. */
+function fromHistorical(h: HistoricalIncomeStatement): MonthlyFinancials {
+  const manualFixedExpenses = h.gasto_renta + h.gasto_luz_agua + h.gasto_sistema + h.gasto_internet + h.gasto_papeleria;
+  const manualVariableExpenses = h.gasto_varios;
+  const salaries = h.gasto_sueldos;
+  const bonuses = h.gasto_bonos;
+  const manualExpenses = manualFixedExpenses + manualVariableExpenses;
+  const gross = h.ventas - h.costos;
+  const operating = manualExpenses + salaries + bonuses;
+  const netBeforeShrinkage = gross - operating;
+
+  return {
+    sales: h.ventas,
+    otherIncome: 0,
+    purchaseCosts: h.costos,
+    manualCosts: 0,
+    cogs: h.costos,
+    gross,
+    cashExpenses: 0,
+    manualExpenses,
+    manualFixedExpenses,
+    manualVariableExpenses,
+    salaries,
+    bonuses,
+    extraBonusesTotal: 0,
+    operating,
+    shrinkage: h.perdidas_merma,
+    netBeforeShrinkage,
+    net: netBeforeShrinkage - h.perdidas_merma,
+  };
+}
+
+/**
+ * Calcula el estado de resultados del mes. Fuente única para /admin/finanzas
+ * y /admin/punto-equilibrio. Si el mes es de antes del panel y ya se capturó
+ * y aprobó a mano en /admin/finanzas/historico, usa esos números en vez de
+ * calcular desde cortes/asistencia/etc. (que para esos meses están vacíos).
+ */
 export async function getMonthlyFinancials(month: string): Promise<MonthlyFinancials> {
+  const historical = (await listHistoricalIncomeStatements([month])).get(month);
+  if (historical?.approved) return fromHistorical(historical);
+
   const [employees, allCuts, allWithdrawals, allPurchases, movements, attendance, weeks, tiers, extraBonuses] = await Promise.all([
     listProfiles(),
     listCuts(),
