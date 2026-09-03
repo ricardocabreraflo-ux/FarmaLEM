@@ -276,12 +276,36 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
         </div>
       </section>
 
-      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[3fr_2fr]">
-        <div className="rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+      <section className="mt-4 grid grid-cols-1 rounded-2xl border border-admin-border bg-admin-surface lg:grid-cols-[3fr_2fr]">
+        <div className="p-5 sm:p-6">
           <SalesByDayChart monday={monday} salesByDate={salesByDate} tiers={tiers.ordered} compact />
+
+          <div className="mt-4">
+            <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-admin-border pt-3 text-[0.82rem]">
+            <span className="text-admin-ink-soft">
+              Acumulado: <b className="font-data text-admin-ink">{fmtMoney(weekSales.sales)}</b>
+            </span>
+            {tiers.nextTier && (
+              <span className="text-admin-ink-soft">
+                Meta semanal: <b className="font-data text-admin-ink">{fmtMoney(tiers.nextTier.goal)}</b>
+              </span>
+            )}
+          </div>
+
+          <div className="mt-5">
+            <Link href="/admin/cortes/nuevo" className="rounded-full border border-admin-border px-6 py-3 text-[0.9rem] font-semibold text-admin-ink">
+              Capturar corte
+            </Link>
+          </div>
         </div>
 
-        <div className="flex flex-col rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+        <div className="relative flex flex-col p-5 sm:p-6 lg:border-l lg:border-dashed lg:border-admin-border">
+          <span className="absolute -left-2.5 -top-2.5 hidden h-5 w-5 rounded-full bg-admin-bg lg:block" />
+          <span className="absolute -left-2.5 -bottom-2.5 hidden h-5 w-5 rounded-full bg-admin-bg lg:block" />
+
           <h2 className="font-display text-base text-admin-ink">Reloj checador</h2>
           <p className="mt-1 text-[0.78rem] text-admin-ink-soft">
             {last ? `Tu última marca: ${last.event_type} · ${fmtTime(last.occurred_at)}` : "Aún no marcas hoy."}
@@ -304,27 +328,6 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <p className="mt-2.5 text-[0.74rem] text-admin-ink-soft">
             ¿Llegó tu compañera y tú sigues aquí capturando? &ldquo;Marcar a otro turno&rdquo; no cierra tu sesión.
           </p>
-        </div>
-      </section>
-
-      <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
-        <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
-
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-admin-border pt-3 text-[0.82rem]">
-          <span className="text-admin-ink-soft">
-            Acumulado: <b className="font-data text-admin-ink">{fmtMoney(weekSales.sales)}</b>
-          </span>
-          {tiers.nextTier && (
-            <span className="text-admin-ink-soft">
-              Meta semanal: <b className="font-data text-admin-ink">{fmtMoney(tiers.nextTier.goal)}</b>
-            </span>
-          )}
-        </div>
-
-        <div className="mt-5">
-          <Link href="/admin/cortes/nuevo" className="rounded-full border border-admin-border px-6 py-3 text-[0.9rem] font-semibold text-admin-ink">
-            Capturar corte
-          </Link>
         </div>
       </section>
 
