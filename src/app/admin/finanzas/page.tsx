@@ -56,6 +56,9 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
         </Link>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Resumen mensual alimentado por cortes, mercancía, asistencia, bonos y gastos.</p>
+      <Link href="/admin/finanzas/historico" className="mt-1 inline-block text-[0.82rem] font-semibold text-admin-primary hover:underline">
+        Estados de resultados de meses anteriores (enero–mayo 2026) &rarr;
+      </Link>
 
       <MonthPicker month={month} basePath="/admin/finanzas" />
 
