@@ -143,8 +143,10 @@ export async function sendCutWhatsAppNotification(params: CutNotificationParams)
  *
  *   WHATSAPP_PUNCH_TEMPLATE_NAME=checada_farmalem   (opcional, ese es el default)
  *
- * Texto sugerido para la plantilla (categoría "Utilidad", idioma es_MX):
- *   "Checada en FarmaLEM: {{1}} · {{2}} · Turno {{3}} · {{4}}"
+ * Texto sugerido para la plantilla (categoría "Utilidad", idioma es_MX) —
+ * ver README, sección "Aviso de checada" (Meta rechaza plantillas que
+ * terminan justo en una variable, por eso {{4}} lleva "hrs." después y hay
+ * una línea de cierre).
  */
 interface PunchNotificationParams {
   employeeName: string;

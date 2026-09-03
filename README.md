@@ -129,14 +129,18 @@ otra plantilla:
    - Nombre: `checada_farmalem`
    - Categoría: **Utilidad**
    - Idioma: Español (MX)
-   - Cuerpo del mensaje, con 4 variables en este orden exacto:
+   - Cuerpo del mensaje, con 4 variables en este orden exacto (nota que la
+     última línea sigue después de la variable {{4}} — Meta rechaza las
+     plantillas que terminan justo en una variable):
      ```
      Checada en FarmaLEM
 
      Empleado: {{1}}
      Movimiento: {{2}}
      Turno: {{3}}
-     Hora: {{4}}
+     Hora: {{4}} hrs.
+
+     Revísalo en el reloj checador de tu panel.
      ```
    - Envíala a revisión.
 2. Si usas un nombre distinto a `checada_farmalem`, ponlo en
