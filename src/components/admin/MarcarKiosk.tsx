@@ -90,6 +90,15 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
         </>
       ) : (
         <>
+          <div className="flex w-full justify-start">
+            <button
+              type="button"
+              onClick={reset}
+              className="flex items-center gap-1 rounded-full border border-admin-border px-3 py-1.5 text-[0.8rem] font-semibold text-admin-ink-soft hover:border-admin-primary hover:text-admin-primary"
+            >
+              &larr; Regresar
+            </button>
+          </div>
           <p className="text-[0.9rem] text-admin-ink-soft">
             {active.shift} &middot; {active.firstName} — tu PIN corto.
           </p>
@@ -116,9 +125,6 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
               </button>
             ))}
           </div>
-          <button type="button" onClick={reset} className="text-[0.82rem] font-semibold text-admin-ink-soft hover:underline">
-            No soy yo / cambiar turno
-          </button>
         </>
       )}
 

@@ -296,7 +296,10 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           </div>
 
           <div className="mt-5">
-            <Link href="/admin/cortes/nuevo" className="rounded-full border border-admin-border px-6 py-3 text-[0.9rem] font-semibold text-admin-ink">
+            <Link
+              href="/admin/cortes/nuevo"
+              className="rounded-full border border-admin-border bg-admin-bg px-6 py-3 text-[0.9rem] font-semibold text-admin-ink transition-transform duration-150 ease-out hover:border-admin-primary active:scale-[0.97]"
+            >
               Capturar corte
             </Link>
           </div>
@@ -320,7 +323,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
             </Link>
             <Link
               href="/admin/turno/marcar"
-              className="rounded-full border border-admin-border px-5 py-3 text-center text-[0.88rem] font-semibold text-admin-ink"
+              className="rounded-full border border-admin-border bg-admin-bg px-5 py-3 text-center text-[0.88rem] font-semibold text-admin-ink hover:border-admin-primary"
             >
               Marcar a otro turno
             </Link>
