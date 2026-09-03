@@ -116,7 +116,17 @@ function CutsStreak({ monday, workedDates, capturedDates }: { monday: string; wo
   );
 }
 
-function SalesByDayChart({ monday, salesByDate, tiers }: { monday: string; salesByDate: Map<string, number>; tiers: BonusTier[] }) {
+function SalesByDayChart({
+  monday,
+  salesByDate,
+  tiers,
+  compact,
+}: {
+  monday: string;
+  salesByDate: Map<string, number>;
+  tiers: BonusTier[];
+  compact?: boolean;
+}) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const values = days.map((d) => salesByDate.get(d) ?? 0);
   // Mismo criterio que la Pirámide de Metas (cada nivel de la meta semanal ÷
@@ -136,12 +146,14 @@ function SalesByDayChart({ monday, salesByDate, tiers }: { monday: string; sales
     <>
       <h2 className="font-display text-base text-admin-ink">Ventas por día</h2>
       <p className="mt-1 text-[0.78rem] text-admin-ink-soft">
-        {dailyLevels.length > 0
-          ? "Líneas punteadas: promedio diario de cada nivel de la meta (igual que la Pirámide) — de referencia, para ver en cuál va cayendo cada día."
-          : "Aún no hay metas configuradas para este turno este mes."}
+        {dailyLevels.length === 0
+          ? "Aún no hay metas configuradas para este turno este mes."
+          : compact
+            ? "Líneas punteadas: promedio diario de cada nivel de la meta."
+            : "Líneas punteadas: promedio diario de cada nivel de la meta (igual que la Pirámide) — de referencia, para ver en cuál va cayendo cada día."}
       </p>
 
-      <div className="relative mt-6 h-40">
+      <div className={`relative ${compact ? "mt-5 h-28" : "mt-6 h-40"}`}>
         {dailyLevels.map((t) => {
           const pct = Math.min(100, Math.round((t.daily / max) * 100));
           return (
@@ -264,12 +276,39 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
         </div>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
-        <SalesByDayChart monday={monday} salesByDate={salesByDate} tiers={tiers.ordered} />
-
-        <div className="mt-4">
-          <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
+      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[3fr_2fr]">
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+          <SalesByDayChart monday={monday} salesByDate={salesByDate} tiers={tiers.ordered} compact />
         </div>
+
+        <div className="flex flex-col rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+          <h2 className="font-display text-base text-admin-ink">Reloj checador</h2>
+          <p className="mt-1 text-[0.78rem] text-admin-ink-soft">
+            {last ? `Tu última marca: ${last.event_type} · ${fmtTime(last.occurred_at)}` : "Aún no marcas hoy."}
+          </p>
+
+          <div className="mt-4 flex flex-col gap-2.5">
+            <Link
+              href="/admin/reloj"
+              className="rounded-full bg-admin-primary px-5 py-3 text-center text-[0.88rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
+            >
+              Marcar mi Entrada/Salida
+            </Link>
+            <Link
+              href="/admin/turno/marcar"
+              className="rounded-full border border-admin-border px-5 py-3 text-center text-[0.88rem] font-semibold text-admin-ink"
+            >
+              Marcar a otro turno
+            </Link>
+          </div>
+          <p className="mt-2.5 text-[0.74rem] text-admin-ink-soft">
+            ¿Llegó tu compañera y tú sigues aquí capturando? &ldquo;Marcar a otro turno&rdquo; no cierra tu sesión.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
+        <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
 
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-admin-border pt-3 text-[0.82rem]">
           <span className="text-admin-ink-soft">
@@ -282,13 +321,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           )}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            href="/admin/reloj"
-            className="rounded-full bg-admin-primary px-6 py-3 text-[0.9rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
-          >
-            Ir al reloj checador
-          </Link>
+        <div className="mt-5">
           <Link href="/admin/cortes/nuevo" className="rounded-full border border-admin-border px-6 py-3 text-[0.9rem] font-semibold text-admin-ink">
             Capturar corte
           </Link>
