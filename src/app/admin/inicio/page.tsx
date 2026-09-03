@@ -298,7 +298,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <div className="mt-5">
             <Link
               href="/admin/cortes/nuevo"
-              className="rounded-full border border-admin-border bg-admin-bg px-6 py-3 text-[0.9rem] font-semibold text-admin-ink transition-transform duration-150 ease-out hover:border-admin-primary active:scale-[0.97]"
+              className="block w-full rounded-full border border-admin-border bg-admin-bg px-6 py-3 text-center text-[0.9rem] font-semibold text-admin-ink transition-transform duration-150 ease-out hover:border-admin-primary active:scale-[0.97]"
             >
               Capturar corte
             </Link>
