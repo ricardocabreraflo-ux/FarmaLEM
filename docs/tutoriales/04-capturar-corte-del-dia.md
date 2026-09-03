@@ -1,4 +1,4 @@
-# 3. Cómo capturar el corte del día
+# 4. Cómo capturar el corte del día
 
 **Para quién:** todo el equipo de mostrador.
 **Cuándo:** al terminar tu turno, con la venta del día y el efectivo listos.
@@ -83,14 +83,26 @@ en el celular abre la cámara directo. Cuando todo esté correcto, toca
 
 ## Listo
 
+Al guardar verás **"✓ Corte guardado correctamente."** arriba de la lista.
 Tu corte queda guardado en **Cortes**, con estado **"Por revisar"** hasta que
 administración lo apruebe.
 
-![Pantalla de Cortes mostrando el corte recién guardado: venta $3,200.00, efectivo $2,400.00, tarjeta $800.00 y el registro del día en la lista](img/corte-06-guardado-en-lista.png)
+![Pantalla de Cortes con el aviso "✓ Corte guardado correctamente." y el registro del día en la lista](img/corte-06-guardado-en-lista.png)
 
 *En computadora:*
 
 ![Lo mismo en pantalla de computadora](img/corte-06-guardado-en-lista-desktop.png)
+
+---
+
+## Si la pantalla se recarga a medio capturar
+
+No pierdes lo que ya escribiste: FarmaLEM guarda un borrador en tu celular o
+computadora mientras capturas. Si la página se llega a recargar sola (por
+ejemplo por una actualización del panel), al volver a abrir **"Capturar
+corte"** verás el aviso **"Recuperamos lo que tenías escrito de un intento
+anterior — revísalo antes de guardar."** con tus datos ya puestos. Solo
+revísalo antes de guardar, por si algo quedó a medias.
 
 ---
 

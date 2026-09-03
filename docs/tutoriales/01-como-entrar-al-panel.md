@@ -28,6 +28,15 @@ mostrador. Se abre directo en la pantalla para elegir tu turno.
 Cada botón muestra el nombre de quien está asignado a ese turno. Toca el
 tuyo — por ejemplo, **MATUTINO**.
 
+> **¿Ya llegaste pero aún no puedes entrar?** Justo debajo de los turnos hay
+> un enlace **"¿Ya llegaste pero aún no puedes entrar? Marca tu entrada
+> aquí"**. Es para cuando ya llegaste a trabajar pero, por ejemplo, tu
+> compañera todavía está usando la computadora para capturar su corte. Te
+> lleva a una pantalla aparte donde marcas tu entrada con tu turno y tu PIN,
+> sin necesidad de abrir tu sesión — el paso a paso completo está en la
+> sección ["Marcar a otro turno"](03-reloj-checador.md#marcar-a-otro-turno)
+> del tutorial del reloj checador.
+
 ## Paso 2 — La primera vez: tu contraseña
 
 La primera vez que entras desde esa computadora, te pide tu **contraseña**
@@ -53,8 +62,11 @@ accesos directos a lo que más usas.
 
 ![Lo mismo en pantalla de computadora](img/entrar-04-inicio-desktop.png)
 
-Desde aquí puedes ir directo al [reloj checador](02-reloj-checador.md) o a
-[capturar el corte del día](03-capturar-corte-del-dia.md).
+Desde aquí puedes ir directo al [reloj checador](03-reloj-checador.md) o a
+[capturar el corte del día](04-capturar-corte-del-dia.md). El tutorial
+["Cómo usar Inicio"](02-inicio.md) explica a detalle cada parte de esta
+pantalla: tu meta de la semana, tus ventas por día, tu racha de cortes
+capturados y los niveles de bono.
 
 ---
 
