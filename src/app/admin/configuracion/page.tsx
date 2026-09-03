@@ -55,7 +55,7 @@ export default async function ConfiguracionPage() {
         <h2 className="font-display text-base text-admin-ink">Usuarios &middot; Roles</h2>
         <p className="mt-1 text-[0.84rem] text-admin-ink-soft">
           Los roles con los que se organiza el equipo, como en SICAR X. Administrador y Vendedor son los roles base del sistema; agrega los que
-          necesites (por ejemplo Supervisor) para más adelante decidir qué módulos ve cada uno.
+          necesites (por ejemplo Supervisor) y dale &ldquo;Permisos&rdquo; a cada uno para decidir qué módulos ve.
         </p>
         <RolesPanel initialRoles={roles} pinConfigured={pinSet} />
       </section>

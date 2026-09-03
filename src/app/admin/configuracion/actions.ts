@@ -68,6 +68,12 @@ async function moduleResult(ok: true): Promise<ModuleActionResult> {
   return { ok, entries, roles };
 }
 
+/** Para abrir "Permisos" desde un rol en Usuarios · Roles: trae la estructura del panel bajo demanda. */
+export async function getModuleEditorStructureAction(): Promise<ModuleActionResult> {
+  await requireAdminSession();
+  return moduleResult(true);
+}
+
 export async function toggleModuleAction(key: string, enabled: boolean): Promise<ModuleActionResult> {
   const session = await requireAdminSession();
   try {

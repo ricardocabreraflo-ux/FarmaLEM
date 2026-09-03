@@ -9,8 +9,20 @@ import {
   type RoleActionResult,
 } from "@/app/admin/configuracion/actions";
 import type { Role } from "@/lib/roles";
+import { RolePermissionsModal } from "@/components/admin/RolePermissionsModal";
 
 const iconBase = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
+function IconKey() {
+  return (
+    <svg {...iconBase} className="h-4 w-4">
+      <circle cx="8" cy="15" r="3.5" />
+      <path d="M10.5 12.5 19 4" />
+      <path d="M15.5 8 18 10.5" />
+      <path d="M18 5.5 20.5 8" />
+    </svg>
+  );
+}
 
 function IconDuplicate() {
   return (
@@ -50,6 +62,7 @@ export function RolesPanel({ initialRoles, pinConfigured }: { initialRoles: Role
   const [newName, setNewName] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePin, setDeletePin] = useState("");
+  const [permissionsRole, setPermissionsRole] = useState<Role | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -171,6 +184,16 @@ export function RolesPanel({ initialRoles, pinConfigured }: { initialRoles: Role
                   <div className="flex items-center gap-3 text-admin-ink-soft">
                     <button
                       type="button"
+                      title="Permisos"
+                      aria-label={`Permisos de ${role.name}`}
+                      onClick={() => setPermissionsRole(role)}
+                      className="flex items-center gap-1 hover:text-admin-primary"
+                    >
+                      <IconKey />
+                      <span className="text-[0.78rem] font-semibold">Permisos</span>
+                    </button>
+                    <button
+                      type="button"
                       disabled={busy}
                       title="Duplicar"
                       aria-label={`Duplicar ${role.name}`}
@@ -264,9 +287,13 @@ export function RolesPanel({ initialRoles, pinConfigured }: { initialRoles: Role
         })}
       </div>
       <p className="mt-2 text-[0.78rem] text-admin-ink-soft">
-        Administrador y Vendedor son los roles base y no se pueden renombrar ni borrar. Por ahora aquí solo se administran los nombres — activar y
-        desactivar módulos por rol es el siguiente paso.
+        Administrador y Vendedor son los roles base y no se pueden renombrar ni borrar. Dale &ldquo;Permisos&rdquo; a cualquier rol para elegir qué
+        pantallas ve.
       </p>
+
+      {permissionsRole && (
+        <RolePermissionsModal roleId={permissionsRole.id} roleName={permissionsRole.name} onClose={() => setPermissionsRole(null)} />
+      )}
     </div>
   );
 }
