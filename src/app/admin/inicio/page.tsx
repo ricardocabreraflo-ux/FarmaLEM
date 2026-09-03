@@ -86,7 +86,7 @@ function CutsStreak({ monday, workedDates, capturedDates }: { monday: string; wo
   return (
     <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
       <span className="text-[0.78rem] text-admin-ink-soft">Cortes capturados esta semana</span>
-      <div className="mt-2 flex flex-wrap gap-3">
+      <div className="mt-2 grid grid-cols-7 gap-2">
         {days.map((d, i) => {
           const worked = workedDates.has(d);
           const captured = capturedDates.has(d);
@@ -164,12 +164,12 @@ function SalesByDayChart({
             </div>
           );
         })}
-        <div className="absolute inset-0 flex items-end justify-between gap-2">
+        <div className="absolute inset-0 grid grid-cols-7 items-end gap-2">
           {days.map((d, i) => {
             const v = values[i];
             const heightPct = v > 0 ? Math.max(3, Math.round((v / max) * 100)) : 0;
             return (
-              <div key={d} className="flex h-full flex-1 flex-col items-end justify-end">
+              <div key={d} className="flex h-full flex-col items-end justify-end">
                 <div
                   title={v > 0 ? fmtMoney(v) : undefined}
                   className={`w-full rounded-t-md ${v > 0 ? "bg-admin-primary" : "border border-dashed border-admin-border"}`}
@@ -181,12 +181,12 @@ function SalesByDayChart({
         </div>
       </div>
 
-      <div className="mt-1.5 flex justify-between gap-2">
+      <div className="mt-1.5 grid grid-cols-7 gap-2">
         {days.map((d, i) => {
           const v = values[i];
           const level = v > 0 ? levelReached(v) : null;
           return (
-            <div key={d} className="flex flex-1 flex-col items-center gap-0.5">
+            <div key={d} className="flex flex-col items-center gap-0.5">
               <span className="text-[0.66rem] font-semibold text-admin-ink-soft">{v > 0 ? fmtMoney(v) : ""}</span>
               <span className="text-[0.7rem] font-bold text-admin-ink-soft">{DAY_LABELS[i]}</span>
               {v > 0 && (
