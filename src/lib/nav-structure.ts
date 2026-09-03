@@ -46,6 +46,7 @@ export const NAV_STRUCTURE: NavEntryDef[] = [
     leaf("/admin/asistencia", "Asistencia", "IconAsistencia", true),
     leaf("/admin/asistencia/calendario", "Calendario de turnos", "IconCalendario", true),
     leaf("/admin/reloj", "Reloj checador", "IconReloj"),
+    leaf("/admin/anaqueles", "Distribución de anaqueles", "IconInventario"),
     leaf("/admin/bonos-extra", "Bonos extraordinarios", "IconBonoExtra", true),
     leaf("/admin/bonos", "Bonos semanales", "IconBonoSemanal", true),
     leaf("/admin/empleados", "Empleados", "IconEmpleados", true),
