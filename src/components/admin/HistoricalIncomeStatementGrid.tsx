@@ -114,9 +114,14 @@ export function HistoricalIncomeStatementGrid({
     const ventas = salesByMonth[months[idx]] ?? 0;
     const costos = n(v.costos);
     const gastos = GASTO_ROWS.reduce((sum, r) => sum + n(v[r.key]), 0);
+    const perdidasMerma = n(v.perdidasMerma);
     const utilidadBruta = ventas - costos;
-    const utilidadNeta = utilidadBruta - gastos;
-    return { ventas, costos, gastos, utilidadBruta, utilidadNeta };
+    // La merma es una pérdida real de inventario, así que sí se resta de la
+    // utilidad neta (antes solo se mostraba como referencia abajo, sin
+    // afectar este total) — así coincide con el Estado de resultados en
+    // vivo y con el comparativo anual, que ya la restaban.
+    const utilidadNeta = utilidadBruta - gastos - perdidasMerma;
+    return { ventas, costos, gastos, perdidasMerma, utilidadBruta, utilidadNeta };
   }
 
   function toInput(idx: number): HistoricalIncomeStatementInput {
@@ -276,7 +281,10 @@ export function HistoricalIncomeStatementGrid({
             ))}
           </tr>
           <tr className="border-b-2 border-admin-border bg-admin-bg/60">
-            <td className="px-3 py-2 font-bold text-admin-ink">UTILIDAD NETA O PÉRDIDA</td>
+            <td className="px-3 py-2">
+              <span className="font-bold text-admin-ink">UTILIDAD NETA O PÉRDIDA</span>
+              <span className="block text-[0.68rem] font-normal text-admin-ink-soft">Ya incluye la merma de abajo</span>
+            </td>
             {months.map((month, idx) => {
               const value = computed(idx).utilidadNeta;
               return (
