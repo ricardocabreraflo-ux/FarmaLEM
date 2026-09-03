@@ -35,7 +35,9 @@ export default async function ComprobanteSemanalPage({ searchParams }: { searchP
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
 
   const [employees, attendance, weeks] = await Promise.all([listProfiles(), listAttendanceForRange(monday, sunday), listBonusWeeksStarting(monday)]);
-  const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);
+  const activeEmployees = employees
+    .filter((e) => e.role === "employee" && e.active)
+    .sort((a, b) => (a.shift === "Matutino" ? -1 : b.shift === "Matutino" ? 1 : 0));
 
   const months = Array.from(new Set(weeks.map((w) => w.month)));
   const tiersByMonth = new Map(await Promise.all(months.map(async (m) => [m, await listBonusTiers(m)] as const)));

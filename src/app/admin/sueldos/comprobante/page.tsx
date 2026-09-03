@@ -32,7 +32,9 @@ export default async function ComprobantePage({ searchParams }: { searchParams: 
     listBonusWeeks(month),
     listBonusTiers(month),
   ]);
-  const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);
+  const activeEmployees = employees
+    .filter((e) => e.role === "employee" && e.active)
+    .sort((a, b) => (a.shift === "Matutino" ? -1 : b.shift === "Matutino" ? 1 : 0));
 
   return (
     <main className="mx-auto max-w-[760px] bg-white px-6 py-10 text-slate-900">
