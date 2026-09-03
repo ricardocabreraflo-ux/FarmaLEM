@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listHistoricalIncomeStatements } from "@/lib/historical-financials";
+import { monthlySales } from "@/lib/sales-report";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { HistoricalIncomeStatementGrid } from "@/components/admin/HistoricalIncomeStatementGrid";
 
@@ -33,12 +34,14 @@ export default async function HistoricalFinancialsPage({ searchParams }: { searc
   const to = hasta || "2026-05";
   const months = monthsBetween(from, to);
 
-  const [profile, employees, statements] = await Promise.all([
+  const [profile, employees, statements, sales] = await Promise.all([
     getProfileById(session.uid),
     listProfiles(),
     listHistoricalIncomeStatements(months),
+    monthlySales(),
   ]);
   const employeeNames = Object.fromEntries(employees.map((e) => [e.id, e.full_name]));
+  const salesByMonth = Object.fromEntries(sales.map((s) => [s.month, s.total]));
 
   return (
     <AdminShell activeHref="/admin/finanzas" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -80,6 +83,7 @@ export default async function HistoricalFinancialsPage({ searchParams }: { searc
           months={months}
           initialStatements={months.map((m) => statements.get(m) ?? null)}
           employeeNames={employeeNames}
+          salesByMonth={salesByMonth}
         />
       </div>
     </AdminShell>

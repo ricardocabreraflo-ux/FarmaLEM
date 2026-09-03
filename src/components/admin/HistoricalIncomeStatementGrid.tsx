@@ -6,7 +6,6 @@ import { saveHistoricalMonthAction, approveHistoricalMonthAction, unapproveHisto
 import type { HistoricalIncomeStatement, HistoricalIncomeStatementInput } from "@/lib/historical-financials";
 
 interface MonthState {
-  ventas: string;
   costos: string;
   gastoRenta: string;
   gastoLuzAgua: string;
@@ -22,7 +21,6 @@ interface MonthState {
 type FieldKey = keyof MonthState;
 
 const EMPTY: MonthState = {
-  ventas: "",
   costos: "",
   gastoRenta: "",
   gastoLuzAgua: "",
@@ -49,7 +47,6 @@ const GASTO_ROWS: { key: FieldKey; label: string }[] = [
 function toState(s: HistoricalIncomeStatement | null): MonthState {
   if (!s) return EMPTY;
   return {
-    ventas: s.ventas ? String(s.ventas) : "",
     costos: s.costos ? String(s.costos) : "",
     gastoRenta: s.gasto_renta ? String(s.gasto_renta) : "",
     gastoLuzAgua: s.gasto_luz_agua ? String(s.gasto_luz_agua) : "",
@@ -94,10 +91,12 @@ export function HistoricalIncomeStatementGrid({
   months,
   initialStatements,
   employeeNames,
+  salesByMonth,
 }: {
   months: string[];
   initialStatements: (HistoricalIncomeStatement | null)[];
   employeeNames: Record<string, string>;
+  salesByMonth: Record<string, number>;
 }) {
   const router = useRouter();
   const [approved, setApproved] = useState<boolean[]>(initialStatements.map((s) => s?.approved ?? false));
@@ -112,7 +111,7 @@ export function HistoricalIncomeStatementGrid({
 
   function computed(idx: number) {
     const v = values[idx];
-    const ventas = n(v.ventas);
+    const ventas = salesByMonth[months[idx]] ?? 0;
     const costos = n(v.costos);
     const gastos = GASTO_ROWS.reduce((sum, r) => sum + n(v[r.key]), 0);
     const utilidadBruta = ventas - costos;
@@ -123,7 +122,7 @@ export function HistoricalIncomeStatementGrid({
   function toInput(idx: number): HistoricalIncomeStatementInput {
     const v = values[idx];
     return {
-      ventas: n(v.ventas),
+      ventas: salesByMonth[months[idx]] ?? 0,
       costos: n(v.costos),
       gastoRenta: n(v.gastoRenta),
       gastoLuzAgua: n(v.gastoLuzAgua),
@@ -241,11 +240,16 @@ export function HistoricalIncomeStatementGrid({
         <tbody>
           <tr className="border-b border-admin-border">
             <td className="px-3 py-2 font-bold text-admin-ink">VENTAS</td>
-            {months.map((month, idx) => (
-              <td key={month} className="px-3 py-2 text-right">
-                <Cell value={values[idx].ventas} approved={approved[idx]} onChange={(v) => setField(idx, "ventas", v)} />
+            {months.map((month) => (
+              <td key={month} className="px-3 py-2 text-right font-data tabular-nums text-admin-ink">
+                {fmtMoney(salesByMonth[month] ?? 0)}
               </td>
             ))}
+          </tr>
+          <tr>
+            <td className="px-3 pb-2 text-[0.7rem] font-normal text-admin-ink-soft" colSpan={months.length + 1}>
+              Ventas tomadas de Estado de resultados &rarr; Ventas por año/histórico, no se capturan aquí.
+            </td>
           </tr>
           <tr className="border-b border-admin-border">
             <td className="px-3 py-2 font-bold text-admin-ink">COSTOS</td>
