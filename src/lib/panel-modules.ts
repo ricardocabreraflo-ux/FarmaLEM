@@ -193,6 +193,33 @@ export async function updatePanelModule(key: string, patch: { enabled?: boolean;
   if (error) throw new Error(error.message);
 }
 
+function allLeaves(): NavLeafDef[] {
+  return NAV_STRUCTURE.flatMap((entry) => (entry.type === "leaf" ? [entry] : entry.items));
+}
+
+/**
+ * Guarda de una vez los permisos de un rol para todas las pantallas
+ * (botón "Guardar" del modal de permisos por rol) — solo escribe los
+ * módulos cuyo estado para este rol realmente cambió.
+ */
+export async function setRolePermissions(roleId: string, visibleKeys: Set<string>): Promise<void> {
+  const [rows, roles] = await Promise.all([getPanelModuleRows(), listRoles()]);
+  const allRoleIds = roles.map((r) => r.id);
+  const db = supabaseAdmin();
+
+  for (const leaf of allLeaves()) {
+    if (leaf.locked) continue;
+    const row = rowFor(rows, leaf.key, allRoleIds, leaf.defaultAdminOnly);
+    const shouldBeVisible = visibleKeys.has(leaf.key);
+    const isVisible = row.visible_role_ids.includes(roleId);
+    if (shouldBeVisible === isVisible) continue;
+
+    const nextRoleIds = shouldBeVisible ? [...row.visible_role_ids, roleId] : row.visible_role_ids.filter((id) => id !== roleId);
+    const { error } = await db.from("panel_modules").upsert({ key: leaf.key, visible_role_ids: nextRoleIds }, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+  }
+}
+
 export async function movePanelModule(key: string, direction: "up" | "down"): Promise<void> {
   const scopeKeys = siblingKeysOf(key);
   if (scopeKeys.length === 0) throw new Error("Módulo desconocido.");

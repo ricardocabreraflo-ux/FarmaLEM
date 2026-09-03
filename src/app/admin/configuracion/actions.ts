@@ -6,7 +6,7 @@ import { saveBreakevenMargin } from "@/lib/breakeven";
 import { saveDeletePinHash } from "@/lib/security-settings";
 import { hashPassword } from "@/lib/password";
 import { logAction } from "@/lib/history";
-import { getModuleEditorStructure, movePanelModule, updatePanelModule, type ModuleEditorEntry } from "@/lib/panel-modules";
+import { getModuleEditorStructure, movePanelModule, updatePanelModule, setRolePermissions, type ModuleEditorEntry } from "@/lib/panel-modules";
 import { createRole, deleteRole, duplicateRole, listRoles, renameRole, type Role } from "@/lib/roles";
 
 export interface BreakevenMarginFormState {
@@ -71,6 +71,19 @@ async function moduleResult(ok: true): Promise<ModuleActionResult> {
 /** Para abrir "Permisos" desde un rol en Usuarios · Roles: trae la estructura del panel bajo demanda. */
 export async function getModuleEditorStructureAction(): Promise<ModuleActionResult> {
   await requireAdminSession();
+  return moduleResult(true);
+}
+
+/** Botón "Guardar" del modal de permisos por rol — aplica todos los cambios marcados de una vez. */
+export async function saveRolePermissionsAction(roleId: string, roleName: string, visibleKeys: string[]): Promise<ModuleActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await setRolePermissions(roleId, new Set(visibleKeys));
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudieron guardar los permisos." };
+  }
+  await logAction(session.uid, "Guardó permisos de rol", roleName);
+  revalidatePath("/admin/configuracion");
   return moduleResult(true);
 }
 
