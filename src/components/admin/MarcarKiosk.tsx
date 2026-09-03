@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { marcarPunch } from "@/app/admin/turno/marcar/actions";
 
 export interface MarcarShiftInfo {
@@ -19,6 +20,7 @@ function fmtTime(iso: string) {
 }
 
 export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
+  const router = useRouter();
   const [active, setActive] = useState<MarcarShiftInfo | null>(null);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,11 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
     setPin("");
     setError(null);
     setConfirmed(null);
+  }
+
+  function goBack() {
+    if (active || confirmed) reset();
+    else router.back();
   }
 
   function submit(value: string) {
@@ -55,6 +62,16 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
 
   return (
     <div className="mx-auto flex max-w-[380px] flex-col items-center gap-6 px-4 py-10 text-center">
+      <div className="flex w-full justify-start">
+        <button
+          type="button"
+          onClick={goBack}
+          className="flex items-center gap-1 rounded-full border border-admin-border bg-admin-surface px-3 py-1.5 text-[0.8rem] font-semibold text-admin-ink-soft hover:border-admin-primary hover:text-admin-primary"
+        >
+          &larr; Regresar
+        </button>
+      </div>
+
       <div>
         <strong className="font-display text-xl text-admin-ink">Marcar Entrada / Salida</strong>
         <p className="mt-1 text-[0.85rem] text-admin-ink-soft">Sin abrir sesión — solo tu turno y tu PIN.</p>
@@ -90,15 +107,6 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
         </>
       ) : (
         <>
-          <div className="flex w-full justify-start">
-            <button
-              type="button"
-              onClick={reset}
-              className="flex items-center gap-1 rounded-full border border-admin-border px-3 py-1.5 text-[0.8rem] font-semibold text-admin-ink-soft hover:border-admin-primary hover:text-admin-primary"
-            >
-              &larr; Regresar
-            </button>
-          </div>
           <p className="text-[0.9rem] text-admin-ink-soft">
             {active.shift} &middot; {active.firstName} — tu PIN corto.
           </p>
