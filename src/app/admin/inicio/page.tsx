@@ -283,26 +283,6 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <div className="mt-4">
             <CutsStreak monday={monday} workedDates={workedDates} capturedDates={capturedDates} />
           </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-admin-border pt-3 text-[0.82rem]">
-            <span className="text-admin-ink-soft">
-              Acumulado: <b className="font-data text-admin-ink">{fmtMoney(weekSales.sales)}</b>
-            </span>
-            {tiers.nextTier && (
-              <span className="text-admin-ink-soft">
-                Meta semanal: <b className="font-data text-admin-ink">{fmtMoney(tiers.nextTier.goal)}</b>
-              </span>
-            )}
-          </div>
-
-          <div className="mt-5">
-            <Link
-              href="/admin/cortes/nuevo"
-              className="block w-full rounded-full border border-admin-border bg-admin-bg px-6 py-3 text-center text-[0.9rem] font-semibold text-admin-ink transition-transform duration-150 ease-out hover:border-admin-primary active:scale-[0.97]"
-            >
-              Capturar corte
-            </Link>
-          </div>
         </div>
 
         <div className="relative flex flex-col p-5 sm:p-6 lg:border-l lg:border-dashed lg:border-admin-border">
@@ -331,6 +311,15 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <p className="mt-2.5 text-[0.74rem] text-admin-ink-soft">
             ¿Llegó tu compañera y tú sigues aquí capturando? &ldquo;Marcar a otro turno&rdquo; no cierra tu sesión.
           </p>
+
+          <div className="mt-auto pt-4">
+            <Link
+              href="/admin/cortes/nuevo"
+              className="block w-full rounded-full border border-admin-border bg-admin-bg px-6 py-3 text-center text-[0.9rem] font-semibold text-admin-ink transition-transform duration-150 ease-out hover:border-admin-primary active:scale-[0.97]"
+            >
+              Capturar corte
+            </Link>
+          </div>
         </div>
       </section>
 

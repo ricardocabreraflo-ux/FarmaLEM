@@ -66,7 +66,7 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
         <button
           type="button"
           onClick={goBack}
-          className="flex items-center gap-1 rounded-full border border-admin-border bg-admin-surface px-3 py-1.5 text-[0.8rem] font-semibold text-admin-ink-soft hover:border-admin-primary hover:text-admin-primary"
+          className="flex items-center gap-1 rounded-full border border-transparent bg-admin-primary-soft px-3 py-1.5 text-[0.8rem] font-semibold text-admin-primary-deep hover:bg-admin-primary hover:text-white"
         >
           &larr; Regresar
         </button>
