@@ -86,7 +86,7 @@ function CutsStreak({ monday, workedDates, capturedDates }: { monday: string; wo
   return (
     <div className="rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
       <span className="text-[0.78rem] text-admin-ink-soft">Cortes capturados esta semana</span>
-      <div className="mt-2 flex justify-between gap-1">
+      <div className="mt-2 flex flex-wrap gap-3">
         {days.map((d, i) => {
           const worked = workedDates.has(d);
           const captured = capturedDates.has(d);
