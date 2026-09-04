@@ -40,18 +40,33 @@ export async function toggleExpenseTemplateAction(id: string, name: string, acti
   revalidatePath("/admin/finanzas/gastos");
 }
 
-export async function captureExpenseTemplateAction(templateId: string, name: string, type: ExpenseTemplateType, category: string, amount: number, month: string) {
+export async function captureExpenseTemplateAction(
+  templateId: string,
+  name: string,
+  type: ExpenseTemplateType,
+  category: string,
+  amount: number,
+  month: string
+): Promise<{ error?: string }> {
   const session = await requireAdminSession();
-  await createFinanceMovement({
-    movementDate: `${month}-01`,
-    type,
-    category,
-    concept: name,
-    amount,
-    createdBy: session.uid,
-    templateId,
-  });
+  if (!(amount >= 0)) return { error: "El monto no puede ser negativo." };
+
+  try {
+    await createFinanceMovement({
+      movementDate: `${month}-01`,
+      type,
+      category,
+      concept: name,
+      amount,
+      createdBy: session.uid,
+      templateId,
+    });
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "No se pudo registrar el gasto." };
+  }
+
   await logAction(session.uid, "Registró gasto del mes", `${name} · $${amount.toFixed(2)}`);
   revalidatePath("/admin/finanzas/gastos");
   revalidatePath("/admin/finanzas");
+  return {};
 }
