@@ -5,11 +5,15 @@ import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
 import { listFinanceMovementsForMonth } from "@/lib/finance-movements";
 import { getMonthlyFinancials } from "@/lib/financials";
+import { listHistoricalIncomeStatements } from "@/lib/historical-financials";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MonthPicker } from "@/components/admin/MonthPicker";
+import { AnnualComparisonTable } from "@/components/admin/AnnualComparisonTable";
 
 export const metadata: Metadata = { title: "Estado de resultados" };
 export const dynamic = "force-dynamic";
+
+const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
 function fmtMoney(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -24,8 +28,16 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
   const session = await requireAdminSession();
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
+  const year = month.slice(0, 4);
+  const yearMonths = MONTH_NAMES.map((_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
 
-  const [profile, movements, financials] = await Promise.all([getProfileById(session.uid), listFinanceMovementsForMonth(month), getMonthlyFinancials(month)]);
+  const [profile, movements, financials, yearFinancialsByMonth, yearHistoricalByMonth] = await Promise.all([
+    getProfileById(session.uid),
+    listFinanceMovementsForMonth(month),
+    getMonthlyFinancials(month),
+    Promise.all(yearMonths.map((m) => getMonthlyFinancials(m))),
+    listHistoricalIncomeStatements(yearMonths),
+  ]);
   const {
     sales,
     otherIncome,
@@ -144,6 +156,21 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
       <p className="mt-5 text-[0.8rem] text-admin-ink-soft">
         Los pagos a proveedores son movimientos de efectivo; el costo se toma de Recepción de mercancía para evitar duplicarlo.
       </p>
+
+      <section className="mt-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-lg text-admin-ink">Comparativo anual {year}</h2>
+          <Link href={`/admin/finanzas/anual?anio=${year}`} className="text-[0.82rem] font-semibold text-admin-primary hover:underline">
+            Ver en página aparte para imprimir &rarr;
+          </Link>
+        </div>
+        <p className="mt-1 text-[0.8rem] text-admin-ink-soft">
+          Los meses ya capturados y aprobados en el histórico usan esos números; los demás se calculan desde cortes, asistencia y gastos del panel.
+        </p>
+        <div className="mt-3">
+          <AnnualComparisonTable months={yearMonths} financialsByMonth={yearFinancialsByMonth} historicalByMonth={yearHistoricalByMonth} />
+        </div>
+      </section>
     </AdminShell>
   );
 }
