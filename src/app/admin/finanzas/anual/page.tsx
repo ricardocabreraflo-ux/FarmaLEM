@@ -5,6 +5,7 @@ import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
 import { getMonthlyFinancials } from "@/lib/financials";
 import { listHistoricalIncomeStatements } from "@/lib/historical-financials";
+import { listFixedExpenseCategoryTotals } from "@/lib/finance-movements";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AnnualComparisonTable } from "@/components/admin/AnnualComparisonTable";
 
@@ -19,10 +20,11 @@ export default async function AnnualComparisonPage({ searchParams }: { searchPar
   const year = anio || mexicoCityToday().slice(0, 4);
   const months = MONTH_NAMES.map((_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
 
-  const [profile, financialsByMonth, historicalByMonth] = await Promise.all([
+  const [profile, financialsByMonth, historicalByMonth, categoryTotalsByMonth] = await Promise.all([
     getProfileById(session.uid),
     Promise.all(months.map((m) => getMonthlyFinancials(m))),
     listHistoricalIncomeStatements(months),
+    listFixedExpenseCategoryTotals(months),
   ]);
 
   return (
@@ -35,8 +37,8 @@ export default async function AnnualComparisonPage({ searchParams }: { searchPar
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">
         Los meses ya capturados y aprobados en el histórico usan esos números; los demás se calculan desde cortes, asistencia y gastos del panel. El
-        desglose por categoría (Renta, Luz y Agua, etc.) solo existe para los meses capturados a mano en el histórico — para los demás se ve &ldquo;—&rdquo;
-        aunque el total de Gastos sí es el real.
+        desglose por categoría (Renta, Luz y Agua, etc.) toma el histórico cuando existe, o lo capturado en Gastos fijos y variables — si una categoría no
+        se ha registrado en ninguno de los dos, se ve &ldquo;—&rdquo; aunque el total de Gastos sí sea el real.
       </p>
 
       <form method="get" className="mt-4 flex flex-wrap items-end gap-3">
@@ -55,7 +57,12 @@ export default async function AnnualComparisonPage({ searchParams }: { searchPar
       </form>
 
       <div className="mt-5">
-        <AnnualComparisonTable months={months} financialsByMonth={financialsByMonth} historicalByMonth={historicalByMonth} />
+        <AnnualComparisonTable
+          months={months}
+          financialsByMonth={financialsByMonth}
+          historicalByMonth={historicalByMonth}
+          categoryTotalsByMonth={categoryTotalsByMonth}
+        />
       </div>
     </AdminShell>
   );

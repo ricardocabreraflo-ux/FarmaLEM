@@ -33,6 +33,45 @@ export async function listFinanceMovementsForMonth(month: string): Promise<Finan
   return data as FinanceMovement[];
 }
 
+export type FixedExpenseCategory = "renta" | "luzAgua" | "papeleria" | "sistema" | "internet" | "varios";
+
+/**
+ * Las categorías de gastos fijos/variables se escriben libres (p. ej. "SICAR X",
+ * "Renta del local"), así que para poder mostrarlas en el comparativo anual
+ * (que usa columnas fijas heredadas del histórico) se agrupan por palabras clave.
+ */
+function normalizeFixedExpenseCategory(raw: string): FixedExpenseCategory | null {
+  const c = raw
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  if (c.includes("renta")) return "renta";
+  if (c.includes("luz") || c.includes("agua") || c.includes("cfe")) return "luzAgua";
+  if (c.includes("papeler")) return "papeleria";
+  if (c.includes("sicar") || c.includes("sistema") || c.includes("punto de venta")) return "sistema";
+  if (c.includes("internet") || c.includes("telmex") || c.includes("izzi") || c.includes("totalplay")) return "internet";
+  if (c.includes("vario")) return "varios";
+  return null;
+}
+
+/** Suma los movimientos de Gasto fijo/variable de cada mes agrupados por categoría normalizada. Usado por el comparativo anual para meses sin captura manual en el histórico. */
+export async function listFixedExpenseCategoryTotals(months: string[]): Promise<Map<string, Partial<Record<FixedExpenseCategory, number>>>> {
+  const movementsByMonth = await Promise.all(months.map((m) => listFinanceMovementsForMonth(m)));
+  const result = new Map<string, Partial<Record<FixedExpenseCategory, number>>>();
+  months.forEach((month, i) => {
+    const totals: Partial<Record<FixedExpenseCategory, number>> = {};
+    for (const movement of movementsByMonth[i]) {
+      if (movement.type !== "Gasto fijo" && movement.type !== "Gasto variable") continue;
+      const key = normalizeFixedExpenseCategory(movement.category);
+      if (!key) continue;
+      totals[key] = (totals[key] ?? 0) + movement.amount;
+    }
+    result.set(month, totals);
+  });
+  return result;
+}
+
 interface CreateFinanceMovementInput {
   movementDate: string;
   type: FinanceMovementType;

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
-import { listFinanceMovementsForMonth } from "@/lib/finance-movements";
+import { listFinanceMovementsForMonth, listFixedExpenseCategoryTotals } from "@/lib/finance-movements";
 import { getMonthlyFinancials } from "@/lib/financials";
 import { listHistoricalIncomeStatements } from "@/lib/historical-financials";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -31,12 +31,13 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
   const year = month.slice(0, 4);
   const yearMonths = MONTH_NAMES.map((_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
 
-  const [profile, movements, financials, yearFinancialsByMonth, yearHistoricalByMonth] = await Promise.all([
+  const [profile, movements, financials, yearFinancialsByMonth, yearHistoricalByMonth, yearCategoryTotalsByMonth] = await Promise.all([
     getProfileById(session.uid),
     listFinanceMovementsForMonth(month),
     getMonthlyFinancials(month),
     Promise.all(yearMonths.map((m) => getMonthlyFinancials(m))),
     listHistoricalIncomeStatements(yearMonths),
+    listFixedExpenseCategoryTotals(yearMonths),
   ]);
   const {
     sales,
@@ -168,7 +169,12 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
           Los meses ya capturados y aprobados en el histórico usan esos números; los demás se calculan desde cortes, asistencia y gastos del panel.
         </p>
         <div className="mt-3">
-          <AnnualComparisonTable months={yearMonths} financialsByMonth={yearFinancialsByMonth} historicalByMonth={yearHistoricalByMonth} />
+          <AnnualComparisonTable
+            months={yearMonths}
+            financialsByMonth={yearFinancialsByMonth}
+            historicalByMonth={yearHistoricalByMonth}
+            categoryTotalsByMonth={yearCategoryTotalsByMonth}
+          />
         </div>
       </section>
     </AdminShell>

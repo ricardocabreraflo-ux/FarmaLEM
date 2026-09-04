@@ -1,5 +1,6 @@
 import type { MonthlyFinancials } from "@/lib/financials";
 import type { HistoricalIncomeStatement } from "@/lib/historical-financials";
+import type { FixedExpenseCategory } from "@/lib/finance-movements";
 
 const MONTH_NAMES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
@@ -16,23 +17,27 @@ export function AnnualComparisonTable({
   months,
   financialsByMonth,
   historicalByMonth,
+  categoryTotalsByMonth,
 }: {
   months: string[];
   financialsByMonth: MonthlyFinancials[];
   historicalByMonth: Map<string, HistoricalIncomeStatement>;
+  /** Gastos fijos/variables capturados en Gastos fijos y variables (para meses sin captura manual en el histórico). */
+  categoryTotalsByMonth?: Map<string, Partial<Record<FixedExpenseCategory, number>>>;
 }) {
   const hist = (idx: number): HistoricalIncomeStatement | undefined => historicalByMonth.get(months[idx]);
   const fin = (idx: number): MonthlyFinancials => financialsByMonth[idx];
+  const cat = (idx: number, key: FixedExpenseCategory): number | null => categoryTotalsByMonth?.get(months[idx])?.[key] ?? null;
 
   const gastoRows: GastoRow[] = [
-    { label: "Renta", value: (i) => hist(i)?.gasto_renta ?? null },
-    { label: "Luz y Agua", value: (i) => hist(i)?.gasto_luz_agua ?? null },
+    { label: "Renta", value: (i) => hist(i)?.gasto_renta ?? cat(i, "renta") },
+    { label: "Luz y Agua", value: (i) => hist(i)?.gasto_luz_agua ?? cat(i, "luzAgua") },
     { label: "Bonos", value: (i) => hist(i)?.gasto_bonos ?? fin(i).bonuses },
     { label: "Sueldos", value: (i) => hist(i)?.gasto_sueldos ?? fin(i).salaries },
-    { label: "Varios", value: (i) => hist(i)?.gasto_varios ?? null },
-    { label: "Papelería", value: (i) => hist(i)?.gasto_papeleria ?? null },
-    { label: "Sistema", value: (i) => hist(i)?.gasto_sistema ?? null },
-    { label: "Internet", value: (i) => hist(i)?.gasto_internet ?? null },
+    { label: "Varios", value: (i) => hist(i)?.gasto_varios ?? cat(i, "varios") },
+    { label: "Papelería", value: (i) => hist(i)?.gasto_papeleria ?? cat(i, "papeleria") },
+    { label: "Sistema", value: (i) => hist(i)?.gasto_sistema ?? cat(i, "sistema") },
+    { label: "Internet", value: (i) => hist(i)?.gasto_internet ?? cat(i, "internet") },
   ];
 
   return (
