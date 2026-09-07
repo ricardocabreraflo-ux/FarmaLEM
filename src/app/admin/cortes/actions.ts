@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
-import { createCut, approveCut, updateCut, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
+import { createCut, replaceCut, getCutByShift, approveCut, updateCut, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
 import { createWithdrawal } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
 import { logAction } from "@/lib/history";
@@ -38,7 +38,15 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   }
   if (Math.abs(cash + card - total) >= 0.01) return { error: "Efectivo + tarjeta debe ser igual a la venta total." };
 
-  let photoPath: string | null = null;
+  // Ya existe un corte de esa fecha/turno/empleado (choca con el índice único cuts_one_shift).
+  // Si todavía no se aprueba, se deja corregir en el momento en vez de tronar con un error
+  // sin salida — es justo el caso de quien se equivocó al capturar y lo vuelve a intentar.
+  const existing = await getCutByShift(cutDate, shift, employeeId);
+  if (existing && existing.status === "Aprobado") {
+    return { error: "Ya existe un corte aprobado para esa fecha y turno — pídele a administración que lo corrija desde Cortes." };
+  }
+
+  let photoPath: string | null = existing?.photo_path ?? null;
   if (photo instanceof File && photo.size > 0) {
     try {
       photoPath = await uploadCutPhoto(employeeId, photo);
@@ -47,24 +55,21 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
     }
   }
 
+  const status: CutStatus = session.role === "admin" && !markPending ? "Aprobado" : "Por revisar";
+
   try {
-    await createCut({
-      cutDate,
-      shift,
-      employeeId,
-      total,
-      cash,
-      card,
-      cashDelivered,
-      createdBy: session.uid,
-      status: session.role === "admin" && !markPending ? "Aprobado" : "Por revisar",
-      photoPath,
-    });
+    if (existing) {
+      await replaceCut(existing.id, { total, cash, card, cashDelivered, status, photoPath });
+    } else {
+      await createCut({ cutDate, shift, employeeId, total, cash, card, cashDelivered, createdBy: session.uid, status, photoPath });
+    }
   } catch (err) {
     return { error: err instanceof Error ? err.message : "No se pudo guardar el corte." };
   }
 
-  if (nomina > 0) {
+  // Solo al capturar por primera vez — si es una corrección, la nómina de esa semana
+  // ya se registró como salida de efectivo la vez anterior y no hay que duplicarla.
+  if (nomina > 0 && !existing) {
     await createWithdrawal({
       withdrawalDate: cutDate,
       shift,
@@ -80,7 +85,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
     });
   }
 
-  await logAction(session.uid, "Creó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
+  await logAction(session.uid, existing ? "Corrigió corte" : "Creó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
 
   const employeeProfile = await getProfileById(employeeId);
   await sendCutWhatsAppNotification({

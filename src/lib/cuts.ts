@@ -68,6 +68,13 @@ export async function getCut(id: string): Promise<Cut | null> {
   return data as Cut;
 }
 
+/** Para saber si ya existe un corte de esa fecha/turno/empleado antes de intentar insertar otro (violaría cuts_one_shift). */
+export async function getCutByShift(cutDate: string, shift: string, employeeId: string): Promise<Cut | null> {
+  const { data, error } = await supabaseAdmin().from("cuts").select().eq("cut_date", cutDate).eq("shift", shift).eq("employee_id", employeeId).maybeSingle();
+  if (error) return null;
+  return data as Cut | null;
+}
+
 interface CreateCutInput {
   cutDate: string;
   shift: string;
@@ -96,6 +103,38 @@ export async function createCut(input: CreateCutInput): Promise<void> {
   });
   if (error) {
     if (error.code === "23505") throw new Error("Ya existe un corte capturado para esa fecha y ese turno.");
+    if (error.code === "23514") throw new Error("Efectivo + tarjeta debe ser igual a la venta total.");
+    throw new Error(error.message);
+  }
+}
+
+interface ReplaceCutInput {
+  total: number;
+  cash: number;
+  card: number;
+  cashDelivered: number;
+  status: CutStatus;
+  photoPath: string | null;
+}
+
+/**
+ * Sobrescribe un corte que ella misma capturó mal y aún no se aprueba —
+ * antes esto tronaba con "Ya existe un corte capturado" sin dar forma de
+ * corregirlo sin pedirle a un admin que entrara a editarlo a mano.
+ */
+export async function replaceCut(id: string, input: ReplaceCutInput): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from("cuts")
+    .update({
+      total: input.total,
+      cash: input.cash,
+      card: input.card,
+      cash_delivered: input.cashDelivered,
+      status: input.status,
+      photo_path: input.photoPath,
+    })
+    .eq("id", id);
+  if (error) {
     if (error.code === "23514") throw new Error("Efectivo + tarjeta debe ser igual a la venta total.");
     throw new Error(error.message);
   }
