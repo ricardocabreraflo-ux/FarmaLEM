@@ -47,6 +47,18 @@
   --admin-bad-text: #a6251b;
   --admin-amber: #b5720a;
   --admin-amber-soft: #fbeed9;
+  --admin-cat-3: #a5471f;
+  --admin-cat-3-soft: #f7e6dd;
+  --admin-cat-4: #1f6b7a;
+  --admin-cat-4-soft: #e2eff1;
+  --admin-cat-5: #6f7a1f;
+  --admin-cat-5-soft: #eef1de;
+  --admin-cat-6: #8a3a63;
+  --admin-cat-6-soft: #f4e4ed;
+  --admin-cat-7: #4a4f9e;
+  --admin-cat-7-soft: #e6e6f5;
+  --admin-cat-8: #3f6b8a;
+  --admin-cat-8-soft: #e2eaf0;
 
   color-scheme: light;
 }
@@ -85,6 +97,18 @@
     --admin-bad-text: #ff8377;
     --admin-amber: #f0b64a;
     --admin-amber-soft: rgb(240 182 74 / 0.16);
+    --admin-cat-3: #e8935f;
+    --admin-cat-3-soft: rgb(232 147 95 / 0.16);
+    --admin-cat-4: #6fd0e0;
+    --admin-cat-4-soft: rgb(111 208 224 / 0.16);
+    --admin-cat-5: #c8d76a;
+    --admin-cat-5-soft: rgb(200 215 106 / 0.16);
+    --admin-cat-6: #e090b8;
+    --admin-cat-6-soft: rgb(224 144 184 / 0.16);
+    --admin-cat-7: #a8acf0;
+    --admin-cat-7-soft: rgb(168 172 240 / 0.16);
+    --admin-cat-8: #8fc0e0;
+    --admin-cat-8-soft: rgb(143 192 224 / 0.16);
 
     color-scheme: dark;
   }
@@ -113,6 +137,18 @@
   --admin-bad-text: #a6251b;
   --admin-amber: #b5720a;
   --admin-amber-soft: #fbeed9;
+  --admin-cat-3: #a5471f;
+  --admin-cat-3-soft: #f7e6dd;
+  --admin-cat-4: #1f6b7a;
+  --admin-cat-4-soft: #e2eff1;
+  --admin-cat-5: #6f7a1f;
+  --admin-cat-5-soft: #eef1de;
+  --admin-cat-6: #8a3a63;
+  --admin-cat-6-soft: #f4e4ed;
+  --admin-cat-7: #4a4f9e;
+  --admin-cat-7-soft: #e6e6f5;
+  --admin-cat-8: #3f6b8a;
+  --admin-cat-8-soft: #e2eaf0;
   color-scheme: light;
 }
 
@@ -134,6 +170,18 @@
   --admin-bad-text: #ff8377;
   --admin-amber: #f0b64a;
   --admin-amber-soft: rgb(240 182 74 / 0.16);
+  --admin-cat-3: #e8935f;
+  --admin-cat-3-soft: rgb(232 147 95 / 0.16);
+  --admin-cat-4: #6fd0e0;
+  --admin-cat-4-soft: rgb(111 208 224 / 0.16);
+  --admin-cat-5: #c8d76a;
+  --admin-cat-5-soft: rgb(200 215 106 / 0.16);
+  --admin-cat-6: #e090b8;
+  --admin-cat-6-soft: rgb(224 144 184 / 0.16);
+  --admin-cat-7: #a8acf0;
+  --admin-cat-7-soft: rgb(168 172 240 / 0.16);
+  --admin-cat-8: #8fc0e0;
+  --admin-cat-8-soft: rgb(143 192 224 / 0.16);
   color-scheme: dark;
 }
 
@@ -179,6 +227,18 @@
   --color-admin-bad-text: var(--admin-bad-text);
   --color-admin-amber: var(--admin-amber);
   --color-admin-amber-soft: var(--admin-amber-soft);
+  --color-admin-cat-3: var(--admin-cat-3);
+  --color-admin-cat-3-soft: var(--admin-cat-3-soft);
+  --color-admin-cat-4: var(--admin-cat-4);
+  --color-admin-cat-4-soft: var(--admin-cat-4-soft);
+  --color-admin-cat-5: var(--admin-cat-5);
+  --color-admin-cat-5-soft: var(--admin-cat-5-soft);
+  --color-admin-cat-6: var(--admin-cat-6);
+  --color-admin-cat-6-soft: var(--admin-cat-6-soft);
+  --color-admin-cat-7: var(--admin-cat-7);
+  --color-admin-cat-7-soft: var(--admin-cat-7-soft);
+  --color-admin-cat-8: var(--admin-cat-8);
+  --color-admin-cat-8-soft: var(--admin-cat-8-soft);
   --font-display: var(--font-bricolage), "Segoe UI", sans-serif;
   --font-body: var(--font-lexend), "Segoe UI", sans-serif;
   --font-data: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
