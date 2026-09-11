@@ -1,7 +1,6 @@
 import "server-only";
 import * as XLSX from "xlsx";
-import type { PurchaseReceipt } from "@/lib/purchase-receipts";
-import type { Purchase } from "@/lib/purchases";
+import type { PurchaseReceipt, PurchaseReceiptLine } from "@/lib/purchase-receipts";
 
 interface Row {
   supplierCode: string | null;
@@ -14,17 +13,25 @@ interface Row {
   expiresOn: string | null;
 }
 
-function toRows(items: Purchase[]): Row[] {
-  return items.map((i) => ({
-    supplierCode: i.supplier_code,
-    barcode: i.barcode,
-    name: i.description,
-    pieces: Number(i.quantity),
-    unitCost: Number(i.cost),
-    salePrice: i.price != null ? Number(i.price) : null,
-    lot: i.lot,
-    expiresOn: i.expires_on,
-  }));
+/**
+ * Todos los renglones del ticket, resueltos o no — así lo que se exporta
+ * siempre trae el ticket completo (para capturar en farmacia de inmediato)
+ * aunque algunos renglones todavía no estén ligados a un código de barras.
+ */
+function toRows(lines: PurchaseReceiptLine[]): Row[] {
+  return lines.map((l) => {
+    const packFactor = l.pack_factor || 1;
+    return {
+      supplierCode: l.supplier_code,
+      barcode: l.barcode,
+      name: l.description.trim() || l.ticket_description || "",
+      pieces: Math.round(l.quantity * packFactor * 1000) / 1000,
+      unitCost: Math.round((l.unit_price / packFactor) * 10000) / 10000,
+      salePrice: l.sale_price,
+      lot: l.lot,
+      expiresOn: l.expires_on,
+    };
+  });
 }
 
 function fmtDate(iso: string | null): string {
@@ -43,8 +50,8 @@ function sheetName(receipt: PurchaseReceipt): string {
  * BARRAS, DESCRIPCIÓN, PIEZAS, COSTO, TOTAL, PRECIO, turnos) más LOTE y
  * CADUCIDAD.
  */
-export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, items: Purchase[], supplierName: string) {
-  const rows = toRows(items);
+export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string) {
+  const rows = toRows(lines);
   const ws: XLSX.WorkSheet = {};
   const set = (ref: string, v: string | number | null, f?: string) => {
     if (f) ws[ref] = { t: "n", f };
@@ -131,11 +138,11 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, items: Purchase[
 }
 
 /** Excel para SICAR X · importación de inventario inicial. */
-export function buildSicarXWorkbook(receipt: PurchaseReceipt, items: Purchase[], supplierName: string) {
-  const rows = toRows(items);
+export function buildSicarXWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string) {
+  const rows = toRows(lines);
   const aoa: (string | number)[][] = [["Clave", "Código de Barras", "Descripción", "Costo", "Precio", "Existencia", "Lote", "Caducidad"]];
   for (const r of rows) {
-    aoa.push([r.barcode, r.barcode, r.name, r.unitCost, r.salePrice ?? 0, r.pieces, r.lot ?? "", fmtDate(r.expiresOn)]);
+    aoa.push([r.supplierCode || r.barcode, r.barcode, r.name, r.unitCost, r.salePrice ?? 0, r.pieces, r.lot ?? "", fmtDate(r.expiresOn)]);
   }
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 55 }, { wch: 10 }, { wch: 10 }, { wch: 11 }, { wch: 13 }, { wch: 12 }];
