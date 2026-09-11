@@ -3,10 +3,11 @@ import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
-import { listCutsForMonth, getCutPhotoUrl } from "@/lib/cuts";
+import { listCutsForMonth, listCutsForRange, getCutPhotoUrl } from "@/lib/cuts";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CutsList } from "@/components/admin/CutsList";
 import { MonthPicker } from "@/components/admin/MonthPicker";
+import { DateRangeFilter } from "@/components/admin/DateRangeFilter";
 
 export const metadata: Metadata = { title: "Cortes" };
 export const dynamic = "force-dynamic";
@@ -15,15 +16,24 @@ function fmtMoney(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
 }
 
-export default async function CortesPage({ searchParams }: { searchParams: Promise<{ mes?: string; guardado?: string }> }) {
+function fmtDate(v: string) {
+  return new Date(`${v}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export default async function CortesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string; guardado?: string; desde?: string; hasta?: string }>;
+}) {
   const session = await requireSession();
   const isAdmin = session.role === "admin";
-  const { mes, guardado } = await searchParams;
+  const { mes, guardado, desde, hasta } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
+  const inRange = Boolean(desde && hasta);
 
   const [profile, cuts, employees] = await Promise.all([
     getProfileById(session.uid),
-    listCutsForMonth(month, isAdmin ? undefined : session.uid),
+    inRange ? listCutsForRange(desde!, hasta!, isAdmin ? undefined : session.uid) : listCutsForMonth(month, isAdmin ? undefined : session.uid),
     listProfiles(),
   ]);
 
@@ -67,9 +77,20 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
         </>
       )}
 
-      <MonthPicker month={month} basePath="/admin/cortes" />
+      {!inRange && <MonthPicker month={month} basePath="/admin/cortes" />}
 
-      <section className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-4">
+        <p className="text-[0.82rem] font-semibold text-admin-ink">
+          {inRange ? "Filtrar por rango de fechas" : "O filtra por un rango de fechas específico"}
+        </p>
+        <DateRangeFilter basePath="/admin/cortes" desde={desde} hasta={hasta} />
+      </div>
+
+      <p className="mt-4 text-[0.82rem] font-semibold text-admin-ink">
+        {inRange ? `Periodo: ${fmtDate(desde!)} — ${fmtDate(hasta!)}` : `Mes: ${new Date(`${month}-01T12:00:00`).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}`}
+      </p>
+
+      <section className="mt-2 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Venta total</p>
           <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalVentas)}</p>
@@ -82,9 +103,17 @@ export default async function CortesPage({ searchParams }: { searchParams: Promi
           <p className="text-[0.78rem] text-admin-ink-soft">Tarjeta</p>
           <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalTarjeta)}</p>
         </div>
-        <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
-          <p className="text-[0.78rem] text-admin-ink-soft">Efectivo entregado</p>
+        <div className="rounded-2xl border border-admin-primary bg-admin-primary-soft p-5">
+          <p className="text-[0.78rem] font-semibold text-admin-primary-deep">Efectivo entregado</p>
           <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalEntregado)}</p>
+          <p className="mt-1.5 text-[0.72rem] leading-snug text-admin-ink-soft">
+            Lo que debería haber físico en caja de estos cortes (ya con sueldo descontado si se pagó ahí) — súmalo con lo que
+            tengas de antes de retirar y así sabes cuánto puedes sacar en{" "}
+            <Link href="/admin/salidas/nuevo" className="font-semibold text-admin-primary hover:underline">
+              Salidas de efectivo
+            </Link>
+            .
+          </p>
         </div>
       </section>
 
