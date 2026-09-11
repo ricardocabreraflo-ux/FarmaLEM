@@ -74,13 +74,14 @@ export default async function ComprasPage() {
                 <th className="px-5 py-3 font-medium">Ticket</th>
                 <th className="px-5 py-3 text-right font-medium">Piezas</th>
                 <th className="px-5 py-3 text-right font-medium">Importe</th>
+                <th className="px-5 py-3 font-medium">Estado</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {receipts.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-admin-ink-soft">
+                  <td colSpan={7} className="px-5 py-8 text-center text-admin-ink-soft">
                     Sin recepciones capturadas
                   </td>
                 </tr>
@@ -92,6 +93,15 @@ export default async function ComprasPage() {
                   <td className="px-5 py-3 text-admin-ink-soft">{r.ticket_number || "s/n"}</td>
                   <td className="px-5 py-3 text-right text-admin-ink">{piecesByReceipt.get(r.id) ?? 0}</td>
                   <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{r.ticket_total != null ? fmtMoney(r.ticket_total) : "—"}</td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[0.76rem] font-semibold ${
+                        r.status === "Pendiente" ? "bg-admin-pending-bg text-admin-pending-text" : "bg-admin-ok-bg text-admin-ok-text"
+                      }`}
+                    >
+                      {r.status}
+                    </span>
+                  </td>
                   <td className="px-5 py-3 text-right">
                     <Link href={`/admin/compras/${r.id}`} className="font-semibold text-admin-primary hover:underline">
                       Ver

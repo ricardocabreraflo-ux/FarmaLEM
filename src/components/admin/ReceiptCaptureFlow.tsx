@@ -322,7 +322,13 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
     setError(null);
     if (!supplierId) return setError("Selecciona el proveedor.");
     if (!lines.length) return setError("No hay renglones que guardar.");
-    if (pendientes.length) return setError(`Faltan datos en ${pendientes.length} renglón(es): código de barras, descripción o precio de venta.`);
+    if (pendientes.length) {
+      const ok = window.confirm(
+        `${pendientes.length} renglón(es) no tienen código de barras, descripción o precio de venta todavía. Se guardarán como pendientes y podrás ` +
+          "completarlos después desde el detalle de la recepción. ¿Guardar así?"
+      );
+      if (!ok) return;
+    }
     if (totals.diff != null && Math.abs(totals.diff) > 1) {
       const ok = window.confirm(`La suma de renglones (${money(totals.suma)}) no cuadra con el importe del ticket (${money(totals.importe)}). ¿Guardar de todos modos?`);
       if (!ok) return;
@@ -685,6 +691,12 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
               <Stat label="Piezas FarmaLEM" value={String(totals.piezas)} />
               <Stat label="Renglones incompletos" value={String(pendientes.length)} tone={pendientes.length ? "bad" : "ok"} />
             </div>
+            {pendientes.length > 0 && (
+              <p className="mt-3 text-[0.78rem] text-admin-ink-soft">
+                Los renglones incompletos se guardan como pendientes — podrás completarlos uno por uno desde el detalle de la recepción sin perder lo ya
+                leído.
+              </p>
+            )}
             <div className="mt-5 flex flex-wrap gap-3">
               <button
                 type="button"

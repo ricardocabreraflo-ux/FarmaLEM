@@ -1,8 +1,10 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { createPurchasesFromReceipt, type ReceiptLineInput } from "@/lib/purchases";
+import { createPurchaseFromReceiptLine, type ReceiptLineInput } from "@/lib/purchases";
 import { upsertEquivalences } from "@/lib/supplier-products";
 import type { ParsedTicket } from "@/lib/ticket-types";
+
+export type ReceiptStatus = "Pendiente" | "Completa";
 
 export interface PurchaseReceipt {
   id: string;
@@ -15,8 +17,26 @@ export interface PurchaseReceipt {
   photo_paths: string[];
   raw_extraction: ParsedTicket | null;
   notes: string | null;
+  status: ReceiptStatus;
   created_by: string;
   created_at: string;
+}
+
+/** Un renglón del ticket, resuelto (purchase_id != null, ya es un movimiento real) o pendiente de completar. */
+export interface PurchaseReceiptLine {
+  id: string;
+  receipt_id: string;
+  supplier_code: string | null;
+  ticket_description: string | null;
+  quantity: number;
+  unit_price: number;
+  lot: string | null;
+  expires_on: string | null;
+  barcode: string;
+  description: string;
+  sale_price: number | null;
+  pack_factor: number;
+  purchase_id: string | null;
 }
 
 export async function listReceipts(): Promise<PurchaseReceipt[]> {
@@ -58,9 +78,9 @@ export interface SaveReceiptLine {
   unitPrice: number; // precio por unidad del ticket
   lot: string | null;
   expiresOn: string | null;
-  barcode: string;
-  description: string;
-  salePrice: number;
+  barcode: string; // vacío si todavía no se resuelve a un producto
+  description: string; // vacío si todavía no se resuelve a un producto
+  salePrice: number | null; // null si todavía no se resuelve a un producto
   packFactor: number;
 }
 
@@ -76,9 +96,34 @@ export interface SaveReceiptInput {
   lines: SaveReceiptLine[];
 }
 
-/** Guarda el encabezado, sube las fotos, crea los renglones en purchases y aprende las equivalencias nuevas. */
+function isResolved(l: Pick<SaveReceiptLine, "barcode" | "description" | "salePrice" | "quantity">): boolean {
+  return Boolean(l.barcode.trim()) && Boolean(l.description.trim()) && l.salePrice != null && l.quantity > 0;
+}
+
+function toReceiptLineInput(l: SaveReceiptLine): ReceiptLineInput {
+  return {
+    barcode: l.barcode,
+    description: l.description,
+    quantity: Math.round(l.quantity * l.packFactor * 1000) / 1000,
+    cost: Math.round((l.unitPrice / l.packFactor) * 10000) / 10000,
+    price: l.salePrice as number,
+    lot: l.lot,
+    expiresOn: l.expiresOn,
+    packFactor: l.packFactor,
+    supplierCode: l.supplierCode,
+  };
+}
+
+/**
+ * Guarda el encabezado, sube las fotos, y guarda cada renglón en
+ * purchase_receipt_lines. Los renglones ya resueltos (con código de barras,
+ * descripción y precio de venta) además se vuelven un movimiento real en
+ * purchases desde ya; los que no, quedan pendientes de completar después
+ * (ver completeReceiptLine) y la recepción queda en estado "Pendiente".
+ */
 export async function saveReceipt(input: SaveReceiptInput, photos: File[], createdBy: string): Promise<string> {
   const db = supabaseAdmin();
+  const anyPending = input.lines.some((l) => !isResolved(l));
 
   const { data: receipt, error: rErr } = await db
     .from("purchase_receipts")
@@ -91,6 +136,7 @@ export async function saveReceipt(input: SaveReceiptInput, photos: File[], creat
       ticket_savings: input.ticketSavings,
       notes: input.notes,
       raw_extraction: input.rawExtraction,
+      status: anyPending ? "Pendiente" : "Completa",
       created_by: createdBy,
     })
     .select("id")
@@ -104,34 +150,122 @@ export async function saveReceipt(input: SaveReceiptInput, photos: File[], creat
     if (pErr) throw new Error(`No se pudieron guardar las fotos: ${pErr.message}`);
   }
 
-  const purchaseLines: ReceiptLineInput[] = input.lines.map((l) => ({
-    barcode: l.barcode,
-    description: l.description,
-    quantity: Math.round(l.quantity * l.packFactor * 1000) / 1000,
-    cost: Math.round((l.unitPrice / l.packFactor) * 10000) / 10000,
-    price: l.salePrice,
-    lot: l.lot,
-    expiresOn: l.expiresOn,
-    packFactor: l.packFactor,
-    supplierCode: l.supplierCode,
-  }));
-  await createPurchasesFromReceipt(receiptId, input.ticketDate, input.supplierId, purchaseLines, createdBy);
+  const { data: insertedLines, error: linesErr } = await db
+    .from("purchase_receipt_lines")
+    .insert(
+      input.lines.map((l) => ({
+        receipt_id: receiptId,
+        supplier_code: l.supplierCode,
+        ticket_description: l.ticketDescription,
+        quantity: l.quantity,
+        unit_price: l.unitPrice,
+        lot: l.lot,
+        expires_on: l.expiresOn,
+        barcode: l.barcode,
+        description: l.description,
+        sale_price: l.salePrice,
+        pack_factor: l.packFactor,
+      }))
+    )
+    .select("id");
+  if (linesErr) throw new Error(`No se pudieron guardar los renglones: ${linesErr.message}`);
 
-  const equivalences = input.lines
-    .filter((l): l is SaveReceiptLine & { supplierCode: string } => Boolean(l.supplierCode))
-    .map((l) => ({
-      supplierId: input.supplierId,
-      supplierCode: l.supplierCode,
-      supplierDescription: l.ticketDescription,
-      barcode: l.barcode,
-      description: l.description,
-      salePrice: l.salePrice,
-      packFactor: l.packFactor,
-      lastUnitPrice: l.unitPrice,
-    }));
+  const equivalences: Parameters<typeof upsertEquivalences>[0] = [];
+  for (let i = 0; i < input.lines.length; i++) {
+    const l = input.lines[i];
+    if (!isResolved(l)) continue;
+    const purchaseId = await createPurchaseFromReceiptLine(receiptId, input.ticketDate, input.supplierId, toReceiptLineInput(l), createdBy);
+    const { error: linkErr } = await db.from("purchase_receipt_lines").update({ purchase_id: purchaseId }).eq("id", insertedLines[i].id);
+    if (linkErr) throw new Error(`No se pudo ligar el renglón al movimiento: ${linkErr.message}`);
+    if (l.supplierCode) {
+      equivalences.push({
+        supplierId: input.supplierId,
+        supplierCode: l.supplierCode,
+        supplierDescription: l.ticketDescription,
+        barcode: l.barcode,
+        description: l.description,
+        salePrice: l.salePrice,
+        packFactor: l.packFactor,
+        lastUnitPrice: l.unitPrice,
+      });
+    }
+  }
   await upsertEquivalences(equivalences);
 
   return receiptId;
+}
+
+export async function listReceiptLines(receiptId: string): Promise<PurchaseReceiptLine[]> {
+  const { data, error } = await supabaseAdmin().from("purchase_receipt_lines").select().eq("receipt_id", receiptId).order("created_at", { ascending: true });
+  if (error) throw new Error(`No se pudieron leer los renglones: ${error.message}`);
+  return data as PurchaseReceiptLine[];
+}
+
+async function getReceiptLine(id: string): Promise<PurchaseReceiptLine | null> {
+  const { data, error } = await supabaseAdmin().from("purchase_receipt_lines").select().eq("id", id).maybeSingle();
+  if (error) throw new Error(`No se pudo leer el renglón: ${error.message}`);
+  return data as PurchaseReceiptLine | null;
+}
+
+export interface CompleteReceiptLineInput {
+  barcode: string;
+  description: string;
+  salePrice: number;
+  packFactor: number;
+}
+
+/** Completa un renglón pendiente: lo vuelve un movimiento real en purchases y, si ya no queda ninguno pendiente, cierra la recepción como "Completa". */
+export async function completeReceiptLine(lineId: string, input: CompleteReceiptLineInput, createdBy: string): Promise<void> {
+  const db = supabaseAdmin();
+  const line = await getReceiptLine(lineId);
+  if (!line) throw new Error("Renglón no encontrado.");
+  if (line.purchase_id) throw new Error("Ese renglón ya estaba completo.");
+
+  const receipt = await getReceipt(line.receipt_id);
+  if (!receipt) throw new Error("Recepción no encontrada.");
+
+  const resolvedLine: SaveReceiptLine = {
+    supplierCode: line.supplier_code,
+    ticketDescription: line.ticket_description,
+    quantity: line.quantity,
+    unitPrice: line.unit_price,
+    lot: line.lot,
+    expiresOn: line.expires_on,
+    barcode: input.barcode,
+    description: input.description,
+    salePrice: input.salePrice,
+    packFactor: input.packFactor,
+  };
+  if (!isResolved(resolvedLine)) throw new Error("Faltan datos: código de barras, descripción o precio de venta.");
+
+  const purchaseId = await createPurchaseFromReceiptLine(line.receipt_id, receipt.ticket_date, receipt.supplier_id, toReceiptLineInput(resolvedLine), createdBy);
+
+  const { error: updErr } = await db
+    .from("purchase_receipt_lines")
+    .update({ barcode: input.barcode, description: input.description, sale_price: input.salePrice, pack_factor: input.packFactor, purchase_id: purchaseId })
+    .eq("id", lineId);
+  if (updErr) throw new Error(`No se pudo completar el renglón: ${updErr.message}`);
+
+  if (line.supplier_code) {
+    await upsertEquivalences([
+      {
+        supplierId: receipt.supplier_id,
+        supplierCode: line.supplier_code,
+        supplierDescription: line.ticket_description,
+        barcode: input.barcode,
+        description: input.description,
+        salePrice: input.salePrice,
+        packFactor: input.packFactor,
+        lastUnitPrice: line.unit_price,
+      },
+    ]);
+  }
+
+  const remaining = await listReceiptLines(line.receipt_id);
+  if (remaining.every((l) => l.purchase_id)) {
+    const { error: statusErr } = await db.from("purchase_receipts").update({ status: "Completa" }).eq("id", line.receipt_id);
+    if (statusErr) throw new Error(`No se pudo actualizar el estado de la recepción: ${statusErr.message}`);
+  }
 }
 
 /**

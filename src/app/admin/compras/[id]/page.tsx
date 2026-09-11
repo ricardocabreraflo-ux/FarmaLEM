@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { listSuppliers } from "@/lib/suppliers";
-import { getReceipt, getReceiptPhotoUrls } from "@/lib/purchase-receipts";
+import { getReceipt, getReceiptPhotoUrls, listReceiptLines } from "@/lib/purchase-receipts";
 import { listPurchasesForReceipt } from "@/lib/purchases";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DeleteReceiptButton } from "@/components/admin/DeleteReceiptButton";
+import { PendingReceiptLinesEditor } from "@/components/admin/PendingReceiptLinesEditor";
 
 export const metadata: Metadata = { title: "Detalle de recepción" };
 export const dynamic = "force-dynamic";
@@ -28,7 +29,8 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
   const [profile, receipt, suppliers] = await Promise.all([getProfileById(session.uid), getReceipt(id), listSuppliers()]);
   if (!receipt) notFound();
 
-  const [items, photoUrls] = await Promise.all([listPurchasesForReceipt(id), getReceiptPhotoUrls(receipt.photo_paths)]);
+  const [items, photoUrls, receiptLines] = await Promise.all([listPurchasesForReceipt(id), getReceiptPhotoUrls(receipt.photo_paths), listReceiptLines(id)]);
+  const pendingLines = receiptLines.filter((l) => !l.purchase_id);
   const supplierName = suppliers.find((s) => s.id === receipt.supplier_id)?.name ?? "—";
 
   const sumaRenglones = items.reduce((sum, i) => sum + i.quantity * i.cost, 0);
@@ -42,8 +44,15 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
       </Link>
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-display text-2xl text-admin-ink">
+        <h1 className="flex flex-wrap items-center gap-3 font-display text-2xl text-admin-ink">
           {supplierName} &middot; Ticket {receipt.ticket_number || "s/n"}
+          <span
+            className={`rounded-full px-3 py-1 text-[0.72rem] font-semibold ${
+              receipt.status === "Pendiente" ? "bg-admin-pending-bg text-admin-pending-text" : "bg-admin-ok-bg text-admin-ok-text"
+            }`}
+          >
+            {receipt.status}
+          </span>
         </h1>
         <div className="flex gap-2">
           <Link href={`/admin/compras/${id}/export/farmalem`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
@@ -94,7 +103,10 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         </section>
       )}
 
-      <section className="mt-6 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+      <PendingReceiptLinesEditor lines={pendingLines} />
+
+      <h2 className="mt-6 font-display text-base text-admin-ink">Renglones recibidos</h2>
+      <section className="mt-2 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-[0.86rem]">
             <thead>

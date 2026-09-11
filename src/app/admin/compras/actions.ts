@@ -6,7 +6,7 @@ import { logAction } from "@/lib/history";
 import type { ParsedTicket } from "@/lib/ticket-types";
 import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-products";
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
-import { saveReceipt, deleteReceipt, type SaveReceiptLine } from "@/lib/purchase-receipts";
+import { saveReceipt, deleteReceipt, completeReceiptLine, type SaveReceiptLine } from "@/lib/purchase-receipts";
 
 export async function fetchSupplierCatalogAction(supplierId: string): Promise<SupplierProduct[]> {
   await requireAdminSession();
@@ -51,8 +51,7 @@ export async function saveReceiptAction(formData: FormData): Promise<SaveReceipt
     return { ok: false, error: "Los renglones capturados no son válidos." };
   }
   if (lines.length === 0) return { ok: false, error: "No hay renglones que guardar." };
-  const incomplete = lines.some((l) => !l.barcode?.trim() || !l.description?.trim() || !(l.quantity > 0) || l.salePrice == null);
-  if (incomplete) return { ok: false, error: "Faltan datos en uno o más renglones: código de barras, descripción, cantidad o precio de venta." };
+  if (lines.some((l) => !(l.quantity > 0))) return { ok: false, error: "Hay un renglón con cantidad inválida." };
 
   const numOrNull = (v: FormDataEntryValue | null) => (v && String(v).trim() !== "" ? Number(v) : null);
   const photos = formData.getAll("photo").filter((f): f is File => f instanceof File && f.size > 0);
@@ -90,6 +89,35 @@ export async function saveReceiptAction(formData: FormData): Promise<SaveReceipt
     return { ok: true, id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo guardar la recepción." };
+  }
+}
+
+export interface CompleteLineResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Completa un renglón pendiente de una recepción (código de barras, descripción y precio de venta) y lo vuelve un movimiento real de compras. */
+export async function completeReceiptLineAction(
+  lineId: string,
+  input: { barcode: string; description: string; salePrice: number; packFactor: number }
+): Promise<CompleteLineResult> {
+  const session = await requireAdminSession();
+  const barcode = input.barcode.trim();
+  const description = input.description.trim();
+  if (!barcode) return { ok: false, error: "Falta el código de barras." };
+  if (!description) return { ok: false, error: "Falta la descripción." };
+  if (!(input.salePrice >= 0)) return { ok: false, error: "El precio de venta no es válido." };
+  if (!(input.packFactor >= 1)) return { ok: false, error: "El factor de empaque no es válido." };
+
+  try {
+    await completeReceiptLine(lineId, { barcode, description, salePrice: input.salePrice, packFactor: input.packFactor }, session.uid);
+    await logAction(session.uid, "Completó renglón de recepción", `${barcode} · ${description}`);
+    revalidatePath("/admin/compras");
+    revalidatePath("/admin/inventario");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo completar el renglón." };
   }
 }
 

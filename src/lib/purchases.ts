@@ -83,36 +83,31 @@ export interface ReceiptLineInput {
   supplierCode: string | null;
 }
 
-/** Inserta todos los renglones de una recepción como filas de purchases, ligadas al ticket. */
-export async function createPurchasesFromReceipt(
-  receiptId: string,
-  purchaseDate: string,
-  supplierId: string,
-  lines: ReceiptLineInput[],
-  createdBy: string
-): Promise<void> {
-  const { error } = await supabaseAdmin()
+/** Crea un solo renglón de una recepción como fila de purchases y regresa su id. */
+export async function createPurchaseFromReceiptLine(receiptId: string, purchaseDate: string, supplierId: string, line: ReceiptLineInput, createdBy: string): Promise<string> {
+  const { data, error } = await supabaseAdmin()
     .from("purchases")
-    .insert(
-      lines.map((l) => ({
-        purchase_date: purchaseDate,
-        supplier_id: supplierId,
-        short_code: null,
-        barcode: l.barcode,
-        description: l.description,
-        quantity: l.quantity,
-        cost: l.cost,
-        price: l.price,
-        invoice: null,
-        lot: l.lot,
-        expires_on: l.expiresOn,
-        pack_factor: l.packFactor,
-        supplier_code: l.supplierCode,
-        receipt_id: receiptId,
-        created_by: createdBy,
-      }))
-    );
-  if (error) throw new Error(`No se pudieron guardar los renglones: ${error.message}`);
+    .insert({
+      purchase_date: purchaseDate,
+      supplier_id: supplierId,
+      short_code: null,
+      barcode: line.barcode,
+      description: line.description,
+      quantity: line.quantity,
+      cost: line.cost,
+      price: line.price,
+      invoice: null,
+      lot: line.lot,
+      expires_on: line.expiresOn,
+      pack_factor: line.packFactor,
+      supplier_code: line.supplierCode,
+      receipt_id: receiptId,
+      created_by: createdBy,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`No se pudo guardar el renglón: ${error.message}`);
+  return data.id as string;
 }
 
 export async function listPurchasesForReceipt(receiptId: string): Promise<Purchase[]> {
