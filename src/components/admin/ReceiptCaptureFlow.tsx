@@ -222,7 +222,11 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
     try {
       ticket = await parseTicketPhotosClient(photos.map((p) => ({ mediaType: "image/jpeg", data: p.base64 })));
     } catch (err) {
-      setError(`No se pudo leer el ticket: ${err instanceof Error ? err.message : "la conexión se interrumpió o tardó demasiado"}.`);
+      const detail = err instanceof Error ? err.message : "la conexión se interrumpió o tardó demasiado";
+      setError(
+        `No se pudo leer el ticket: ${detail}. Si la pantalla se bloqueó o cambiaste de app mientras leía, es por eso — inténtalo` +
+          " de nuevo dejando el celular encendido y a la vista hasta que termine (puede tardar hasta 2 minutos con varias fotos)."
+      );
       setStep("fotos");
       return;
     }
@@ -425,7 +429,8 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
         )}
         {step === "leyendo" && (
           <p className="mt-4 rounded-lg bg-admin-primary-soft px-4 py-3 text-[0.85rem] text-admin-primary-deep">
-            Leyendo el ticket… esto tarda entre 30 segundos y un minuto según el número de fotos.
+            Leyendo el ticket… con varias fotos puede tardar hasta 2 minutos. <strong>No bloquees el celular ni cambies de app</strong> —
+            si la pantalla se apaga se corta la lectura.
           </p>
         )}
         {(step === "captura" || step === "guardando") && photos.length > 0 && (
