@@ -71,6 +71,15 @@ export async function findLatestPurchaseByBarcode(barcode: string): Promise<Purc
   return data as Purchase | null;
 }
 
+/** Costo más reciente conocido de cada código de barras, para comparar contra el catálogo de referencia de SICAR X. */
+export async function listLatestCostByBarcode(): Promise<Map<string, number>> {
+  const { data, error } = await supabaseAdmin().from("purchases").select("barcode, cost, created_at").order("created_at", { ascending: true });
+  if (error) throw new Error(`No se pudieron leer los costos: ${error.message}`);
+  const map = new Map<string, number>();
+  for (const row of (data ?? []) as { barcode: string; cost: number }[]) map.set(row.barcode, row.cost);
+  return map;
+}
+
 export interface ReceiptLineInput {
   barcode: string;
   description: string;
