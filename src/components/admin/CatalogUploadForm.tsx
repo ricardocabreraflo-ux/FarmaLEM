@@ -2,7 +2,8 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { uploadCatalogAction } from "@/app/admin/catalogo/actions";
+import { uploadCatalogFileClient } from "@/lib/catalog-upload-client";
+import { logCatalogUploadAction } from "@/app/admin/catalogo/actions";
 
 export function CatalogUploadForm() {
   const router = useRouter();
@@ -15,16 +16,15 @@ export function CatalogUploadForm() {
     const file = fileRef.current?.files?.[0];
     if (!file) return setMessage({ ok: false, text: "Selecciona el archivo del catálogo." });
     setMessage(null);
-    const fd = new FormData();
-    fd.set("file", file);
     startTransition(async () => {
-      const res = await uploadCatalogAction(fd);
-      if (res.ok) {
-        setMessage({ ok: true, text: `✓ Catálogo actualizado — ${res.count} productos.` });
+      try {
+        const { count } = await uploadCatalogFileClient(file);
+        await logCatalogUploadAction(count);
+        setMessage({ ok: true, text: `✓ Catálogo actualizado — ${count} productos.` });
         if (fileRef.current) fileRef.current.value = "";
         router.refresh();
-      } else {
-        setMessage({ ok: false, text: res.error ?? "No se pudo subir el catálogo." });
+      } catch (err) {
+        setMessage({ ok: false, text: err instanceof Error ? err.message : "No se pudo subir el catálogo." });
       }
     });
   }
