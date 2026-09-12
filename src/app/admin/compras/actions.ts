@@ -7,6 +7,7 @@ import type { ParsedTicket } from "@/lib/ticket-types";
 import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-products";
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
 import { saveReceipt, deleteReceipt, completeReceiptLine, type SaveReceiptLine } from "@/lib/purchase-receipts";
+import { getCatalogEntryByBarcode } from "@/lib/product-catalog";
 
 export async function fetchSupplierCatalogAction(supplierId: string): Promise<SupplierProduct[]> {
   await requireAdminSession();
@@ -21,12 +22,23 @@ export interface KnownProduct {
   salePrice: number;
 }
 
-/** Busca si ese código de barras ya se recibió antes (de cualquier proveedor), para no volver a capturar la descripción/precio. */
+/**
+ * Busca ese código de barras — primero en lo que ya se ha recibido antes
+ * (refleja la descripción/precio que ya se usa en FarmaLEM), y si no, en el
+ * catálogo de referencia de SICAR X, para no volver a capturar la
+ * descripción/precio de un producto que ya conocemos aunque nunca se haya
+ * recibido en el panel.
+ */
 export async function findByBarcodeAction(barcode: string): Promise<KnownProduct | null> {
   await requireAdminSession();
   const purchase = await findLatestPurchaseByBarcode(barcode);
-  if (!purchase) return null;
-  return { barcode: purchase.barcode, description: purchase.description, salePrice: purchase.price };
+  if (purchase) return { barcode: purchase.barcode, description: purchase.description, salePrice: purchase.price };
+
+  const catalogEntry = await getCatalogEntryByBarcode(barcode);
+  if (!catalogEntry) return null;
+  const salePrice = catalogEntry.sale_price_net ?? catalogEntry.sale_price;
+  if (salePrice == null) return null;
+  return { barcode: catalogEntry.barcode, description: catalogEntry.description, salePrice };
 }
 
 export interface SaveReceiptResult {

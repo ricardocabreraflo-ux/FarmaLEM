@@ -24,3 +24,12 @@ export async function getCatalogInfo(): Promise<{ count: number; updatedAt: stri
   const { data: latest } = await supabaseAdmin().from("product_catalog").select("updated_at").order("updated_at", { ascending: false }).limit(1).maybeSingle();
   return { count: count ?? 0, updatedAt: latest?.updated_at ?? null };
 }
+
+/** Un producto del catálogo de referencia por su código de barras — para autocompletar precio de venta al capturar un renglón nuevo. */
+export async function getCatalogEntryByBarcode(barcode: string): Promise<ProductCatalogEntry | null> {
+  const clean = barcode.trim();
+  if (!clean) return null;
+  const { data, error } = await supabaseAdmin().from("product_catalog").select().eq("barcode", clean).maybeSingle();
+  if (error) throw new Error(`No se pudo buscar en el catálogo: ${error.message}`);
+  return data as ProductCatalogEntry | null;
+}
