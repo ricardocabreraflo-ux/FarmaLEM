@@ -7,7 +7,6 @@ interface Row {
   barcode: string;
   name: string;
   pieces: number;
-  unitCost: number;
   salePrice: number | null;
   lot: string | null;
   expiresOn: string | null;
@@ -17,6 +16,7 @@ interface Row {
  * Todos los renglones del ticket, resueltos o no — así lo que se exporta
  * siempre trae el ticket completo (para capturar en farmacia de inmediato)
  * aunque algunos renglones todavía no estén ligados a un código de barras.
+ * Sin costo: estos exports los captura personal que no debe verlo.
  */
 function toRows(lines: PurchaseReceiptLine[]): Row[] {
   return lines.map((l) => {
@@ -26,7 +26,6 @@ function toRows(lines: PurchaseReceiptLine[]): Row[] {
       barcode: l.barcode,
       name: l.description.trim() || l.ticket_description || "",
       pieces: Math.round(l.quantity * packFactor * 1000) / 1000,
-      unitCost: Math.round((l.unit_price / packFactor) * 10000) / 10000,
       salePrice: l.sale_price,
       lot: l.lot,
       expiresOn: l.expires_on,
@@ -47,8 +46,8 @@ function sheetName(receipt: PurchaseReceipt): string {
 
 /**
  * Excel con el mismo formato que ya usa FarmaLEM (CLAVE CORTA, CÓDIGO DE
- * BARRAS, DESCRIPCIÓN, PIEZAS, COSTO, TOTAL, PRECIO, turnos) más LOTE y
- * CADUCIDAD.
+ * BARRAS, DESCRIPCIÓN, PIEZAS, PRECIO, turnos) más LOTE y CADUCIDAD — sin
+ * costo, para que lo pueda capturar personal sin ver a qué costo compramos.
  */
 export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string) {
   const rows = toRows(lines);
@@ -68,13 +67,14 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
   set("H2", 0);
   set("N2", 0);
   set("T2", 0);
+  // Sin COSTO ni TOTAL: este archivo lo capturan las empleadas en SICAR X y
+  // no deben ver a qué costo compramos — solo Ricardo ve costos, dentro del
+  // panel (detalle de la recepción), nunca en el Excel que se les entrega.
   const headers: Record<string, string> = {
     A3: "CLAVE CORTA",
     B3: "CODIGO DE BARRAS",
     C3: "DESCRPCION PRODUCTO",
     D3: "PIEZAS",
-    E3: "COSTO",
-    F3: "TOTAL",
     G3: "PRECIO",
     Y3: "TOTAL PIEZAS VENDIDAS",
     AB3: "PIEZAS DISPONIBLES PARA VENTA",
@@ -90,8 +90,6 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     set(`B${n}`, r.barcode);
     set(`C${n}`, r.name);
     set(`D${n}`, r.pieces);
-    set(`E${n}`, r.unitCost);
-    set(`F${n}`, null, `D${n}*E${n}`);
     set(`G${n}`, r.salePrice);
     set(`M${n}`, null, `SUM(H${n}:L${n})`);
     set(`S${n}`, null, `SUM(N${n}:R${n})`);
@@ -103,16 +101,10 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
   });
   const last = first + rows.length - 1;
   const tRow = last + 1;
-  set(`E${tRow}`, "SUMA");
-  set(`F${tRow}`, null, `SUM(F${first}:F${last})`);
-  set(`E${tRow + 1}`, "TICKET");
-  set(`F${tRow + 1}`, receipt.ticket_total ?? 0);
-  set(`E${tRow + 2}`, "DIFERENCIA");
-  set(`F${tRow + 2}`, null, `F${tRow}-F${tRow + 1}`);
   set(`C${tRow}`, "PIEZAS");
   set(`D${tRow}`, null, `SUM(D${first}:D${last})`);
 
-  ws["!ref"] = `A1:AD${tRow + 2}`;
+  ws["!ref"] = `A1:AD${tRow}`;
   ws["!merges"] = [
     XLSX.utils.decode_range("F1:G1"),
     XLSX.utils.decode_range("H1:M1"),
@@ -124,7 +116,7 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     XLSX.utils.decode_range("T2:X2"),
   ];
   const cols: XLSX.ColInfo[] = [];
-  const widths: Record<string, number> = { A: 10, B: 16, C: 57, D: 7, E: 9, F: 11, G: 10, Y: 10, Z: 4, AA: 4, AB: 12, AC: 13, AD: 12 };
+  const widths: Record<string, number> = { A: 10, B: 16, C: 57, D: 7, G: 10, Y: 10, Z: 4, AA: 4, AB: 12, AC: 13, AD: 12 };
   for (let c = 0; c < 30; c++) {
     const letter = XLSX.utils.encode_col(c);
     cols.push({ wch: widths[letter] ?? 4.5 });
@@ -137,15 +129,19 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
   return { buffer, filename: `Recepcion_${sheetName(receipt)}_${supplierName}.xlsx` };
 }
 
-/** Excel para SICAR X · importación de inventario inicial. */
+/**
+ * Excel para SICAR X · importación de inventario inicial. Sin columna de
+ * costo a propósito — lo captura personal que no debe ver a qué costo
+ * compramos, solo el precio de venta.
+ */
 export function buildSicarXWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string) {
   const rows = toRows(lines);
-  const aoa: (string | number)[][] = [["Clave", "Código de Barras", "Descripción", "Costo", "Precio", "Existencia", "Lote", "Caducidad"]];
+  const aoa: (string | number)[][] = [["Clave", "Código de Barras", "Descripción", "Precio", "Existencia", "Lote", "Caducidad"]];
   for (const r of rows) {
-    aoa.push([r.supplierCode || r.barcode, r.barcode, r.name, r.unitCost, r.salePrice ?? 0, r.pieces, r.lot ?? "", fmtDate(r.expiresOn)]);
+    aoa.push([r.supplierCode || r.barcode, r.barcode, r.name, r.salePrice ?? 0, r.pieces, r.lot ?? "", fmtDate(r.expiresOn)]);
   }
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 55 }, { wch: 10 }, { wch: 10 }, { wch: 11 }, { wch: 13 }, { wch: 12 }];
+  ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 55 }, { wch: 10 }, { wch: 11 }, { wch: 13 }, { wch: 12 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Inventario inicial");
   const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
