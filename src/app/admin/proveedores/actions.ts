@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { createSupplier } from "@/lib/suppliers";
+import { createSupplier, updateSupplier } from "@/lib/suppliers";
 import { logAction } from "@/lib/history";
 
 export interface SupplierFormState {
@@ -26,4 +26,25 @@ export async function createSupplierForm(_prevState: SupplierFormState | undefin
   await logAction(session.uid, "Creó proveedor", name);
   revalidatePath("/admin/proveedores");
   redirect("/admin/proveedores");
+}
+
+export interface UpdateSupplierResult {
+  ok: boolean;
+  error?: string;
+}
+
+export async function updateSupplierAction(id: string, name: string, contact: string): Promise<UpdateSupplierResult> {
+  const session = await requireAdminSession();
+  const cleanName = name.trim();
+  if (!cleanName) return { ok: false, error: "El nombre del proveedor es obligatorio." };
+
+  try {
+    await updateSupplier(id, cleanName, contact.trim() || null);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar el proveedor." };
+  }
+
+  await logAction(session.uid, "Editó proveedor", cleanName);
+  revalidatePath("/admin/proveedores");
+  return { ok: true };
 }

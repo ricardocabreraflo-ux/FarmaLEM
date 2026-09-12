@@ -20,3 +20,8 @@ export async function createSupplier(name: string, contact: string | null, creat
   const { error } = await supabaseAdmin().from("suppliers").insert({ name, contact, created_by: createdBy, active: true });
   if (error) throw new Error(error.message);
 }
+
+export async function updateSupplier(id: string, name: string, contact: string | null): Promise<void> {
+  const { error } = await supabaseAdmin().from("suppliers").update({ name, contact, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
