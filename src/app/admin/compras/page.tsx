@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { listPurchases } from "@/lib/purchases";
 import { listSuppliers } from "@/lib/suppliers";
 import { listReceipts } from "@/lib/purchase-receipts";
+import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = { title: "Recepción de mercancía" };
@@ -21,7 +23,10 @@ function fmtDate(v: string) {
 export default async function ComprasPage() {
   const session = await requireSession();
   const isAdmin = session.role === "admin";
-  const [profile, purchases, suppliers, receipts] = await Promise.all([getProfileById(session.uid), listPurchases(), listSuppliers(), listReceipts()]);
+  const profile = await getProfileById(session.uid);
+  if (!(await canAccessModule("/admin/compras", isAdmin, profile?.role_id ?? null))) redirect("/admin");
+
+  const [purchases, suppliers, receipts] = await Promise.all([listPurchases(), listSuppliers(), listReceipts()]);
   const nameById = new Map(suppliers.map((s) => [s.id, s.name]));
 
   const totalPieces = purchases.reduce((sum, p) => sum + p.quantity, 0);
@@ -52,7 +57,7 @@ export default async function ComprasPage() {
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Sube las fotos del ticket del proveedor y cruza los renglones contra el catálogo aprendido.</p>
 
-      <section className={`mt-5 grid grid-cols-1 gap-3 ${isAdmin ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+      <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
           <span className="text-[0.78rem] text-admin-ink-soft">Recepciones</span>
           <p className="mt-1 font-display text-lg text-admin-ink">{receipts.length}</p>
@@ -61,12 +66,10 @@ export default async function ComprasPage() {
           <span className="text-[0.78rem] text-admin-ink-soft">Piezas recibidas</span>
           <p className="mt-1 font-display text-lg text-admin-ink">{totalPieces}</p>
         </div>
-        {isAdmin && (
-          <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
-            <span className="text-[0.78rem] text-admin-ink-soft">Costo total</span>
-            <p className="mt-1 font-display text-lg text-admin-ink">{fmtMoney(totalCost)}</p>
-          </div>
-        )}
+        <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
+          <span className="text-[0.78rem] text-admin-ink-soft">Costo total</span>
+          <p className="mt-1 font-display text-lg text-admin-ink">{fmtMoney(totalCost)}</p>
+        </div>
       </section>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
@@ -129,8 +132,8 @@ export default async function ComprasPage() {
                 <th className="px-5 py-3 font-medium">Código de barras</th>
                 <th className="px-5 py-3 font-medium">Descripción</th>
                 <th className="px-5 py-3 text-right font-medium">Piezas</th>
-                {isAdmin && <th className="px-5 py-3 text-right font-medium">Costo</th>}
-                {isAdmin && <th className="px-5 py-3 text-right font-medium">Total</th>}
+                <th className="px-5 py-3 text-right font-medium">Costo</th>
+                <th className="px-5 py-3 text-right font-medium">Total</th>
                 <th className="px-5 py-3 text-right font-medium">Precio</th>
                 <th className="px-5 py-3 font-medium">Proveedor</th>
               </tr>
@@ -138,7 +141,7 @@ export default async function ComprasPage() {
             <tbody>
               {purchases.length === 0 && (
                 <tr>
-                  <td colSpan={isAdmin ? 8 : 6} className="px-5 py-8 text-center text-admin-ink-soft">
+                  <td colSpan={8} className="px-5 py-8 text-center text-admin-ink-soft">
                     Sin productos capturados
                   </td>
                 </tr>
@@ -149,8 +152,8 @@ export default async function ComprasPage() {
                   <td className="px-5 py-3 text-admin-ink-soft">{p.barcode}</td>
                   <td className="px-5 py-3 font-semibold text-admin-ink">{p.description}</td>
                   <td className="px-5 py-3 text-right text-admin-ink">{p.quantity}</td>
-                  {isAdmin && <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(p.cost)}</td>}
-                  {isAdmin && <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(p.quantity * p.cost)}</td>}
+                  <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(p.cost)}</td>
+                  <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(p.quantity * p.cost)}</td>
                   <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(p.price)}</td>
                   <td className="px-5 py-3 text-admin-ink-soft">{p.supplier_id ? nameById.get(p.supplier_id) ?? "—" : "—"}</td>
                 </tr>

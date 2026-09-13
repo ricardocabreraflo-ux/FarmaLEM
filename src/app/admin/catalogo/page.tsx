@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { listProductCatalog, getCatalogInfo } from "@/lib/product-catalog";
 import { listLatestCostByBarcode } from "@/lib/purchases";
+import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CatalogUploadForm } from "@/components/admin/CatalogUploadForm";
 import { ProductCatalogTable, type CatalogRow } from "@/components/admin/ProductCatalogTable";
@@ -18,13 +20,10 @@ function fmtDateTime(v: string | null) {
 export default async function CatalogoPage() {
   const session = await requireSession();
   const isAdmin = session.role === "admin";
+  const profile = await getProfileById(session.uid);
+  if (!(await canAccessModule("/admin/catalogo", isAdmin, profile?.role_id ?? null))) redirect("/admin");
 
-  const [profile, entries, info, costByBarcode] = await Promise.all([
-    getProfileById(session.uid),
-    listProductCatalog(),
-    getCatalogInfo(),
-    listLatestCostByBarcode(),
-  ]);
+  const [entries, info, costByBarcode] = await Promise.all([listProductCatalog(), getCatalogInfo(), listLatestCostByBarcode()]);
 
   const rows: CatalogRow[] = entries.map((e) => ({
     barcode: e.barcode,
@@ -61,7 +60,7 @@ export default async function CatalogoPage() {
         </section>
       )}
 
-      <ProductCatalogTable rows={rows} isAdmin={isAdmin} />
+      <ProductCatalogTable rows={rows} />
     </AdminShell>
   );
 }

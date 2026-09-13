@@ -198,6 +198,20 @@ function allLeaves(): NavLeafDef[] {
 }
 
 /**
+ * Igual que la visibilidad del menú, pero para gatear el acceso a la
+ * página en sí: una pantalla admin-only con un rol de permisos que sí la
+ * tenga habilitada debe poder entrar (no solo verla en el menú).
+ */
+export async function canAccessModule(key: string, isAdmin: boolean, roleId: string | null): Promise<boolean> {
+  if (isAdmin) return true;
+  const target = allLeaves().find((l) => l.key === key);
+  if (!target) return false;
+  const [rows, roles] = await Promise.all([getPanelModuleRows(), listRoles()]);
+  const allRoleIds = roles.map((r) => r.id);
+  return isLeafVisible(target, rows, allRoleIds, isAdmin, roleId);
+}
+
+/**
  * Guarda de una vez los permisos de un rol para todas las pantallas
  * (botón "Guardar" del modal de permisos por rol) — solo escribe los
  * módulos cuyo estado para este rol realmente cambió.

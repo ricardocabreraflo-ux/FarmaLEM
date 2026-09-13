@@ -91,10 +91,12 @@ export function PendingReceiptLinesEditor({ lines, isAdmin }: { lines: PurchaseR
               <tr className="border-b border-admin-border text-admin-ink-soft">
                 <th className="px-4 py-2.5 font-medium">Ticket</th>
                 <th className="px-4 py-2.5 text-right font-medium">Piezas</th>
+                <th className="px-4 py-2.5 text-right font-medium">Precio</th>
                 <th className="px-4 py-2.5 font-medium">Lote / caducidad</th>
                 <th className="px-4 py-2.5 font-medium">Código de barras</th>
                 <th className="px-4 py-2.5 font-medium">Descripción</th>
                 <th className="px-4 py-2.5 text-right font-medium">Precio venta</th>
+                <th className="px-4 py-2.5 font-medium">Factor</th>
               </tr>
             </thead>
             <tbody>
@@ -105,6 +107,7 @@ export function PendingReceiptLinesEditor({ lines, isAdmin }: { lines: PurchaseR
                     <span className="block text-[0.72rem]">clave {l.supplier_code ?? "—"}</span>
                   </td>
                   <td className="px-4 py-2.5 text-right text-admin-ink">{l.quantity}</td>
+                  <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink-soft">{money(l.unit_price)}</td>
                   <td className="px-4 py-2.5 text-admin-ink-soft">
                     {l.lot ?? "—"}
                     <br />
@@ -113,6 +116,7 @@ export function PendingReceiptLinesEditor({ lines, isAdmin }: { lines: PurchaseR
                   <td className="px-4 py-2.5 text-admin-ink-soft">{l.barcode || "—"}</td>
                   <td className="px-4 py-2.5 font-semibold text-admin-ink">{l.description || "—"}</td>
                   <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink-soft">{l.sale_price != null ? money(l.sale_price) : "—"}</td>
+                  <td className="px-4 py-2.5 text-admin-ink-soft">{l.pack_factor || 1}</td>
                 </tr>
               ))}
             </tbody>
