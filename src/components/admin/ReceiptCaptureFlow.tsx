@@ -199,6 +199,7 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
   const [hiddenColumns, setHiddenColumns] = useState<Set<ColumnKey>>(new Set());
   const [sort, setSort] = useState<{ key: ColumnKey; dir: "asc" | "desc" } | null>(null);
   const [showColumnPicker, setShowColumnPicker] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   useEffect(() => {
     if (!supplierId || supplierId === NEW_SUPPLIER) {
@@ -286,6 +287,7 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
   }, [lines, ticketTotal, ticketPieces]);
 
   const pendientes = lines.filter((l) => !l.barcode.trim() || !l.description.trim() || l.salePrice == null || l.quantity <= 0);
+  const needsConfirm = pendientes.length > 0 || (totals.diff != null && Math.abs(totals.diff) > 1);
 
   const counts = useMemo(
     () => ({
@@ -339,16 +341,9 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
       setSuppliers((prev) => [...prev, { id: created.id!, name: newSupplierName.trim(), contact: null, active: true }]);
       setSupplierId(created.id);
     }
-    if (pendientes.length) {
-      const ok = window.confirm(
-        `${pendientes.length} renglón(es) no tienen código de barras, descripción o precio de venta todavía. Se guardarán como pendientes y podrás ` +
-          "completarlos después desde el detalle de la recepción. ¿Guardar así?"
-      );
-      if (!ok) return;
-    }
-    if (totals.diff != null && Math.abs(totals.diff) > 1) {
-      const ok = window.confirm(`La suma de renglones (${money(totals.suma)}) no cuadra con el importe del ticket (${money(totals.importe)}). ¿Guardar de todos modos?`);
-      if (!ok) return;
+    if (needsConfirm && !confirmVisible) {
+      setConfirmVisible(true);
+      return;
     }
     setStep("guardando");
 
@@ -732,6 +727,37 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
                 leído.
               </p>
             )}
+            {confirmVisible && step !== "guardando" && (
+              <div className="mt-4 rounded-xl border border-admin-pending-text/40 bg-admin-pending-bg px-4 py-3 text-[0.85rem] text-admin-pending-text">
+                <p className="font-semibold">Antes de guardar, revisa:</p>
+                <ul className="mt-1 list-disc pl-5">
+                  {pendientes.length > 0 && (
+                    <li>{pendientes.length} renglón(es) sin código de barras, descripción o precio de venta — se guardarán como pendientes.</li>
+                  )}
+                  {totals.diff != null && Math.abs(totals.diff) > 1 && (
+                    <li>
+                      La suma de renglones ({money(totals.suma)}) no cuadra con el importe del ticket ({money(totals.importe)}).
+                    </li>
+                  )}
+                </ul>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={guardar}
+                    className="rounded-full bg-admin-primary px-5 py-2 text-[0.82rem] font-semibold text-white"
+                  >
+                    Sí, guardar de todos modos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmVisible(false)}
+                    className="rounded-full border border-admin-border px-5 py-2 text-[0.82rem] font-semibold text-admin-ink-soft"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="mt-5 flex flex-wrap gap-3">
               <button
                 type="button"
@@ -748,6 +774,7 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
                   setStep("fotos");
                   setLines([]);
                   setParsed(null);
+                  setConfirmVisible(false);
                 }}
                 className="rounded-full border border-admin-border px-6 py-3 text-[0.9rem] font-semibold text-admin-ink disabled:opacity-60"
               >
