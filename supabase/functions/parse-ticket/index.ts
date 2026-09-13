@@ -54,17 +54,18 @@ type TicketOut = z.infer<typeof Ticket>;
 /**
  * Tickets con muchas fotos (densos, varias páginas) generan demasiados
  * renglones para una sola llamada: ya pasó tiempo agotado (150s) con 5 fotos,
- * y JSON truncado (max_tokens insuficiente) con un ticket todavía más denso.
- * Por eso las fotos se agrupan de a lo más GROUP_SIZE y cada grupo se manda
- * en paralelo como una llamada aparte y más chica.
+ * JSON truncado por max_tokens con grupos de 4-5, y hasta con grupos de 3
+ * fotos densas el "pensamiento" (thinking) se comía casi todo el presupuesto
+ * de MAX_TOKENS, dejando apenas espacio para el JSON (se cortaba a medio
+ * renglón). Grupos de 2 fotos + esfuerzo "low" dejan margen de sobra para
+ * que el JSON siempre termine completo.
+ *
+ * MAX_TOKENS no puede subirse más: el SDK exige streaming para valores que
+ * tomarían más de ~10 min estimados (32000 ya lo disparaba de inmediato, sin
+ * ni siquiera llamar al modelo) y esta función no transmite por streaming.
  */
-const GROUP_SIZE = 3;
-// El SDK exige streaming para max_tokens grandes (>10 min estimados de
-// generación) y esta función no transmite por streaming — 32000 ya lo
-// disparaba de inmediato, sin ni siquiera llamar al modelo. 16000 es el
-// valor que ya veníamos usando sin ese problema; el agrupado de a lo más
-// GROUP_SIZE fotos por llamada es lo que evita que se trunque un ticket denso.
 const MAX_TOKENS = 16000;
+const GROUP_SIZE = 2;
 
 function chunk<T>(items: T[], groupSize: number): T[][] {
   const groups = Math.ceil(items.length / groupSize);
@@ -81,14 +82,25 @@ async function transcribe(client: Anthropic, images: ImageIn[], note: string): P
   }));
   content.push({ type: "text", text: `Transcribe este ticket (${images.length} foto(s), en orden de arriba hacia abajo).${note}` });
 
-  const response = await client.messages.parse({
-    model: "claude-sonnet-5",
-    max_tokens: MAX_TOKENS,
-    system: SYSTEM,
-    thinking: { type: "adaptive" },
-    output_config: { effort: "medium", format: zodOutputFormat(Ticket) },
-    messages: [{ role: "user", content }],
-  });
+  let response: Awaited<ReturnType<typeof client.messages.parse>>;
+  try {
+    response = await client.messages.parse({
+      model: "claude-sonnet-5",
+      max_tokens: MAX_TOKENS,
+      system: SYSTEM,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "low", format: zodOutputFormat(Ticket) },
+      messages: [{ role: "user", content }],
+    });
+  } catch (err) {
+    // Cuando el "pensamiento" del modelo consume casi todo MAX_TOKENS, el
+    // JSON final queda a medias y el parseo interno de messages.parse()
+    // truena aquí (antes de poder revisar stop_reason) con un error de
+    // parseo — se distingue así de un error real de la API (red, auth, etc).
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/parse|json/i.test(msg)) throw new Error("La respuesta se cortó por ser demasiado larga — sube menos fotos por intento.");
+    throw err;
+  }
 
   if (response.stop_reason === "refusal") throw new Error("El modelo rechazó la lectura");
   if (response.stop_reason === "max_tokens") throw new Error("La respuesta se cortó por ser demasiado larga — sube menos fotos por intento");
