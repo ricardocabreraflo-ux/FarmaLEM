@@ -33,7 +33,7 @@ function draftFor(line: PurchaseReceiptLine): Draft {
   };
 }
 
-export function PendingReceiptLinesEditor({ lines }: { lines: PurchaseReceiptLine[] }) {
+export function PendingReceiptLinesEditor({ lines, isAdmin }: { lines: PurchaseReceiptLine[]; isAdmin: boolean }) {
   const router = useRouter();
   const [drafts, setDrafts] = useState<Record<string, Draft>>(() => Object.fromEntries(lines.map((l) => [l.id, draftFor(l)])));
   const [pending, startTransition] = useTransition();
@@ -77,6 +77,50 @@ export function PendingReceiptLinesEditor({ lines }: { lines: PurchaseReceiptLin
   }
 
   if (lines.length === 0) return null;
+
+  if (!isAdmin) {
+    return (
+      <section className="mt-6 overflow-hidden rounded-2xl border border-admin-pending-text/40 bg-admin-surface">
+        <div className="border-b border-admin-border bg-admin-pending-bg px-5 py-3">
+          <h2 className="font-display text-base text-admin-pending-text">Renglones por capturar ({lines.length})</h2>
+          <p className="mt-0.5 text-[0.8rem] text-admin-ink-soft">Todavía no tienen código de barras o precio ligado. Captúralos con estos datos del ticket.</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-[0.84rem]">
+            <thead>
+              <tr className="border-b border-admin-border text-admin-ink-soft">
+                <th className="px-4 py-2.5 font-medium">Ticket</th>
+                <th className="px-4 py-2.5 text-right font-medium">Piezas</th>
+                <th className="px-4 py-2.5 font-medium">Lote / caducidad</th>
+                <th className="px-4 py-2.5 font-medium">Código de barras</th>
+                <th className="px-4 py-2.5 font-medium">Descripción</th>
+                <th className="px-4 py-2.5 text-right font-medium">Precio venta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((l) => (
+                <tr key={l.id} className="border-b border-admin-border align-top last:border-0">
+                  <td className="px-4 py-2.5 text-admin-ink-soft">
+                    <span className="block font-semibold text-admin-ink">{l.ticket_description ?? "—"}</span>
+                    <span className="block text-[0.72rem]">clave {l.supplier_code ?? "—"}</span>
+                  </td>
+                  <td className="px-4 py-2.5 text-right text-admin-ink">{l.quantity}</td>
+                  <td className="px-4 py-2.5 text-admin-ink-soft">
+                    {l.lot ?? "—"}
+                    <br />
+                    {fmtDate(l.expires_on)}
+                  </td>
+                  <td className="px-4 py-2.5 text-admin-ink-soft">{l.barcode || "—"}</td>
+                  <td className="px-4 py-2.5 font-semibold text-admin-ink">{l.description || "—"}</td>
+                  <td className="px-4 py-2.5 text-right font-data tabular-nums text-admin-ink-soft">{l.sale_price != null ? money(l.sale_price) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-6 overflow-hidden rounded-2xl border border-admin-pending-text/40 bg-admin-surface">

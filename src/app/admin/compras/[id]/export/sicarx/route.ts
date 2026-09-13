@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { requireSession } from "@/lib/admin-auth";
 import { getReceipt, listReceiptLines } from "@/lib/purchase-receipts";
 import { listSuppliers } from "@/lib/suppliers";
 import { buildSicarXWorkbook } from "@/lib/excel-receipt";
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireAdminSession();
+  await requireSession();
   const { id } = await params;
 
   const [receipt, lines, suppliers] = await Promise.all([getReceipt(id), listReceiptLines(id), listSuppliers()]);

@@ -55,17 +55,15 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
             {receipt.status}
           </span>
         </h1>
-        {isAdmin && (
-          <div className="flex gap-2">
-            <Link href={`/admin/compras/${id}/export/farmalem`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-              Excel FarmaLEM
-            </Link>
-            <Link href={`/admin/compras/${id}/export/sicarx`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-              Excel SICAR X
-            </Link>
-            <DeleteReceiptButton id={id} />
-          </div>
-        )}
+        <div className="flex gap-2">
+          <Link href={`/admin/compras/${id}/export/farmalem`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+            Excel FarmaLEM
+          </Link>
+          <Link href={`/admin/compras/${id}/export/sicarx`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+            Excel SICAR X
+          </Link>
+          {isAdmin && <DeleteReceiptButton id={id} />}
+        </div>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">{fmtDate(receipt.ticket_date)}</p>
 
@@ -110,7 +108,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
         </section>
       )}
 
-      {isAdmin && <PendingReceiptLinesEditor lines={pendingLines} />}
+      <PendingReceiptLinesEditor lines={pendingLines} isAdmin={isAdmin} />
 
       <h2 className="mt-6 font-display text-base text-admin-ink">Renglones recibidos</h2>
       <section className="mt-2 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
