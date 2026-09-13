@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { compressToBase64 } from "@/lib/client-image";
-import { fetchSupplierCatalogAction, findByBarcodeAction, saveReceiptAction } from "@/app/admin/compras/actions";
+import { fetchSupplierCatalogAction, findByBarcodeAction, saveReceiptAction, createSupplierAction } from "@/app/admin/compras/actions";
 import { parseTicketPhotosClient } from "@/lib/ticket-parser-client";
 import { mexicoCityToday } from "@/lib/dates";
 import type { ParsedLine, ParsedTicket } from "@/lib/ticket-types";
@@ -176,9 +176,13 @@ function Th({
   );
 }
 
-export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
+const NEW_SUPPLIER = "__nuevo__";
+
+export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers: Supplier[] }) {
   const router = useRouter();
-  const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? "");
+  const [suppliers, setSuppliers] = useState(initialSuppliers);
+  const [supplierId, setSupplierId] = useState(initialSuppliers[0]?.id ?? NEW_SUPPLIER);
+  const [newSupplierName, setNewSupplierName] = useState("");
   const [catalog, setCatalog] = useState<Map<string, SupplierProduct>>(new Map());
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [step, setStep] = useState<Step>("fotos");
@@ -197,7 +201,10 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   const [showColumnPicker, setShowColumnPicker] = useState(false);
 
   useEffect(() => {
-    if (!supplierId) return;
+    if (!supplierId || supplierId === NEW_SUPPLIER) {
+      Promise.resolve().then(() => setCatalog(new Map()));
+      return;
+    }
     fetchSupplierCatalogAction(supplierId)
       .then((rows) => setCatalog(new Map(rows.map((r) => [r.supplier_code, r]))))
       .catch((e: Error) => setError(e.message));
@@ -321,7 +328,17 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
   async function guardar() {
     setError(null);
     if (!supplierId) return setError("Selecciona el proveedor.");
+    if (supplierId === NEW_SUPPLIER && !newSupplierName.trim()) return setError("Escribe el nombre del proveedor nuevo.");
     if (!lines.length) return setError("No hay renglones que guardar.");
+
+    let finalSupplierId = supplierId;
+    if (supplierId === NEW_SUPPLIER) {
+      const created = await createSupplierAction(newSupplierName);
+      if (!created.ok || !created.id) return setError(created.error ?? "No se pudo crear el proveedor.");
+      finalSupplierId = created.id;
+      setSuppliers((prev) => [...prev, { id: created.id!, name: newSupplierName.trim(), contact: null, active: true }]);
+      setSupplierId(created.id);
+    }
     if (pendientes.length) {
       const ok = window.confirm(
         `${pendientes.length} renglón(es) no tienen código de barras, descripción o precio de venta todavía. Se guardarán como pendientes y podrás ` +
@@ -336,7 +353,7 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
     setStep("guardando");
 
     const fd = new FormData();
-    fd.set("supplierId", supplierId);
+    fd.set("supplierId", finalSupplierId);
     fd.set("ticketNumber", ticketNumber);
     fd.set("ticketDate", ticketDate);
     fd.set("ticketTotal", ticketTotal);
@@ -387,9 +404,23 @@ export function ReceiptCaptureFlow({ suppliers }: { suppliers: Supplier[] }) {
                   {s.name}
                 </option>
               ))}
+              <option value={NEW_SUPPLIER}>+ Nuevo proveedor…</option>
             </select>
           </label>
-          <span className="text-[0.82rem] text-admin-ink-soft">{catalog.size} productos conocidos de este proveedor</span>
+          {supplierId === NEW_SUPPLIER ? (
+            <label className="block text-[0.85rem] font-semibold text-admin-ink">
+              Nombre del proveedor nuevo
+              <input
+                value={newSupplierName}
+                onChange={(e) => setNewSupplierName(e.target.value)}
+                disabled={step !== "fotos"}
+                placeholder="Ej. Distribuidora Central"
+                className={`${inputClass} mt-1.5 w-[220px]`}
+              />
+            </label>
+          ) : (
+            <span className="text-[0.82rem] text-admin-ink-soft">{catalog.size} productos conocidos de este proveedor</span>
+          )}
         </div>
 
         {step === "fotos" && (

@@ -8,6 +8,30 @@ import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-produc
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
 import { saveReceipt, deleteReceipt, completeReceiptLine, updateReceiptSupplier, type SaveReceiptLine } from "@/lib/purchase-receipts";
 import { getCatalogEntryByBarcode } from "@/lib/product-catalog";
+import { createSupplier } from "@/lib/suppliers";
+
+export interface CreateSupplierResult {
+  ok: boolean;
+  id?: string;
+  error?: string;
+}
+
+/** Da de alta un proveedor nuevo al vuelo, desde la pantalla de nueva recepción. */
+export async function createSupplierAction(name: string): Promise<CreateSupplierResult> {
+  const session = await requireAdminSession();
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, error: "Ponle un nombre al proveedor." };
+
+  try {
+    const id = await createSupplier(trimmed, null, session.uid);
+    await logAction(session.uid, "Creó proveedor", trimmed);
+    revalidatePath("/admin/proveedores");
+    revalidatePath("/admin/compras/nuevo");
+    return { ok: true, id };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo crear el proveedor." };
+  }
+}
 
 export async function fetchSupplierCatalogAction(supplierId: string): Promise<SupplierProduct[]> {
   await requireAdminSession();

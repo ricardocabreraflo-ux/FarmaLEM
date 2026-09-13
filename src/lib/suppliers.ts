@@ -16,9 +16,10 @@ export async function listSuppliers(onlyActive = false): Promise<Supplier[]> {
   return data as Supplier[];
 }
 
-export async function createSupplier(name: string, contact: string | null, createdBy: string): Promise<void> {
-  const { error } = await supabaseAdmin().from("suppliers").insert({ name, contact, created_by: createdBy, active: true });
+export async function createSupplier(name: string, contact: string | null, createdBy: string): Promise<string> {
+  const { data, error } = await supabaseAdmin().from("suppliers").insert({ name, contact, created_by: createdBy, active: true }).select("id").single();
   if (error) throw new Error(error.message);
+  return data.id as string;
 }
 
 export async function updateSupplier(id: string, name: string, contact: string | null): Promise<void> {

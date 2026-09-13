@@ -15,13 +15,7 @@ export default async function NewPurchasePage() {
   return (
     <AdminShell activeHref="/admin/compras" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <h1 className="font-display text-2xl text-admin-ink">Nueva recepción de mercancía</h1>
-      {suppliers.length === 0 ? (
-        <p className="mt-4 rounded-lg bg-admin-pending-bg px-4 py-3 text-[0.85rem] text-admin-pending-text">
-          Da de alta un proveedor primero en Mercancía → Proveedores.
-        </p>
-      ) : (
-        <ReceiptCaptureFlow suppliers={suppliers} />
-      )}
+      <ReceiptCaptureFlow suppliers={suppliers} />
     </AdminShell>
   );
 }
