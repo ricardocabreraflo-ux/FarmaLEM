@@ -291,3 +291,18 @@ export async function deleteReceipt(id: string): Promise<void> {
   const { error: receiptErr } = await db.from("purchase_receipts").delete().eq("id", id);
   if (receiptErr) throw new Error(`No se pudo borrar la recepción: ${receiptErr.message}`);
 }
+
+/**
+ * Corrige el proveedor de una recepción ya guardada (por ejemplo, si se
+ * capturó con el proveedor equivocado). Actualiza tanto el encabezado como
+ * los movimientos de compras ya ligados, para que queden consistentes.
+ */
+export async function updateReceiptSupplier(id: string, supplierId: string): Promise<void> {
+  const db = supabaseAdmin();
+
+  const { error: receiptErr } = await db.from("purchase_receipts").update({ supplier_id: supplierId }).eq("id", id);
+  if (receiptErr) throw new Error(`No se pudo actualizar el proveedor de la recepción: ${receiptErr.message}`);
+
+  const { error: purchasesErr } = await db.from("purchases").update({ supplier_id: supplierId }).eq("receipt_id", id);
+  if (purchasesErr) throw new Error(`No se pudo actualizar el proveedor de los movimientos: ${purchasesErr.message}`);
+}

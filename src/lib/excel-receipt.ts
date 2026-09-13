@@ -74,10 +74,11 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
   set("H2", 0);
   set("N2", 0);
   set("T2", 0);
-  // COSTO y TOTAL (columnas AE/AF) solo se agregan cuando showCost=true —
-  // van después de las columnas fijas de SICAR X (hasta AD) para no
-  // desacomodar esas fórmulas/turnos; el resto del personal recibe el
-  // archivo sin esas dos columnas.
+  // COSTO y TOTAL van en E/F cuando showCost=true — esas dos columnas están
+  // libres en los renglones de datos (solo se usan en la fila 1 para el
+  // rótulo "TOTAL VENDIDO"), así que quedan justo junto a PIEZAS/PRECIO,
+  // visibles sin tener que desplazarse a la derecha; el resto del personal
+  // recibe el archivo sin esas dos columnas.
   const headers: Record<string, string> = {
     A3: "CLAVE CORTA",
     B3: "CODIGO DE BARRAS",
@@ -88,7 +89,7 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     AB3: "PIEZAS DISPONIBLES PARA VENTA",
     AC3: "LOTE",
     AD3: "CADUCIDAD",
-    ...(showCost ? { AE3: "COSTO", AF3: "TOTAL" } : {}),
+    ...(showCost ? { E3: "COSTO", F3: "TOTAL" } : {}),
   };
   for (const [ref, v] of Object.entries(headers)) set(ref, v);
 
@@ -108,18 +109,17 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     set(`AC${n}`, r.lot ?? "");
     set(`AD${n}`, fmtDate(r.expiresOn));
     if (showCost) {
-      set(`AE${n}`, r.unitCost);
-      set(`AF${n}`, r.totalCost);
+      set(`E${n}`, r.unitCost);
+      set(`F${n}`, r.totalCost);
     }
   });
   const last = first + rows.length - 1;
   const tRow = last + 1;
   set(`C${tRow}`, "PIEZAS");
   set(`D${tRow}`, null, `SUM(D${first}:D${last})`);
-  if (showCost) set(`AF${tRow}`, null, `SUM(AF${first}:AF${last})`);
+  if (showCost) set(`F${tRow}`, null, `SUM(F${first}:F${last})`);
 
-  const lastCol = showCost ? "AF" : "AD";
-  ws["!ref"] = `A1:${lastCol}${tRow}`;
+  ws["!ref"] = `A1:AD${tRow}`;
   ws["!merges"] = [
     XLSX.utils.decode_range("F1:G1"),
     XLSX.utils.decode_range("H1:M1"),
@@ -131,8 +131,8 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     XLSX.utils.decode_range("T2:X2"),
   ];
   const cols: XLSX.ColInfo[] = [];
-  const widths: Record<string, number> = { A: 10, B: 16, C: 57, D: 7, G: 10, Y: 10, Z: 4, AA: 4, AB: 12, AC: 13, AD: 12, AE: 10, AF: 10 };
-  for (let c = 0; c < (showCost ? 32 : 30); c++) {
+  const widths: Record<string, number> = { A: 10, B: 16, C: 57, D: 7, E: 10, F: 10, G: 10, Y: 10, Z: 4, AA: 4, AB: 12, AC: 13, AD: 12 };
+  for (let c = 0; c < 30; c++) {
     const letter = XLSX.utils.encode_col(c);
     cols.push({ wch: widths[letter] ?? 4.5 });
   }

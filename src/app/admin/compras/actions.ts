@@ -6,7 +6,7 @@ import { logAction } from "@/lib/history";
 import type { ParsedTicket } from "@/lib/ticket-types";
 import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-products";
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
-import { saveReceipt, deleteReceipt, completeReceiptLine, type SaveReceiptLine } from "@/lib/purchase-receipts";
+import { saveReceipt, deleteReceipt, completeReceiptLine, updateReceiptSupplier, type SaveReceiptLine } from "@/lib/purchase-receipts";
 import { getCatalogEntryByBarcode } from "@/lib/product-catalog";
 
 export async function fetchSupplierCatalogAction(supplierId: string): Promise<SupplierProduct[]> {
@@ -130,6 +130,28 @@ export async function completeReceiptLineAction(
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo completar el renglón." };
+  }
+}
+
+export interface UpdateReceiptSupplierResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Corrige el proveedor de una recepción ya guardada (encabezado y movimientos ligados). */
+export async function updateReceiptSupplierAction(receiptId: string, supplierId: string): Promise<UpdateReceiptSupplierResult> {
+  const session = await requireAdminSession();
+  if (!supplierId) return { ok: false, error: "Selecciona el proveedor." };
+
+  try {
+    await updateReceiptSupplier(receiptId, supplierId);
+    await logAction(session.uid, "Corrigió proveedor de recepción", `#${receiptId.slice(0, 8).toUpperCase()}`);
+    revalidatePath("/admin/compras");
+    revalidatePath(`/admin/compras/${receiptId}`);
+    revalidatePath("/admin/inventario");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar el proveedor." };
   }
 }
 

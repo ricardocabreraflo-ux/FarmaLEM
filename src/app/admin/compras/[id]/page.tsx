@@ -10,6 +10,7 @@ import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DeleteReceiptButton } from "@/components/admin/DeleteReceiptButton";
 import { PendingReceiptLinesEditor } from "@/components/admin/PendingReceiptLinesEditor";
+import { EditReceiptSupplier } from "@/components/admin/EditReceiptSupplier";
 
 export const metadata: Metadata = { title: "Detalle de recepción" };
 export const dynamic = "force-dynamic";
@@ -69,7 +70,10 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
           {isAdmin && <DeleteReceiptButton id={id} />}
         </div>
       </div>
-      <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">{fmtDate(receipt.ticket_date)}</p>
+      <div className="mt-1.5 flex flex-wrap items-center gap-3">
+        <p className="text-[0.86rem] text-admin-ink-soft">{fmtDate(receipt.ticket_date)}</p>
+        {isAdmin && <EditReceiptSupplier receiptId={id} supplierId={receipt.supplier_id} suppliers={suppliers} />}
+      </div>
 
       <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
