@@ -68,11 +68,11 @@ async function transcribe(client: Anthropic, images: ImageIn[], note: string): P
   content.push({ type: "text", text: `Transcribe este ticket (${images.length} foto(s), en orden de arriba hacia abajo).${note}` });
 
   const response = await client.messages.parse({
-    model: "claude-opus-5",
+    model: "claude-sonnet-5",
     max_tokens: 16000,
     system: SYSTEM,
     thinking: { type: "adaptive" },
-    output_config: { effort: "high", format: zodOutputFormat(Ticket) },
+    output_config: { effort: "medium", format: zodOutputFormat(Ticket) },
     messages: [{ role: "user", content }],
   });
 
