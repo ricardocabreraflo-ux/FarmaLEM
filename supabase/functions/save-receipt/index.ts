@@ -65,7 +65,11 @@ Deno.serve(async (req) => {
     if (!Array.isArray(input.lines) || input.lines.length === 0) return json({ error: "No hay renglones que guardar." }, 400);
     if (input.lines.some((l) => !(l.quantity > 0))) return json({ error: "Hay un renglón con cantidad inválida." }, 400);
 
-    const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!).schema("farmalem");
+    // .schema("farmalem") regresa un cliente acotado solo a tablas/RPC de ese
+    // esquema — pierde .storage y demás, por eso se guarda aparte el cliente
+    // completo para subir las fotos.
+    const raw = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const db = raw.schema("farmalem");
 
     const anyPending = input.lines.some((l) => !isResolved(l));
     const { data: receipt, error: rErr } = await db
@@ -93,7 +97,7 @@ Deno.serve(async (req) => {
           const ext = (p.filename.split(".").pop() || "jpg").toLowerCase();
           const path = `recepciones/${receiptId}/foto-${i + 1}.${ext}`;
           const bytes = Uint8Array.from(atob(p.base64), (c) => c.charCodeAt(0));
-          const { error } = await db.storage.from(PHOTO_BUCKET).upload(path, bytes, { contentType: p.contentType || "image/jpeg", upsert: true });
+          const { error } = await raw.storage.from(PHOTO_BUCKET).upload(path, bytes, { contentType: p.contentType || "image/jpeg", upsert: true });
           if (error) throw new Error(`No se pudo subir la foto ${i + 1}: ${error.message}`);
           return path;
         })
