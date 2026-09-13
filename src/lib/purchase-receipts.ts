@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { createPurchaseFromReceiptLine, type ReceiptLineInput } from "@/lib/purchases";
+import { createPurchaseFromReceiptLine, createPurchasesFromReceiptLines, type ReceiptLineInput } from "@/lib/purchases";
 import { upsertEquivalences } from "@/lib/supplier-products";
 import type { ParsedTicket } from "@/lib/ticket-types";
 
@@ -170,13 +170,12 @@ export async function saveReceipt(input: SaveReceiptInput, photos: File[], creat
     .select("id");
   if (linesErr) throw new Error(`No se pudieron guardar los renglones: ${linesErr.message}`);
 
+  const resolvedIdx: number[] = [];
   const equivalences: Parameters<typeof upsertEquivalences>[0] = [];
   for (let i = 0; i < input.lines.length; i++) {
     const l = input.lines[i];
     if (!isResolved(l)) continue;
-    const purchaseId = await createPurchaseFromReceiptLine(receiptId, input.ticketDate, input.supplierId, toReceiptLineInput(l), createdBy);
-    const { error: linkErr } = await db.from("purchase_receipt_lines").update({ purchase_id: purchaseId }).eq("id", insertedLines[i].id);
-    if (linkErr) throw new Error(`No se pudo ligar el renglón al movimiento: ${linkErr.message}`);
+    resolvedIdx.push(i);
     if (l.supplierCode) {
       equivalences.push({
         supplierId: input.supplierId,
@@ -189,6 +188,20 @@ export async function saveReceipt(input: SaveReceiptInput, photos: File[], creat
         lastUnitPrice: l.unitPrice,
       });
     }
+  }
+
+  if (resolvedIdx.length > 0) {
+    const purchaseIds = await createPurchasesFromReceiptLines(
+      receiptId,
+      input.ticketDate,
+      input.supplierId,
+      resolvedIdx.map((i) => toReceiptLineInput(input.lines[i])),
+      createdBy
+    );
+    const { error: linkErr } = await db
+      .from("purchase_receipt_lines")
+      .upsert(resolvedIdx.map((lineIdx, k) => ({ id: insertedLines[lineIdx].id, purchase_id: purchaseIds[k] })), { onConflict: "id" });
+    if (linkErr) throw new Error(`No se pudo ligar los renglones a sus movimientos: ${linkErr.message}`);
   }
   await upsertEquivalences(equivalences);
 
