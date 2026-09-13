@@ -52,13 +52,22 @@ type ImageIn = { media_type: "image/jpeg" | "image/png" | "image/webp"; data: st
 type TicketOut = z.infer<typeof Ticket>;
 
 /**
- * Tickets con muchas fotos (densos, varias páginas) pueden tardar más de los
- * 150s que aguanta la función — ya pasó con un ticket de 5 fotos (546 =
- * tiempo agotado). Por arriba de este umbral partimos las fotos en dos
- * mitades y las transcribimos en paralelo (dos llamadas más chicas en vez de
- * una grande), para quedar cómodos bajo el límite.
+ * Tickets con muchas fotos (densos, varias páginas) generan demasiados
+ * renglones para una sola llamada: ya pasó tiempo agotado (150s) con 5 fotos,
+ * y JSON truncado (max_tokens insuficiente) con un ticket todavía más denso.
+ * Por eso las fotos se agrupan de a lo más GROUP_SIZE y cada grupo se manda
+ * en paralelo como una llamada aparte y más chica.
  */
-const SPLIT_THRESHOLD = 4;
+const GROUP_SIZE = 3;
+const MAX_TOKENS = 32000;
+
+function chunk<T>(items: T[], groupSize: number): T[][] {
+  const groups = Math.ceil(items.length / groupSize);
+  const perGroup = Math.ceil(items.length / groups);
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += perGroup) out.push(items.slice(i, i + perGroup));
+  return out;
+}
 
 async function transcribe(client: Anthropic, images: ImageIn[], note: string): Promise<{ ticket: TicketOut; usage: Anthropic.Usage }> {
   const content: Anthropic.ContentBlockParam[] = images.map((img) => ({
@@ -69,7 +78,7 @@ async function transcribe(client: Anthropic, images: ImageIn[], note: string): P
 
   const response = await client.messages.parse({
     model: "claude-sonnet-5",
-    max_tokens: 16000,
+    max_tokens: MAX_TOKENS,
     system: SYSTEM,
     thinking: { type: "adaptive" },
     output_config: { effort: "medium", format: zodOutputFormat(Ticket) },
@@ -77,28 +86,35 @@ async function transcribe(client: Anthropic, images: ImageIn[], note: string): P
   });
 
   if (response.stop_reason === "refusal") throw new Error("El modelo rechazó la lectura");
+  if (response.stop_reason === "max_tokens") throw new Error("La respuesta se cortó por ser demasiado larga — sube menos fotos por intento");
   if (!response.parsed_output) throw new Error("No se pudo estructurar la respuesta");
   return { ticket: response.parsed_output, usage: response.usage };
 }
 
 /** proveedor/folio/fecha suelen ir en las primeras fotos; los totales, en las últimas. */
-function mergeTickets(first: TicketOut, last: TicketOut): TicketOut {
+function mergeTickets(parts: TicketOut[]): TicketOut {
+  const first = parts[0];
+  const last = parts[parts.length - 1];
   return {
-    proveedor: first.proveedor ?? last.proveedor,
-    rfc: first.rfc ?? last.rfc,
-    sucursal: first.sucursal ?? last.sucursal,
-    ticket_numero: first.ticket_numero ?? last.ticket_numero,
-    fecha: first.fecha ?? last.fecha,
-    importe: last.importe ?? first.importe,
-    ahorro: last.ahorro ?? first.ahorro,
-    piezas: last.piezas ?? first.piezas,
-    lineas: [...first.lineas, ...last.lineas],
-    observaciones: [first.observaciones, last.observaciones].filter(Boolean).join(" · ") || null,
+    proveedor: parts.map((p) => p.proveedor).find(Boolean) ?? null,
+    rfc: parts.map((p) => p.rfc).find(Boolean) ?? null,
+    sucursal: parts.map((p) => p.sucursal).find(Boolean) ?? null,
+    ticket_numero: parts.map((p) => p.ticket_numero).find(Boolean) ?? null,
+    fecha: first.fecha ?? parts.map((p) => p.fecha).find(Boolean) ?? null,
+    importe: last.importe ?? [...parts].reverse().map((p) => p.importe).find((v) => v != null) ?? null,
+    ahorro: last.ahorro ?? [...parts].reverse().map((p) => p.ahorro).find((v) => v != null) ?? null,
+    piezas: last.piezas ?? [...parts].reverse().map((p) => p.piezas).find((v) => v != null) ?? null,
+    lineas: parts.flatMap((p) => p.lineas),
+    observaciones: parts.map((p) => p.observaciones).filter(Boolean).join(" · ") || null,
   };
 }
 
-function sumUsage(a: Anthropic.Usage, b: Anthropic.Usage): Anthropic.Usage {
-  return { ...a, input_tokens: (a.input_tokens ?? 0) + (b.input_tokens ?? 0), output_tokens: (a.output_tokens ?? 0) + (b.output_tokens ?? 0) };
+function sumUsage(usages: Anthropic.Usage[]): Anthropic.Usage {
+  return usages.reduce((acc, u) => ({
+    ...acc,
+    input_tokens: (acc.input_tokens ?? 0) + (u.input_tokens ?? 0),
+    output_tokens: (acc.output_tokens ?? 0) + (u.output_tokens ?? 0),
+  }));
 }
 
 Deno.serve(async (req) => {
@@ -117,24 +133,25 @@ Deno.serve(async (req) => {
 
     const client = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
 
+    const groups = chunk(images, GROUP_SIZE);
     let ticket: TicketOut;
     let usage: Anthropic.Usage;
-    if (images.length <= SPLIT_THRESHOLD) {
+    if (groups.length <= 1) {
       const r = await transcribe(client, images, "");
       ticket = r.ticket;
       usage = r.usage;
     } else {
-      const mid = Math.ceil(images.length / 2);
-      const [ra, rb] = await Promise.all([
-        transcribe(client, images.slice(0, mid), ` Es la primera mitad de un ticket más largo (fotos 1 a ${mid} de ${images.length}).`),
-        transcribe(
-          client,
-          images.slice(mid),
-          ` Es la segunda mitad de un ticket más largo (fotos ${mid + 1} a ${images.length} de ${images.length}); son renglones nuevos, no repitas los de la primera mitad.`
-        ),
-      ]);
-      ticket = mergeTickets(ra.ticket, rb.ticket);
-      usage = sumUsage(ra.usage, rb.usage);
+      let photoIdx = 0;
+      const results = await Promise.all(
+        groups.map((g) => {
+          const from = photoIdx + 1;
+          photoIdx += g.length;
+          const note = ` Es una parte de un ticket más largo (fotos ${from} a ${photoIdx} de ${images.length}, en ese orden); son renglones nuevos que no aparecen en las otras partes, no los repitas ni inventes continuidad.`;
+          return transcribe(client, g, note);
+        })
+      );
+      ticket = mergeTickets(results.map((r) => r.ticket));
+      usage = sumUsage(results.map((r) => r.usage));
     }
 
     return json({ ticket, usage });
