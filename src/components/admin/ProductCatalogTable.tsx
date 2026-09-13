@@ -19,7 +19,7 @@ function money(n: number | null) {
 
 const SHOWN = 300;
 
-export function ProductCatalogTable({ rows }: { rows: CatalogRow[] }) {
+export function ProductCatalogTable({ rows, isAdmin }: { rows: CatalogRow[]; isAdmin: boolean }) {
   const [q, setQ] = useState("");
 
   const filtered = useMemo(() => {
@@ -56,14 +56,14 @@ export function ProductCatalogTable({ rows }: { rows: CatalogRow[] }) {
                 <th className="px-4 py-2.5 font-medium">Categoría</th>
                 <th className="px-4 py-2.5 text-right font-medium">Precio</th>
                 <th className="px-4 py-2.5 text-right font-medium">Precio neto</th>
-                <th className="px-4 py-2.5 text-right font-medium">Costo</th>
-                <th className="px-4 py-2.5 text-right font-medium">Margen</th>
+                {isAdmin && <th className="px-4 py-2.5 text-right font-medium">Costo</th>}
+                {isAdmin && <th className="px-4 py-2.5 text-right font-medium">Margen</th>}
               </tr>
             </thead>
             <tbody>
               {shown.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-admin-ink-soft">
+                  <td colSpan={isAdmin ? 8 : 6} className="px-4 py-8 text-center text-admin-ink-soft">
                     Sin resultados.
                   </td>
                 </tr>
@@ -80,10 +80,12 @@ export function ProductCatalogTable({ rows }: { rows: CatalogRow[] }) {
                     <td className="px-4 py-2">{r.category ?? "—"}</td>
                     <td className="px-4 py-2 text-right font-data tabular-nums">{money(r.salePrice)}</td>
                     <td className="px-4 py-2 text-right font-data tabular-nums">{money(r.salePriceNet)}</td>
-                    <td className="px-4 py-2 text-right font-data tabular-nums">{money(r.cost)}</td>
-                    <td className={`px-4 py-2 text-right font-data tabular-nums ${margin == null ? "" : margin >= 0 ? "text-admin-ok-text" : "text-admin-bad-text"}`}>
-                      {margin == null ? "—" : `${money(margin)} (${marginPct!.toFixed(0)}%)`}
-                    </td>
+                    {isAdmin && <td className="px-4 py-2 text-right font-data tabular-nums">{money(r.cost)}</td>}
+                    {isAdmin && (
+                      <td className={`px-4 py-2 text-right font-data tabular-nums ${margin == null ? "" : margin >= 0 ? "text-admin-ok-text" : "text-admin-bad-text"}`}>
+                        {margin == null ? "—" : `${money(margin)} (${marginPct!.toFixed(0)}%)`}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

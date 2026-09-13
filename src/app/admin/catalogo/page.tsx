@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { listProductCatalog, getCatalogInfo } from "@/lib/product-catalog";
 import { listLatestCostByBarcode } from "@/lib/purchases";
@@ -16,7 +16,8 @@ function fmtDateTime(v: string | null) {
 }
 
 export default async function CatalogoPage() {
-  const session = await requireAdminSession();
+  const session = await requireSession();
+  const isAdmin = session.role === "admin";
 
   const [profile, entries, info, costByBarcode] = await Promise.all([
     getProfileById(session.uid),
@@ -44,21 +45,23 @@ export default async function CatalogoPage() {
         recibido en Recepción de mercancía). No representa existencias — solo es para armar el catálogo.
       </p>
 
-      <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-5">
-        <CatalogUploadForm />
-        <p className="mt-3 text-[0.78rem] text-admin-ink-soft">
-          {info.count > 0 ? (
-            <>
-              {info.count} productos cargados{fmtDateTime(info.updatedAt) ? ` · última actualización ${fmtDateTime(info.updatedAt)}` : ""}. Subir un
-              archivo nuevo reemplaza todo el catálogo.
-            </>
-          ) : (
-            "Todavía no hay catálogo cargado."
-          )}
-        </p>
-      </section>
+      {isAdmin && (
+        <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-5">
+          <CatalogUploadForm />
+          <p className="mt-3 text-[0.78rem] text-admin-ink-soft">
+            {info.count > 0 ? (
+              <>
+                {info.count} productos cargados{fmtDateTime(info.updatedAt) ? ` · última actualización ${fmtDateTime(info.updatedAt)}` : ""}. Subir un
+                archivo nuevo reemplaza todo el catálogo.
+              </>
+            ) : (
+              "Todavía no hay catálogo cargado."
+            )}
+          </p>
+        </section>
+      )}
 
-      <ProductCatalogTable rows={rows} />
+      <ProductCatalogTable rows={rows} isAdmin={isAdmin} />
     </AdminShell>
   );
 }
