@@ -59,7 +59,12 @@ type TicketOut = z.infer<typeof Ticket>;
  * en paralelo como una llamada aparte y más chica.
  */
 const GROUP_SIZE = 3;
-const MAX_TOKENS = 32000;
+// El SDK exige streaming para max_tokens grandes (>10 min estimados de
+// generación) y esta función no transmite por streaming — 32000 ya lo
+// disparaba de inmediato, sin ni siquiera llamar al modelo. 16000 es el
+// valor que ya veníamos usando sin ese problema; el agrupado de a lo más
+// GROUP_SIZE fotos por llamada es lo que evita que se trunque un ticket denso.
+const MAX_TOKENS = 16000;
 
 function chunk<T>(items: T[], groupSize: number): T[][] {
   const groups = Math.ceil(items.length / groupSize);
