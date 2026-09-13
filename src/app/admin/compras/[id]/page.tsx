@@ -38,8 +38,8 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
   const pendingLines = receiptLines.filter((l) => !l.purchase_id);
   const supplierName = suppliers.find((s) => s.id === receipt.supplier_id)?.name ?? "—";
 
-  const sumaRenglones = items.reduce((sum, i) => sum + i.quantity * i.cost, 0);
-  const totalPiezas = items.reduce((sum, i) => sum + i.quantity, 0);
+  const sumaRenglones = receiptLines.reduce((sum, l) => sum + l.quantity * l.unit_price, 0);
+  const totalPiezas = receiptLines.reduce((sum, l) => sum + l.quantity * (l.pack_factor || 1), 0);
   const diff = receipt.ticket_total != null ? sumaRenglones - receipt.ticket_total : null;
 
   return (
@@ -87,7 +87,7 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
           </p>
         </div>
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-4">
-          <span className="text-[0.78rem] text-admin-ink-soft">Piezas recibidas</span>
+          <span className="text-[0.78rem] text-admin-ink-soft">Piezas del ticket</span>
           <p className="mt-1 font-display text-lg text-admin-ink">{totalPiezas}</p>
         </div>
       </section>

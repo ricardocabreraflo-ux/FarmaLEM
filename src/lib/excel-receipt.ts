@@ -10,25 +10,32 @@ interface Row {
   salePrice: number | null;
   lot: string | null;
   expiresOn: string | null;
+  unitCost: number;
+  totalCost: number;
 }
 
 /**
  * Todos los renglones del ticket, resueltos o no — así lo que se exporta
  * siempre trae el ticket completo (para capturar en farmacia de inmediato)
  * aunque algunos renglones todavía no estén ligados a un código de barras.
- * Sin costo: estos exports los captura personal que no debe verlo.
+ * El costo solo se agrega al archivo cuando showCost=true (ver build*), para
+ * quien tiene permiso de verlo.
  */
 function toRows(lines: PurchaseReceiptLine[]): Row[] {
   return lines.map((l) => {
     const packFactor = l.pack_factor || 1;
+    const pieces = Math.round(l.quantity * packFactor * 1000) / 1000;
+    const unitCost = Math.round((l.unit_price / packFactor) * 10000) / 10000;
     return {
       supplierCode: l.supplier_code,
       barcode: l.barcode,
       name: l.description.trim() || l.ticket_description || "",
-      pieces: Math.round(l.quantity * packFactor * 1000) / 1000,
+      pieces,
       salePrice: l.sale_price,
       lot: l.lot,
       expiresOn: l.expires_on,
+      unitCost,
+      totalCost: Math.round(l.quantity * l.unit_price * 100) / 100,
     };
   });
 }
@@ -49,7 +56,7 @@ function sheetName(receipt: PurchaseReceipt): string {
  * BARRAS, DESCRIPCIÓN, PIEZAS, PRECIO, turnos) más LOTE y CADUCIDAD — sin
  * costo, para que lo pueda capturar personal sin ver a qué costo compramos.
  */
-export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string) {
+export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string, showCost: boolean) {
   const rows = toRows(lines);
   const ws: XLSX.WorkSheet = {};
   const set = (ref: string, v: string | number | null, f?: string) => {
@@ -67,9 +74,10 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
   set("H2", 0);
   set("N2", 0);
   set("T2", 0);
-  // Sin COSTO ni TOTAL: este archivo lo capturan las empleadas en SICAR X y
-  // no deben ver a qué costo compramos — solo Ricardo ve costos, dentro del
-  // panel (detalle de la recepción), nunca en el Excel que se les entrega.
+  // COSTO y TOTAL (columnas AE/AF) solo se agregan cuando showCost=true —
+  // van después de las columnas fijas de SICAR X (hasta AD) para no
+  // desacomodar esas fórmulas/turnos; el resto del personal recibe el
+  // archivo sin esas dos columnas.
   const headers: Record<string, string> = {
     A3: "CLAVE CORTA",
     B3: "CODIGO DE BARRAS",
@@ -80,6 +88,7 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     AB3: "PIEZAS DISPONIBLES PARA VENTA",
     AC3: "LOTE",
     AD3: "CADUCIDAD",
+    ...(showCost ? { AE3: "COSTO", AF3: "TOTAL" } : {}),
   };
   for (const [ref, v] of Object.entries(headers)) set(ref, v);
 
@@ -98,13 +107,19 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     set(`AB${n}`, null, `D${n}-Y${n}`);
     set(`AC${n}`, r.lot ?? "");
     set(`AD${n}`, fmtDate(r.expiresOn));
+    if (showCost) {
+      set(`AE${n}`, r.unitCost);
+      set(`AF${n}`, r.totalCost);
+    }
   });
   const last = first + rows.length - 1;
   const tRow = last + 1;
   set(`C${tRow}`, "PIEZAS");
   set(`D${tRow}`, null, `SUM(D${first}:D${last})`);
+  if (showCost) set(`AF${tRow}`, null, `SUM(AF${first}:AF${last})`);
 
-  ws["!ref"] = `A1:AD${tRow}`;
+  const lastCol = showCost ? "AF" : "AD";
+  ws["!ref"] = `A1:${lastCol}${tRow}`;
   ws["!merges"] = [
     XLSX.utils.decode_range("F1:G1"),
     XLSX.utils.decode_range("H1:M1"),
@@ -116,8 +131,8 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
     XLSX.utils.decode_range("T2:X2"),
   ];
   const cols: XLSX.ColInfo[] = [];
-  const widths: Record<string, number> = { A: 10, B: 16, C: 57, D: 7, G: 10, Y: 10, Z: 4, AA: 4, AB: 12, AC: 13, AD: 12 };
-  for (let c = 0; c < 30; c++) {
+  const widths: Record<string, number> = { A: 10, B: 16, C: 57, D: 7, G: 10, Y: 10, Z: 4, AA: 4, AB: 12, AC: 13, AD: 12, AE: 10, AF: 10 };
+  for (let c = 0; c < (showCost ? 32 : 30); c++) {
     const letter = XLSX.utils.encode_col(c);
     cols.push({ wch: widths[letter] ?? 4.5 });
   }
@@ -130,18 +145,26 @@ export function buildFarmaLEMWorkbook(receipt: PurchaseReceipt, lines: PurchaseR
 }
 
 /**
- * Excel para SICAR X · importación de inventario inicial. Sin columna de
- * costo a propósito — lo captura personal que no debe ver a qué costo
- * compramos, solo el precio de venta.
+ * Excel para SICAR X · importación de inventario inicial. Costo y Total
+ * solo se agregan cuando showCost=true — quien no debe ver a qué costo
+ * compramos recibe el archivo sin esas dos columnas.
  */
-export function buildSicarXWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string) {
+export function buildSicarXWorkbook(receipt: PurchaseReceipt, lines: PurchaseReceiptLine[], supplierName: string, showCost: boolean) {
   const rows = toRows(lines);
-  const aoa: (string | number)[][] = [["Clave", "Código de Barras", "Descripción", "Precio", "Existencia", "Lote", "Caducidad"]];
+  const header = ["Clave", "Código de Barras", "Descripción", "Precio", "Existencia", "Lote", "Caducidad"];
+  const cols = [{ wch: 16 }, { wch: 16 }, { wch: 55 }, { wch: 10 }, { wch: 11 }, { wch: 13 }, { wch: 12 }];
+  if (showCost) {
+    header.push("Costo", "Total");
+    cols.push({ wch: 10 }, { wch: 10 });
+  }
+  const aoa: (string | number)[][] = [header];
   for (const r of rows) {
-    aoa.push([r.supplierCode || r.barcode, r.barcode, r.name, r.salePrice ?? 0, r.pieces, r.lot ?? "", fmtDate(r.expiresOn)]);
+    const row: (string | number)[] = [r.supplierCode || r.barcode, r.barcode, r.name, r.salePrice ?? 0, r.pieces, r.lot ?? "", fmtDate(r.expiresOn)];
+    if (showCost) row.push(r.unitCost, r.totalCost);
+    aoa.push(row);
   }
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws["!cols"] = [{ wch: 16 }, { wch: 16 }, { wch: 55 }, { wch: 10 }, { wch: 11 }, { wch: 13 }, { wch: 12 }];
+  ws["!cols"] = cols;
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Inventario inicial");
   const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" }) as Buffer;
