@@ -380,13 +380,17 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
     );
     photos.forEach((p, i) => fd.append("photo", p.file, `foto-${i + 1}.jpg`));
 
-    const res = await saveReceiptAction(fd);
-    if (res.ok && res.id) {
-      router.push(`/admin/compras/${res.id}`);
-    } else {
+    try {
+      const res = await saveReceiptAction(fd);
+      if (res.ok && res.id) {
+        router.push(`/admin/compras/${res.id}`);
+        return;
+      }
       setError(`No se pudo guardar: ${res.error ?? "error desconocido"}`);
-      setStep("captura");
+    } catch (err) {
+      setError(`No se pudo guardar: ${err instanceof Error ? err.message : "la conexión se interrumpió o tardó demasiado"}. Tus renglones siguen aquí, puedes intentar guardar de nuevo.`);
     }
+    setStep("captura");
   }
 
   return (
