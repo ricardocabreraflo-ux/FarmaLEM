@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { createPurchaseFromReceiptLine, createPurchasesFromReceiptLines, type ReceiptLineInput } from "@/lib/purchases";
+import { createPurchaseFromReceiptLine, type ReceiptLineInput } from "@/lib/purchases";
 import { upsertEquivalences } from "@/lib/supplier-products";
 import type { ParsedTicket } from "@/lib/ticket-types";
 
@@ -53,17 +53,6 @@ export async function getReceipt(id: string): Promise<PurchaseReceipt | null> {
 
 const PHOTO_BUCKET = "farmalem-documents";
 
-async function uploadReceiptPhoto(receiptId: string, index: number, file: File): Promise<string> {
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `recepciones/${receiptId}/foto-${index + 1}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const { error } = await supabaseAdmin()
-    .storage.from(PHOTO_BUCKET)
-    .upload(path, buffer, { contentType: file.type || "image/jpeg", upsert: true });
-  if (error) throw new Error(`No se pudo subir la foto ${index + 1}: ${error.message}`);
-  return path;
-}
-
 export async function getReceiptPhotoUrls(paths: string[]): Promise<string[]> {
   if (paths.length === 0) return [];
   const { data, error } = await supabaseAdmin().storage.from(PHOTO_BUCKET).createSignedUrls(paths, 60 * 30);
@@ -84,18 +73,6 @@ export interface SaveReceiptLine {
   packFactor: number;
 }
 
-export interface SaveReceiptInput {
-  supplierId: string;
-  ticketNumber: string | null;
-  ticketDate: string;
-  ticketTotal: number | null;
-  ticketPieces: number | null;
-  ticketSavings: number | null;
-  notes: string | null;
-  rawExtraction: ParsedTicket | null;
-  lines: SaveReceiptLine[];
-}
-
 function isResolved(l: Pick<SaveReceiptLine, "barcode" | "description" | "salePrice" | "quantity">): boolean {
   return Boolean(l.barcode.trim()) && Boolean(l.description.trim()) && l.salePrice != null && l.quantity > 0;
 }
@@ -112,100 +89,6 @@ function toReceiptLineInput(l: SaveReceiptLine): ReceiptLineInput {
     packFactor: l.packFactor,
     supplierCode: l.supplierCode,
   };
-}
-
-/**
- * Guarda el encabezado, sube las fotos, y guarda cada renglón en
- * purchase_receipt_lines. Los renglones ya resueltos (con código de barras,
- * descripción y precio de venta) además se vuelven un movimiento real en
- * purchases desde ya; los que no, quedan pendientes de completar después
- * (ver completeReceiptLine) y la recepción queda en estado "Pendiente".
- */
-export async function saveReceipt(input: SaveReceiptInput, photos: File[], createdBy: string): Promise<string> {
-  const db = supabaseAdmin();
-  const anyPending = input.lines.some((l) => !isResolved(l));
-
-  const { data: receipt, error: rErr } = await db
-    .from("purchase_receipts")
-    .insert({
-      supplier_id: input.supplierId,
-      ticket_number: input.ticketNumber,
-      ticket_date: input.ticketDate,
-      ticket_total: input.ticketTotal,
-      ticket_pieces: input.ticketPieces,
-      ticket_savings: input.ticketSavings,
-      notes: input.notes,
-      raw_extraction: input.rawExtraction,
-      status: anyPending ? "Pendiente" : "Completa",
-      created_by: createdBy,
-    })
-    .select("id")
-    .single();
-  if (rErr) throw new Error(`No se pudo crear la recepción: ${rErr.message}`);
-  const receiptId = receipt.id as string;
-
-  if (photos.length > 0) {
-    const paths = await Promise.all(photos.map((file, i) => uploadReceiptPhoto(receiptId, i, file)));
-    const { error: pErr } = await db.from("purchase_receipts").update({ photo_paths: paths }).eq("id", receiptId);
-    if (pErr) throw new Error(`No se pudieron guardar las fotos: ${pErr.message}`);
-  }
-
-  const { data: insertedLines, error: linesErr } = await db
-    .from("purchase_receipt_lines")
-    .insert(
-      input.lines.map((l) => ({
-        receipt_id: receiptId,
-        supplier_code: l.supplierCode,
-        ticket_description: l.ticketDescription,
-        quantity: l.quantity,
-        unit_price: l.unitPrice,
-        lot: l.lot,
-        expires_on: l.expiresOn,
-        barcode: l.barcode,
-        description: l.description,
-        sale_price: l.salePrice,
-        pack_factor: l.packFactor,
-      }))
-    )
-    .select("id");
-  if (linesErr) throw new Error(`No se pudieron guardar los renglones: ${linesErr.message}`);
-
-  const resolvedIdx: number[] = [];
-  const equivalences: Parameters<typeof upsertEquivalences>[0] = [];
-  for (let i = 0; i < input.lines.length; i++) {
-    const l = input.lines[i];
-    if (!isResolved(l)) continue;
-    resolvedIdx.push(i);
-    if (l.supplierCode) {
-      equivalences.push({
-        supplierId: input.supplierId,
-        supplierCode: l.supplierCode,
-        supplierDescription: l.ticketDescription,
-        barcode: l.barcode,
-        description: l.description,
-        salePrice: l.salePrice,
-        packFactor: l.packFactor,
-        lastUnitPrice: l.unitPrice,
-      });
-    }
-  }
-
-  if (resolvedIdx.length > 0) {
-    const purchaseIds = await createPurchasesFromReceiptLines(
-      receiptId,
-      input.ticketDate,
-      input.supplierId,
-      resolvedIdx.map((i) => toReceiptLineInput(input.lines[i])),
-      createdBy
-    );
-    const { error: linkErr } = await db
-      .from("purchase_receipt_lines")
-      .upsert(resolvedIdx.map((lineIdx, k) => ({ id: insertedLines[lineIdx].id, purchase_id: purchaseIds[k] })), { onConflict: "id" });
-    if (linkErr) throw new Error(`No se pudo ligar los renglones a sus movimientos: ${linkErr.message}`);
-  }
-  await upsertEquivalences(equivalences);
-
-  return receiptId;
 }
 
 export async function listReceiptLines(receiptId: string): Promise<PurchaseReceiptLine[]> {

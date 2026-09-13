@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { compressToBase64 } from "@/lib/client-image";
-import { fetchSupplierCatalogAction, findByBarcodeAction, saveReceiptAction, createSupplierAction } from "@/app/admin/compras/actions";
+import { fetchSupplierCatalogAction, findByBarcodeAction, createSupplierAction } from "@/app/admin/compras/actions";
 import { parseTicketPhotosClient } from "@/lib/ticket-parser-client";
+import { saveReceiptClient } from "@/lib/receipt-save-client";
 import { mexicoCityToday } from "@/lib/dates";
 import type { ParsedLine, ParsedTicket } from "@/lib/ticket-types";
 import type { SupplierProduct } from "@/lib/supplier-products";
@@ -178,7 +179,7 @@ function Th({
 
 const NEW_SUPPLIER = "__nuevo__";
 
-export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers: Supplier[] }) {
+export function ReceiptCaptureFlow({ suppliers: initialSuppliers, createdBy }: { suppliers: Supplier[]; createdBy: string }) {
   const router = useRouter();
   const [suppliers, setSuppliers] = useState(initialSuppliers);
   const [supplierId, setSupplierId] = useState(initialSuppliers[0]?.id ?? NEW_SUPPLIER);
@@ -347,19 +348,18 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
     }
     setStep("guardando");
 
-    const fd = new FormData();
-    fd.set("supplierId", finalSupplierId);
-    fd.set("ticketNumber", ticketNumber);
-    fd.set("ticketDate", ticketDate);
-    fd.set("ticketTotal", ticketTotal);
-    fd.set("ticketPieces", ticketPieces);
-    fd.set("ticketSavings", ticketSavings);
-    fd.set("notes", notes);
-    fd.set("rawExtraction", parsed ? JSON.stringify(parsed) : "");
-    fd.set(
-      "lines",
-      JSON.stringify(
-        lines.map((l) => ({
+    try {
+      const id = await saveReceiptClient({
+        supplierId: finalSupplierId,
+        createdBy,
+        ticketNumber: ticketNumber || null,
+        ticketDate,
+        ticketTotal: ticketTotal ? Number(ticketTotal) : null,
+        ticketPieces: ticketPieces ? Number(ticketPieces) : null,
+        ticketSavings: ticketSavings ? Number(ticketSavings) : null,
+        notes: notes.trim() || null,
+        rawExtraction: parsed,
+        lines: lines.map((l) => ({
           supplierCode: l.supplierCode.trim() || null,
           ticketDescription: l.ticketDescription.trim() || null,
           quantity: l.quantity,
@@ -370,18 +370,11 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers }: { suppliers:
           description: l.description.trim(),
           salePrice: l.salePrice,
           packFactor: l.packFactor,
-        }))
-      )
-    );
-    photos.forEach((p, i) => fd.append("photo", p.file, `foto-${i + 1}.jpg`));
-
-    try {
-      const res = await saveReceiptAction(fd);
-      if (res.ok && res.id) {
-        router.push(`/admin/compras/${res.id}`);
-        return;
-      }
-      setError(`No se pudo guardar: ${res.error ?? "error desconocido"}`);
+        })),
+        photos: photos.map((p, i) => ({ base64: p.base64, contentType: p.file.type || "image/jpeg", filename: p.file.name || `foto-${i + 1}.jpg` })),
+      });
+      router.push(`/admin/compras/${id}`);
+      return;
     } catch (err) {
       setError(`No se pudo guardar: ${err instanceof Error ? err.message : "la conexión se interrumpió o tardó demasiado"}. Tus renglones siguen aquí, puedes intentar guardar de nuevo.`);
     }

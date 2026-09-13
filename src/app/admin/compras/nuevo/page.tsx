@@ -15,7 +15,7 @@ export default async function NewPurchasePage() {
   return (
     <AdminShell activeHref="/admin/compras" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <h1 className="font-display text-2xl text-admin-ink">Nueva recepción de mercancía</h1>
-      <ReceiptCaptureFlow suppliers={suppliers} />
+      <ReceiptCaptureFlow suppliers={suppliers} createdBy={session.uid} />
     </AdminShell>
   );
 }

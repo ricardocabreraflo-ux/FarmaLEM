@@ -119,47 +119,6 @@ export async function createPurchaseFromReceiptLine(receiptId: string, purchaseD
   return data.id as string;
 }
 
-/**
- * Crea varios renglones resueltos de una recepción de una sola vez (un solo
- * INSERT), en vez de una llamada por renglón — con tickets de decenas o
- * cientos de renglones, N llamadas secuenciales tardaban más de lo que
- * aguanta la función de guardar (Netlify) y se quedaba pegado en "Guardando…"
- * sin terminar. Regresa los ids en el mismo orden que `lines`.
- */
-export async function createPurchasesFromReceiptLines(
-  receiptId: string,
-  purchaseDate: string,
-  supplierId: string,
-  lines: ReceiptLineInput[],
-  createdBy: string
-): Promise<string[]> {
-  if (lines.length === 0) return [];
-  const { data, error } = await supabaseAdmin()
-    .from("purchases")
-    .insert(
-      lines.map((line) => ({
-        purchase_date: purchaseDate,
-        supplier_id: supplierId,
-        short_code: null,
-        barcode: line.barcode,
-        description: line.description,
-        quantity: line.quantity,
-        cost: line.cost,
-        price: line.price,
-        invoice: null,
-        lot: line.lot,
-        expires_on: line.expiresOn,
-        pack_factor: line.packFactor,
-        supplier_code: line.supplierCode,
-        receipt_id: receiptId,
-        created_by: createdBy,
-      }))
-    )
-    .select("id");
-  if (error) throw new Error(`No se pudieron guardar los renglones: ${error.message}`);
-  return (data as { id: string }[]).map((r) => r.id);
-}
-
 export async function listPurchasesForReceipt(receiptId: string): Promise<Purchase[]> {
   const { data, error } = await supabaseAdmin().from("purchases").select().eq("receipt_id", receiptId).order("created_at", { ascending: true });
   if (error) throw new Error(`No se pudieron leer los renglones: ${error.message}`);
