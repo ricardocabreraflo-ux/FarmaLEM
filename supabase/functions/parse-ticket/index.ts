@@ -49,6 +49,57 @@ Reglas:
 - Extrae también los totales del ticket (importe, ahorro, piezas) si se ven.`;
 
 type ImageIn = { media_type: "image/jpeg" | "image/png" | "image/webp"; data: string };
+type TicketOut = z.infer<typeof Ticket>;
+
+/**
+ * Tickets con muchas fotos (densos, varias páginas) pueden tardar más de los
+ * 150s que aguanta la función — ya pasó con un ticket de 5 fotos (546 =
+ * tiempo agotado). Por arriba de este umbral partimos las fotos en dos
+ * mitades y las transcribimos en paralelo (dos llamadas más chicas en vez de
+ * una grande), para quedar cómodos bajo el límite.
+ */
+const SPLIT_THRESHOLD = 4;
+
+async function transcribe(client: Anthropic, images: ImageIn[], note: string): Promise<{ ticket: TicketOut; usage: Anthropic.Usage }> {
+  const content: Anthropic.ContentBlockParam[] = images.map((img) => ({
+    type: "image",
+    source: { type: "base64", media_type: img.media_type, data: img.data },
+  }));
+  content.push({ type: "text", text: `Transcribe este ticket (${images.length} foto(s), en orden de arriba hacia abajo).${note}` });
+
+  const response = await client.messages.parse({
+    model: "claude-opus-5",
+    max_tokens: 16000,
+    system: SYSTEM,
+    thinking: { type: "adaptive" },
+    output_config: { effort: "high", format: zodOutputFormat(Ticket) },
+    messages: [{ role: "user", content }],
+  });
+
+  if (response.stop_reason === "refusal") throw new Error("El modelo rechazó la lectura");
+  if (!response.parsed_output) throw new Error("No se pudo estructurar la respuesta");
+  return { ticket: response.parsed_output, usage: response.usage };
+}
+
+/** proveedor/folio/fecha suelen ir en las primeras fotos; los totales, en las últimas. */
+function mergeTickets(first: TicketOut, last: TicketOut): TicketOut {
+  return {
+    proveedor: first.proveedor ?? last.proveedor,
+    rfc: first.rfc ?? last.rfc,
+    sucursal: first.sucursal ?? last.sucursal,
+    ticket_numero: first.ticket_numero ?? last.ticket_numero,
+    fecha: first.fecha ?? last.fecha,
+    importe: last.importe ?? first.importe,
+    ahorro: last.ahorro ?? first.ahorro,
+    piezas: last.piezas ?? first.piezas,
+    lineas: [...first.lineas, ...last.lineas],
+    observaciones: [first.observaciones, last.observaciones].filter(Boolean).join(" · ") || null,
+  };
+}
+
+function sumUsage(a: Anthropic.Usage, b: Anthropic.Usage): Anthropic.Usage {
+  return { ...a, input_tokens: (a.input_tokens ?? 0) + (b.input_tokens ?? 0), output_tokens: (a.output_tokens ?? 0) + (b.output_tokens ?? 0) };
+}
 
 Deno.serve(async (req) => {
   const cors = {
@@ -65,30 +116,30 @@ Deno.serve(async (req) => {
     if (images.length > 8) return json({ error: "Máximo 8 fotos por ticket" }, 400);
 
     const client = new Anthropic({ apiKey: Deno.env.get("ANTHROPIC_API_KEY") });
-    const content: Anthropic.ContentBlockParam[] = images.map((img) => ({
-      type: "image",
-      source: { type: "base64", media_type: img.media_type, data: img.data },
-    }));
-    content.push({
-      type: "text",
-      text: `Transcribe este ticket (${images.length} foto(s), en orden de arriba hacia abajo).`,
-    });
 
-    const response = await client.messages.parse({
-      model: "claude-opus-5",
-      max_tokens: 16000,
-      system: SYSTEM,
-      thinking: { type: "adaptive" },
-      output_config: { effort: "high", format: zodOutputFormat(Ticket) },
-      messages: [{ role: "user", content }],
-    });
+    let ticket: TicketOut;
+    let usage: Anthropic.Usage;
+    if (images.length <= SPLIT_THRESHOLD) {
+      const r = await transcribe(client, images, "");
+      ticket = r.ticket;
+      usage = r.usage;
+    } else {
+      const mid = Math.ceil(images.length / 2);
+      const [ra, rb] = await Promise.all([
+        transcribe(client, images.slice(0, mid), ` Es la primera mitad de un ticket más largo (fotos 1 a ${mid} de ${images.length}).`),
+        transcribe(
+          client,
+          images.slice(mid),
+          ` Es la segunda mitad de un ticket más largo (fotos ${mid + 1} a ${images.length} de ${images.length}); son renglones nuevos, no repitas los de la primera mitad.`
+        ),
+      ]);
+      ticket = mergeTickets(ra.ticket, rb.ticket);
+      usage = sumUsage(ra.usage, rb.usage);
+    }
 
-    if (response.stop_reason === "refusal") return json({ error: "El modelo rechazó la lectura" }, 502);
-    if (!response.parsed_output) return json({ error: "No se pudo estructurar la respuesta" }, 502);
-
-    return json({ ticket: response.parsed_output, usage: response.usage });
+    return json({ ticket, usage });
   } catch (err) {
-    const message = err instanceof Anthropic.APIError ? `API ${err.status}: ${err.message}` : String(err);
+    const message = err instanceof Anthropic.APIError ? `API ${err.status}: ${err.message}` : err instanceof Error ? err.message : String(err);
     console.error(message);
     return json({ error: message }, 500);
   }
