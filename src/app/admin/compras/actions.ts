@@ -5,7 +5,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAction } from "@/lib/history";
 import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-products";
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
-import { deleteReceipt, completeReceiptLine, updateReceiptSupplier } from "@/lib/purchase-receipts";
+import { deleteReceipt, completeReceiptLine, updateReceiptSupplier, updateReceiptDetails } from "@/lib/purchase-receipts";
 import { getCatalogEntryByBarcode } from "@/lib/product-catalog";
 import { createSupplier } from "@/lib/suppliers";
 
@@ -112,6 +112,27 @@ export async function updateReceiptSupplierAction(receiptId: string, supplierId:
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar el proveedor." };
+  }
+}
+
+export interface UpdateReceiptDetailsResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Corrige el número de ticket/factura y la fecha de una recepción ya guardada. */
+export async function updateReceiptDetailsAction(receiptId: string, ticketNumber: string, ticketDate: string): Promise<UpdateReceiptDetailsResult> {
+  const session = await requireAdminSession();
+  if (!ticketDate) return { ok: false, error: "Falta la fecha del ticket." };
+
+  try {
+    await updateReceiptDetails(receiptId, ticketNumber.trim() || null, ticketDate);
+    await logAction(session.uid, "Corrigió datos de recepción", `#${receiptId.slice(0, 8).toUpperCase()} · ${ticketNumber.trim() || "s/n"} · ${ticketDate}`);
+    revalidatePath("/admin/compras");
+    revalidatePath(`/admin/compras/${receiptId}`);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudieron actualizar los datos del ticket." };
   }
 }
 

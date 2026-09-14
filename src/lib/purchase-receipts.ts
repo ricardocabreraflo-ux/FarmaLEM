@@ -202,3 +202,18 @@ export async function updateReceiptSupplier(id: string, supplierId: string): Pro
   const { error: purchasesErr } = await db.from("purchases").update({ supplier_id: supplierId }).eq("receipt_id", id);
   if (purchasesErr) throw new Error(`No se pudo actualizar el proveedor de los movimientos: ${purchasesErr.message}`);
 }
+
+/**
+ * Corrige el número de ticket/factura y la fecha de una recepción ya
+ * guardada. Actualiza también la fecha de los movimientos de compras ya
+ * ligados, para que queden consistentes con el encabezado.
+ */
+export async function updateReceiptDetails(id: string, ticketNumber: string | null, ticketDate: string): Promise<void> {
+  const db = supabaseAdmin();
+
+  const { error: receiptErr } = await db.from("purchase_receipts").update({ ticket_number: ticketNumber, ticket_date: ticketDate }).eq("id", id);
+  if (receiptErr) throw new Error(`No se pudo actualizar el ticket: ${receiptErr.message}`);
+
+  const { error: purchasesErr } = await db.from("purchases").update({ purchase_date: ticketDate }).eq("receipt_id", id);
+  if (purchasesErr) throw new Error(`No se pudo actualizar la fecha de los movimientos: ${purchasesErr.message}`);
+}
