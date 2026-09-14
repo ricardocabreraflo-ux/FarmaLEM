@@ -27,8 +27,8 @@ export interface NavGroupDef {
 
 export type NavEntryDef = NavLeafDef | NavGroupDef;
 
-function leaf(href: string, label: string, iconKey: string, defaultAdminOnly = false, locked = false): NavLeafDef {
-  return { type: "leaf", key: href, href, label, iconKey, defaultAdminOnly, locked };
+function leaf(href: string, label: string, iconKey: string, defaultAdminOnly = false, locked = false, key = href): NavLeafDef {
+  return { type: "leaf", key, href, label, iconKey, defaultAdminOnly, locked };
 }
 
 function group(id: string, label: string, iconKey: string, items: NavLeafDef[]): NavGroupDef {
@@ -37,7 +37,10 @@ function group(id: string, label: string, iconKey: string, items: NavLeafDef[]):
 
 export const NAV_STRUCTURE: NavEntryDef[] = [
   leaf("/admin/inicio", "Inicio", "IconInicio", false, true),
-  leaf("/admin", "Pedidos", "IconPedidos", true),
+  // key se queda "/admin" (por compatibilidad con la fila ya guardada en
+  // panel_modules: orden, visibilidad) aunque la URL real ahora es
+  // /admin/pedidos — /admin es solo un redirect a Inicio.
+  leaf("/admin/pedidos", "Pedidos", "IconPedidos", true, false, "/admin"),
   group("caja", "Caja", "IconCaja", [
     leaf("/admin/cortes", "Cortes", "IconCortes"),
     leaf("/admin/salidas", "Salidas de efectivo", "IconSalidas", true),

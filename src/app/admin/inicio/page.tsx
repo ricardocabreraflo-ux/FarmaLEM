@@ -469,7 +469,7 @@ async function AdminInicio({ uid, role }: { uid: string; role: "admin" | "employ
       <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5">
         <h2 className="font-display text-base text-admin-ink">Accesos directos</h2>
         <div className="mt-3.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-          <Link href="/admin" className="rounded-xl border border-admin-border p-3 text-center text-[0.85rem] font-semibold text-admin-ink hover:border-admin-primary">
+          <Link href="/admin/pedidos" className="rounded-xl border border-admin-border p-3 text-center text-[0.85rem] font-semibold text-admin-ink hover:border-admin-primary">
             Pedidos
           </Link>
           <Link href="/admin/cortes" className="rounded-xl border border-admin-border p-3 text-center text-[0.85rem] font-semibold text-admin-ink hover:border-admin-primary">
