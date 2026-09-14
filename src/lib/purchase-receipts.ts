@@ -18,6 +18,7 @@ export interface PurchaseReceipt {
   raw_extraction: ParsedTicket | null;
   notes: string | null;
   status: ReceiptStatus;
+  entered_in_system: boolean;
   created_by: string;
   created_at: string;
 }
@@ -201,6 +202,12 @@ export async function updateReceiptSupplier(id: string, supplierId: string): Pro
 
   const { error: purchasesErr } = await db.from("purchases").update({ supplier_id: supplierId }).eq("receipt_id", id);
   if (purchasesErr) throw new Error(`No se pudo actualizar el proveedor de los movimientos: ${purchasesErr.message}`);
+}
+
+/** Marca/desmarca una recepción como ya capturada en el otro sistema (SICAR X u otro). */
+export async function setReceiptEnteredInSystem(id: string, value: boolean): Promise<void> {
+  const { error } = await supabaseAdmin().from("purchase_receipts").update({ entered_in_system: value }).eq("id", id);
+  if (error) throw new Error(`No se pudo actualizar la marca de sistema: ${error.message}`);
 }
 
 /**

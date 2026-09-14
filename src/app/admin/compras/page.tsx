@@ -8,7 +8,7 @@ import { listSuppliers } from "@/lib/suppliers";
 import { listReceipts } from "@/lib/purchase-receipts";
 import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { DeleteReceiptRowButton } from "@/components/admin/DeleteReceiptRowButton";
+import { ReceiptEnteredCheckbox } from "@/components/admin/ReceiptEnteredCheckbox";
 
 export const metadata: Metadata = { title: "Recepción de mercancía" };
 export const dynamic = "force-dynamic";
@@ -84,13 +84,14 @@ export default async function ComprasPage() {
                 <th className="px-5 py-3 text-right font-medium">Piezas</th>
                 <th className="px-5 py-3 text-right font-medium">Importe</th>
                 <th className="px-5 py-3 font-medium">Estado</th>
+                <th className="px-5 py-3 text-center font-medium">Sistema</th>
                 <th className="px-5 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {receipts.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-admin-ink-soft">
+                  <td colSpan={8} className="px-5 py-8 text-center text-admin-ink-soft">
                     Sin recepciones capturadas
                   </td>
                 </tr>
@@ -111,13 +112,19 @@ export default async function ComprasPage() {
                       {r.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-3">
-                      <Link href={`/admin/compras/${r.id}`} className="font-semibold text-admin-primary hover:underline">
-                        {isAdmin ? "Ver / editar" : "Ver"}
-                      </Link>
-                      {isAdmin && <DeleteReceiptRowButton id={r.id} />}
-                    </div>
+                  <td className="px-5 py-3 text-center">
+                    {isAdmin ? (
+                      <ReceiptEnteredCheckbox receiptId={r.id} initialValue={r.entered_in_system} />
+                    ) : r.entered_in_system ? (
+                      "✓"
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <Link href={`/admin/compras/${r.id}`} className="font-semibold text-admin-primary hover:underline">
+                      {isAdmin ? "Editar" : "Ver"}
+                    </Link>
                   </td>
                 </tr>
               ))}
