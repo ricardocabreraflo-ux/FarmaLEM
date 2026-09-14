@@ -8,6 +8,7 @@ import { listSuppliers } from "@/lib/suppliers";
 import { listReceipts } from "@/lib/purchase-receipts";
 import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { DeleteReceiptRowButton } from "@/components/admin/DeleteReceiptRowButton";
 
 export const metadata: Metadata = { title: "Recepción de mercancía" };
 export const dynamic = "force-dynamic";
@@ -110,10 +111,13 @@ export default async function ComprasPage() {
                       {r.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-right">
-                    <Link href={`/admin/compras/${r.id}`} className="font-semibold text-admin-primary hover:underline">
-                      Ver
-                    </Link>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-end gap-3">
+                      <Link href={`/admin/compras/${r.id}`} className="font-semibold text-admin-primary hover:underline">
+                        {isAdmin ? "Ver / editar" : "Ver"}
+                      </Link>
+                      {isAdmin && <DeleteReceiptRowButton id={r.id} />}
+                    </div>
                   </td>
                 </tr>
               ))}
