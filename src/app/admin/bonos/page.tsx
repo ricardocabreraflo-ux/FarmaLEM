@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
+import { requireSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listBonusTiers, listBonusWeeks, earnedBonus, targetForWeek, autoGenerateBonusWeeks } from "@/lib/bonuses";
+import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MonthPicker } from "@/components/admin/MonthPicker";
 
@@ -15,22 +17,25 @@ function fmtMoney(n: number) {
 }
 
 export default async function BonosPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
-  const session = await requireAdminSession();
+  const session = await requireSession();
+  const isAdmin = session.role === "admin";
+  const profileForAccess = await getProfileById(session.uid);
+  if (!(await canAccessModule("/admin/bonos", isAdmin, profileForAccess?.role_id ?? null))) redirect("/admin");
+
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
 
   // Rellena en automático las semanas de este mes que ya terminaron y
   // todavía no tienen fila — así no hay que esperar a que alguien entre a
-  // "Calcular semana" a mano.
-  await autoGenerateBonusWeeks(month, session.uid);
+  // "Calcular semana" a mano. Es una escritura, así que solo admin la dispara.
+  if (isAdmin) await autoGenerateBonusWeeks(month, session.uid);
 
-  const [profile, employees, weeks, tiers] = await Promise.all([
-    getProfileById(session.uid),
-    listProfiles(),
-    listBonusWeeks(month),
-    listBonusTiers(month),
-  ]);
+  const profile = profileForAccess;
+  const [employees, allWeeks, tiers] = await Promise.all([listProfiles(), listBonusWeeks(month), listBonusTiers(month)]);
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
+
+  // Una vendedora solo ve sus propias semanas, de solo lectura — nunca las de sus compañeras ni las de otros meses ajenas.
+  const weeks = isAdmin ? allWeeks : allWeeks.filter((w) => w.employee_id === session.uid);
 
   const totalEarned = weeks.reduce((sum, w) => sum + earnedBonus(w, tiers), 0);
   const weeksWithBonus = weeks.filter((w) => earnedBonus(w, tiers) > 0).length;
@@ -40,20 +45,22 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
     <AdminShell activeHref="/admin/bonos" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-admin-ink">Bonos semanales</h1>
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/admin/bonos/reporte?mes=${month}`} target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-            Imprimir
-          </Link>
-          <Link href={`/admin/bonos/metas?mes=${month}`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-            Configurar metas
-          </Link>
-          <Link
-            href={`/admin/bonos/nuevo?mes=${month}`}
-            className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
-          >
-            + Calcular semana
-          </Link>
-        </div>
+        {isAdmin && (
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/admin/bonos/reporte?mes=${month}`} target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+              Imprimir
+            </Link>
+            <Link href={`/admin/bonos/metas?mes=${month}`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+              Configurar metas
+            </Link>
+            <Link
+              href={`/admin/bonos/nuevo?mes=${month}`}
+              className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
+            >
+              + Calcular semana
+            </Link>
+          </div>
+        )}
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Pirámide de cuatro niveles; una falta elimina solamente el bono de esa semana.</p>
 
@@ -87,13 +94,13 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
                   <th className="px-4 py-3 text-right font-medium">Meta alcanzada</th>
                   <th className="px-4 py-3 text-right font-medium">Bono</th>
                   <th className="px-4 py-3 font-medium">Resultado</th>
-                  <th className="px-4 py-3"></th>
+                  {isAdmin && <th className="px-4 py-3"></th>}
                 </tr>
               </thead>
               <tbody>
                 {weeks.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-admin-ink-soft">
+                    <td colSpan={isAdmin ? 7 : 6} className="px-4 py-8 text-center text-admin-ink-soft">
                       Sin semanas calculadas
                     </td>
                   </tr>
@@ -116,11 +123,13 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
                           {w.absent ? "Falta" : bonus > 0 ? "Nivel alcanzado" : "Sin meta"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <Link href={`/admin/bonos/${w.id}?mes=${month}`} className="font-semibold text-admin-primary hover:underline">
-                          Editar
-                        </Link>
-                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
+                          <Link href={`/admin/bonos/${w.id}?mes=${month}`} className="font-semibold text-admin-primary hover:underline">
+                            Editar
+                          </Link>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
