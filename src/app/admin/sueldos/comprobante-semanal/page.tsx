@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { listProfiles } from "@/lib/profiles";
 import { listAttendanceForRange } from "@/lib/attendance";
-import { listBonusWeeksStarting, listBonusTiers, earnedBonus } from "@/lib/bonuses";
+import { listBonusWeeksStarting, listBonusTiers, earnedBonus, autoGenerateBonusWeeks } from "@/lib/bonuses";
 import { mexicoCityToday } from "@/lib/time-clock";
 import { addDays, mondayOf } from "@/lib/dates";
 import { PrintButton } from "@/components/admin/PrintButton";
@@ -28,11 +28,13 @@ function rangeLabel(monday: string, sunday: string) {
 }
 
 export default async function ComprobanteSemanalPage({ searchParams }: { searchParams: Promise<{ inicio?: string }> }) {
-  await requireAdminSession();
+  const session = await requireAdminSession();
   const { inicio } = await searchParams;
   const monday = mondayOf(inicio || mexicoCityToday());
   const sunday = addDays(monday, 6);
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+
+  await autoGenerateBonusWeeks(monday.slice(0, 7), session.uid);
 
   const [employees, attendance, weeks] = await Promise.all([listProfiles(), listAttendanceForRange(monday, sunday), listBonusWeeksStarting(monday)]);
   const activeEmployees = employees

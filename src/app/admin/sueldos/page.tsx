@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listAttendanceForMonth } from "@/lib/attendance";
-import { listBonusWeeks, listBonusTiers, earnedBonus } from "@/lib/bonuses";
+import { listBonusWeeks, listBonusTiers, earnedBonus, autoGenerateBonusWeeks } from "@/lib/bonuses";
 import { listExtraBonuses } from "@/lib/extra-bonuses";
 import { listPayrollStatus } from "@/lib/payroll";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -24,6 +24,8 @@ export default async function SueldosPage({ searchParams }: { searchParams: Prom
   const session = await requireAdminSession();
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
+
+  await autoGenerateBonusWeeks(month, session.uid);
 
   const [profile, employees, attendance, weeks, tiers, extraBonuses, payroll] = await Promise.all([
     getProfileById(session.uid),

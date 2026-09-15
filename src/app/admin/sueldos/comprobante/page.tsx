@@ -4,7 +4,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { listProfiles } from "@/lib/profiles";
 import { listAttendanceForMonth } from "@/lib/attendance";
-import { listBonusWeeks, listBonusTiers, earnedBonus, targetForWeek } from "@/lib/bonuses";
+import { listBonusWeeks, listBonusTiers, earnedBonus, targetForWeek, autoGenerateBonusWeeks } from "@/lib/bonuses";
 import { PrintButton } from "@/components/admin/PrintButton";
 
 export const metadata: Metadata = { title: "Comprobante de sueldo y bono" };
@@ -22,9 +22,11 @@ function monthLabel(month: string) {
 }
 
 export default async function ComprobantePage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
-  await requireAdminSession();
+  const session = await requireAdminSession();
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
+
+  await autoGenerateBonusWeeks(month, session.uid);
 
   const [employees, attendance, weeks, tiers] = await Promise.all([
     listProfiles(),

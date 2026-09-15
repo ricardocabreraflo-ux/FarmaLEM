@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { addDays, mexicoCityToday } from "@/lib/dates";
 
 export interface BonusTier {
   id: string;
@@ -116,6 +117,80 @@ export async function computeWeekFromRecords(employeeId: string, startDate: stri
   const sales = (cuts ?? []).reduce((sum, c) => sum + Number(c.total), 0);
   const absent = (att ?? []).length > 0;
   return { sales, absent };
+}
+
+export interface MonthWeekWindow {
+  week: number;
+  startDate: string;
+  endDate: string;
+}
+
+/**
+ * Semanas Lunes-Domingo de ese mes calendario, numeradas en orden — una
+ * semana es de ese mes si su jueves cae en ese mes (igual que ya se venía
+ * haciendo a mano: la semana que cruza fin de mes se cuenta completa para
+ * el mes donde caen más de sus días, nunca se parte a la mitad).
+ */
+export function weeksOfMonth(month: string): MonthWeekWindow[] {
+  const [y, m] = month.split("-").map(Number);
+  const lastDay = `${month}-${String(new Date(y, m, 0).getDate()).padStart(2, "0")}`;
+  const dow = new Date(`${month}-01T12:00:00`).getDay(); // 0 domingo … 4 jueves … 6 sábado
+  let thursday = addDays(`${month}-01`, (4 - dow + 7) % 7);
+
+  const weeks: MonthWeekWindow[] = [];
+  let week = 1;
+  while (thursday <= lastDay) {
+    const monday = addDays(thursday, -3);
+    weeks.push({ week, startDate: monday, endDate: addDays(monday, 6) });
+    week++;
+    thursday = addDays(thursday, 7);
+  }
+  return weeks;
+}
+
+/**
+ * Calcula y guarda en automático las semanas de ese mes que ya terminaron y
+ * todavía no tienen fila — para no depender de que alguien entre a
+ * "Calcular semana" a mano cada vez. Nunca toca una semana que ya existe
+ * (capturada a mano o generada antes), y no inventa una semana en $0 si esa
+ * semana no tuvo ningún corte capturado (probablemente antes de usar el
+ * panel). Regresa cuántas filas nuevas creó.
+ */
+export async function autoGenerateBonusWeeks(month: string, createdBy: string): Promise<number> {
+  const db = supabaseAdmin();
+  const today = mexicoCityToday();
+  const windows = weeksOfMonth(month).filter((w) => w.endDate <= today);
+  if (windows.length === 0) return 0;
+
+  const [{ data: employees, error: empErr }, existingWeeks] = await Promise.all([
+    db.from("profiles").select("id, shift").eq("role", "employee").eq("active", true),
+    listBonusWeeks(month),
+  ]);
+  if (empErr) throw new Error(`No se pudieron leer los empleados: ${empErr.message}`);
+  if (!employees || employees.length === 0) return 0;
+
+  const existingKeys = new Set(existingWeeks.map((w) => `${w.week}:${w.employee_id}`));
+  let created = 0;
+
+  for (const w of windows) {
+    const { count, error: cutsCountErr } = await db
+      .from("cuts")
+      .select("id", { count: "exact", head: true })
+      .gte("cut_date", w.startDate)
+      .lte("cut_date", w.endDate);
+    if (cutsCountErr) throw new Error(`No se pudieron leer los cortes: ${cutsCountErr.message}`);
+    if (!count) continue; // sin ningún corte esa semana — probablemente antes de usar el panel, no se inventa una semana en $0.
+
+    for (const emp of employees as { id: string; shift: string }[]) {
+      const key = `${w.week}:${emp.id}`;
+      if (existingKeys.has(key)) continue;
+
+      const { sales, absent } = await computeWeekFromRecords(emp.id, w.startDate, w.endDate);
+      await saveBonusWeek({ month, week: w.week, employeeId: emp.id, shift: emp.shift, startDate: w.startDate, endDate: w.endDate, sales, absent, createdBy });
+      created++;
+    }
+  }
+  return created;
 }
 
 function tiersForShift(tiers: BonusTier[], shift: string) {

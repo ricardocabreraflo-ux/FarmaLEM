@@ -5,6 +5,7 @@ import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById } from "@/lib/profiles";
 import { listFinanceMovementsForMonth, listFixedExpenseCategoryTotals } from "@/lib/finance-movements";
 import { getMonthlyFinancials } from "@/lib/financials";
+import { autoGenerateBonusWeeks } from "@/lib/bonuses";
 import { listHistoricalIncomeStatements } from "@/lib/historical-financials";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MonthPicker } from "@/components/admin/MonthPicker";
@@ -30,6 +31,8 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
   const month = mes || mexicoCityToday().slice(0, 7);
   const year = month.slice(0, 4);
   const yearMonths = MONTH_NAMES.map((_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
+
+  await Promise.all(yearMonths.map((m) => autoGenerateBonusWeeks(m, session.uid)));
 
   const [profile, movements, financials, yearFinancialsByMonth, yearHistoricalByMonth, yearCategoryTotalsByMonth] = await Promise.all([
     getProfileById(session.uid),

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
-import { listBonusTiers, listBonusWeeks, earnedBonus, targetForWeek } from "@/lib/bonuses";
+import { listBonusTiers, listBonusWeeks, earnedBonus, targetForWeek, autoGenerateBonusWeeks } from "@/lib/bonuses";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MonthPicker } from "@/components/admin/MonthPicker";
 
@@ -18,6 +18,11 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
   const session = await requireAdminSession();
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
+
+  // Rellena en automático las semanas de este mes que ya terminaron y
+  // todavía no tienen fila — así no hay que esperar a que alguien entre a
+  // "Calcular semana" a mano.
+  await autoGenerateBonusWeeks(month, session.uid);
 
   const [profile, employees, weeks, tiers] = await Promise.all([
     getProfileById(session.uid),
