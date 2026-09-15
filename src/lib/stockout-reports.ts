@@ -83,6 +83,24 @@ export async function deleteStockoutReport(id: string): Promise<void> {
   if (error) throw new Error(`No se pudo borrar el registro: ${error.message}`);
 }
 
+/**
+ * Cuando llega un renglón con ese código de barras en una recepción, marca
+ * como "resuelto" cualquier negado/faltante pendiente con el mismo código
+ * — solo por código exacto, nunca por descripción parecida (mismo criterio
+ * que ya se usa para no cruzar renglones de compra por coincidencia
+ * aproximada). Un "Negado" sin código de barras nunca se resuelve solo.
+ */
+export async function autoResolveStockoutsByBarcode(barcode: string): Promise<void> {
+  const clean = barcode.trim();
+  if (!clean) return;
+  const { error } = await supabaseAdmin()
+    .from("stockout_reports")
+    .update({ resolved: true, resolved_at: new Date().toISOString() })
+    .eq("barcode", clean)
+    .eq("resolved", false);
+  if (error) throw new Error(`No se pudo marcar como surtido: ${error.message}`);
+}
+
 export interface StockoutLookupResult {
   description: string;
   salePrice: number | null;

@@ -212,6 +212,20 @@ Deno.serve(async (req) => {
       if (eqErr) throw new Error(`No se pudieron guardar las equivalencias: ${eqErr.message}`);
     }
 
+    // Si algún código de barras que llegó en este ticket coincide con un
+    // negado/faltante pendiente, se marca como surtido solo — nunca por
+    // descripción parecida, solo por código exacto. No es fatal: si falla,
+    // la recepción ya se guardó bien de todas formas.
+    const resolvedBarcodes = [...new Set(resolvedIdx.map((i) => input.lines[i].barcode.trim()).filter(Boolean))];
+    if (resolvedBarcodes.length > 0) {
+      const { error: stockoutErr } = await db
+        .from("stockout_reports")
+        .update({ resolved: true, resolved_at: new Date().toISOString() })
+        .in("barcode", resolvedBarcodes)
+        .eq("resolved", false);
+      if (stockoutErr) console.error("[stockout_reports]", stockoutErr.message);
+    }
+
     const totalPieces = input.lines.reduce((sum, l) => sum + l.quantity * l.packFactor, 0);
     const { error: histErr } = await db
       .from("history")

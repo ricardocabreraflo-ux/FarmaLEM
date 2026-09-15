@@ -2,6 +2,7 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { createPurchaseFromReceiptLine, type ReceiptLineInput } from "@/lib/purchases";
 import { upsertEquivalences } from "@/lib/supplier-products";
+import { autoResolveStockoutsByBarcode } from "@/lib/stockout-reports";
 import type { ParsedTicket } from "@/lib/ticket-types";
 
 export type ReceiptStatus = "Pendiente" | "Completa";
@@ -163,6 +164,8 @@ export async function completeReceiptLine(lineId: string, input: CompleteReceipt
     const { error: statusErr } = await db.from("purchase_receipts").update({ status: "Completa" }).eq("id", line.receipt_id);
     if (statusErr) throw new Error(`No se pudo actualizar el estado de la recepción: ${statusErr.message}`);
   }
+
+  await autoResolveStockoutsByBarcode(input.barcode);
 }
 
 /**
