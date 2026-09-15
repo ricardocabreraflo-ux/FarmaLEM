@@ -173,7 +173,7 @@ export function AdminShellClient({
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-[1180px] items-start">
+      <div className="mx-auto flex max-w-[1500px] items-start">
         <nav
           aria-label="Navegación del panel"
           onMouseEnter={clearAutoCollapse}
