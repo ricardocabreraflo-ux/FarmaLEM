@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createStockoutAction, lookupStockoutProductAction } from "@/app/admin/negados/actions";
 import type { StockoutKind, StockoutShift } from "@/lib/stockout-reports";
@@ -14,6 +14,7 @@ function todayISO() {
 
 export function StockoutForm({ defaultShift, isAdmin }: { defaultShift: StockoutShift; isAdmin: boolean }) {
   const router = useRouter();
+  const registrarRef = useRef<HTMLButtonElement>(null);
   const [pending, startTransition] = useTransition();
   const [looking, setLooking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +58,7 @@ export function StockoutForm({ defaultShift, isAdmin }: { defaultShift: Stockout
         if (res.data.cost != null) setCost(String(res.data.cost));
         if (res.data.category) setCategory(res.data.category);
         setNotice("Encontrado — se llenaron los datos conocidos.");
+        registrarRef.current?.focus();
       } else {
         setNotice("Ese código no está en compras ni en el catálogo. Captúralo como Negado o llena los datos a mano.");
       }
@@ -114,7 +116,19 @@ export function StockoutForm({ defaultShift, isAdmin }: { defaultShift: Stockout
       <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {kind === "Faltante" && (
           <div className="flex gap-2 lg:col-span-1">
-            <input value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Código de barras" className={`${inputClass} flex-1`} />
+            <input
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  onLookup();
+                }
+              }}
+              placeholder="Código de barras (escanea aquí)"
+              autoFocus
+              className={`${inputClass} flex-1`}
+            />
             <button
               type="button"
               disabled={looking || !barcode.trim()}
@@ -167,6 +181,7 @@ export function StockoutForm({ defaultShift, isAdmin }: { defaultShift: Stockout
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
+          ref={registrarRef}
           type="button"
           disabled={pending || !activeSubstance.trim()}
           onClick={onSubmit}
