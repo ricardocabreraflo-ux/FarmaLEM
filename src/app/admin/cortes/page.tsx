@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
-import { listCutsForMonth, listCutsForRange, getCutPhotoUrl } from "@/lib/cuts";
+import { listCutsForMonth, listCutsForRange, getCutPhotoUrl, getPendingCashCollection } from "@/lib/cuts";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CutsList } from "@/components/admin/CutsList";
 import { MonthPicker } from "@/components/admin/MonthPicker";
@@ -31,10 +31,11 @@ export default async function CortesPage({
   const month = mes || mexicoCityToday().slice(0, 7);
   const inRange = Boolean(desde && hasta);
 
-  const [profile, cuts, employees] = await Promise.all([
+  const [profile, cuts, employees, pendingCash] = await Promise.all([
     getProfileById(session.uid),
     inRange ? listCutsForRange(desde!, hasta!, isAdmin ? undefined : session.uid) : listCutsForMonth(month, isAdmin ? undefined : session.uid),
     listProfiles(),
+    isAdmin ? getPendingCashCollection() : Promise.resolve(null),
   ]);
 
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
@@ -90,7 +91,7 @@ export default async function CortesPage({
         {inRange ? `Periodo: ${fmtDate(desde!)} — ${fmtDate(hasta!)}` : `Mes: ${new Date(`${month}-01T12:00:00`).toLocaleDateString("es-MX", { month: "long", year: "numeric" })}`}
       </p>
 
-      <section className="mt-2 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section className={`mt-2 grid grid-cols-2 gap-4 ${isAdmin ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Venta total</p>
           <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalVentas)}</p>
@@ -115,6 +116,16 @@ export default async function CortesPage({
             .
           </p>
         </div>
+        {isAdmin && pendingCash && (
+          <div className="rounded-2xl border border-admin-pending-text bg-admin-pending-bg p-5">
+            <p className="text-[0.78rem] font-semibold text-admin-pending-text">Efectivo pendiente de recoger</p>
+            <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(pendingCash.total)}</p>
+            <p className="mt-1.5 text-[0.72rem] leading-snug text-admin-ink-soft">
+              Suma de todos los cortes ya Aprobados que faltan por marcar &ldquo;Recogido&rdquo; ({pendingCash.count}) — sin importar el mes, es lo que
+              debería seguir físicamente en la caja ahorita.
+            </p>
+          </div>
+        )}
       </section>
 
       <div className="mt-6">

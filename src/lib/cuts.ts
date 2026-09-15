@@ -193,6 +193,19 @@ export async function setCutCashCollected(id: string, value: boolean): Promise<v
   if (error) throw new Error(`No se pudo actualizar la marca de efectivo recogido: ${error.message}`);
 }
 
+/**
+ * Cuánto efectivo debería seguir físicamente en la caja ahorita mismo: la
+ * suma de "Efectivo entregado" de todos los cortes ya Aprobados que todavía
+ * no se marcan como Recogido — sin importar de qué mes son, porque el
+ * efectivo sin recoger de hace semanas sigue pendiente igual.
+ */
+export async function getPendingCashCollection(): Promise<{ total: number; count: number }> {
+  const { data, error } = await supabaseAdmin().from("cuts").select("cash_delivered").eq("status", "Aprobado").eq("cash_collected", false);
+  if (error) throw new Error(`No se pudo calcular el efectivo pendiente: ${error.message}`);
+  const rows = (data ?? []) as { cash_delivered: number }[];
+  return { total: rows.reduce((s, r) => s + r.cash_delivered, 0), count: rows.length };
+}
+
 export async function approveCut(id: string, approvedBy: string): Promise<void> {
   const { error } = await supabaseAdmin()
     .from("cuts")
