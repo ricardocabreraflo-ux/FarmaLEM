@@ -19,6 +19,7 @@ export interface Cut {
   approved_by: string | null;
   approved_at: string | null;
   notes: string | null;
+  cash_collected: boolean;
   created_at: string;
 }
 
@@ -184,6 +185,12 @@ export async function updateCut(id: string, input: UpdateCutInput): Promise<void
 export async function updateCutNotes(id: string, notes: string | null): Promise<void> {
   const { error } = await supabaseAdmin().from("cuts").update({ notes }).eq("id", id);
   if (error) throw new Error(`No se pudo guardar la nota: ${error.message}`);
+}
+
+/** Marca/desmarca que el efectivo físico de ese corte ya se recogió — para llevar el flujo de efectivo real, aparte del estado Aprobado. */
+export async function setCutCashCollected(id: string, value: boolean): Promise<void> {
+  const { error } = await supabaseAdmin().from("cuts").update({ cash_collected: value }).eq("id", id);
+  if (error) throw new Error(`No se pudo actualizar la marca de efectivo recogido: ${error.message}`);
 }
 
 export async function approveCut(id: string, approvedBy: string): Promise<void> {

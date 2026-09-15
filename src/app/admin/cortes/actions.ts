@@ -4,7 +4,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
-import { createCut, replaceCut, getCutByShift, approveCut, updateCut, updateCutNotes, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
+import {
+  createCut,
+  replaceCut,
+  getCutByShift,
+  approveCut,
+  updateCut,
+  updateCutNotes,
+  setCutCashCollected,
+  uploadCutPhoto,
+  type CutStatus,
+} from "@/lib/cuts";
 import { createWithdrawal } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
 import { logAction } from "@/lib/history";
@@ -148,4 +158,20 @@ export async function updateCutNotesAction(id: string, notes: string): Promise<U
   await logAction(session.uid, "Agregó nota a corte", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/cortes");
   return { ok: true };
+}
+
+export interface SetCutCashCollectedResult {
+  ok: boolean;
+  error?: string;
+}
+
+export async function setCutCashCollectedAction(id: string, value: boolean): Promise<SetCutCashCollectedResult> {
+  await requireAdminSession();
+  try {
+    await setCutCashCollected(id, value);
+    revalidatePath("/admin/cortes");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar." };
+  }
 }

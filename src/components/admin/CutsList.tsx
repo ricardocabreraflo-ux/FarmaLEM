@@ -7,6 +7,7 @@ import type { Profile } from "@/lib/profiles";
 import { approveCutAction } from "@/app/admin/cortes/actions";
 import { EditCutModal } from "@/components/admin/EditCutModal";
 import { CutNoteModal } from "@/components/admin/CutNoteModal";
+import { CutCashCollectedCheckbox } from "@/components/admin/CutCashCollectedCheckbox";
 
 const STATUS_STYLE: Record<Cut["status"], string> = {
   "Por revisar": "bg-admin-pending-bg text-admin-pending-text",
@@ -50,6 +51,7 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
               <th className="px-5 py-3 text-right font-medium">Efectivo entregado</th>
               <th className="px-5 py-3 font-medium">Estado</th>
               {isAdmin && <th className="px-5 py-3 font-medium">Nota</th>}
+              {isAdmin && <th className="px-5 py-3 text-center font-medium">Recogido</th>}
               <th className="px-5 py-3"></th>
               {isAdmin && <th className="px-5 py-3"></th>}
               {isAdmin && <th className="px-5 py-3"></th>}
@@ -90,6 +92,11 @@ function CutRow({ cut, isAdmin, onEdit, onNote }: { cut: Row; isAdmin: boolean; 
           <button type="button" onClick={onNote} className="text-left text-[0.82rem] font-semibold text-admin-primary hover:underline">
             {cut.notes ? <span className="line-clamp-2 whitespace-normal font-normal text-admin-ink-soft">{cut.notes}</span> : "+ Nota"}
           </button>
+        </td>
+      )}
+      {isAdmin && (
+        <td className="px-5 py-3 text-center">
+          <CutCashCollectedCheckbox cutId={cut.id} initialValue={cut.cash_collected} />
         </td>
       )}
       <td className="px-5 py-3">
