@@ -12,6 +12,7 @@ import {
   updateCut,
   updateCutNotes,
   setCutCashCollected,
+  bulkSetCutCashCollected,
   uploadCutPhoto,
   type CutStatus,
 } from "@/lib/cuts";
@@ -174,4 +175,16 @@ export async function setCutCashCollectedAction(id: string, value: boolean): Pro
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar." };
   }
+}
+
+export async function bulkSetCutCashCollectedAction(ids: string[], value: boolean): Promise<SetCutCashCollectedResult> {
+  const session = await requireAdminSession();
+  try {
+    await bulkSetCutCashCollected(ids, value);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar." };
+  }
+  await logAction(session.uid, value ? "Marcó cortes como recogidos" : "Desmarcó cortes como recogidos", `${ids.length} corte(s)`);
+  revalidatePath("/admin/cortes");
+  return { ok: true };
 }

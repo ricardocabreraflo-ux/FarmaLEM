@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { Cut } from "@/lib/cuts";
 import { isCutDateLocked } from "@/lib/cuts-lock";
 import type { Profile } from "@/lib/profiles";
-import { approveCutAction } from "@/app/admin/cortes/actions";
+import { approveCutAction, bulkSetCutCashCollectedAction } from "@/app/admin/cortes/actions";
 import { EditCutModal } from "@/components/admin/EditCutModal";
 import { CutNoteModal } from "@/components/admin/CutNoteModal";
 import { CutCashCollectedCheckbox } from "@/components/admin/CutCashCollectedCheckbox";
@@ -29,19 +30,83 @@ interface Row extends Cut {
 }
 
 export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: boolean; employees: Profile[] }) {
+  const router = useRouter();
   const [editingCut, setEditingCut] = useState<Row | null>(null);
   const [notingCut, setNotingCut] = useState<Row | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkPending, startBulkTransition] = useTransition();
 
   if (cuts.length === 0) {
     return <p className="rounded-2xl border border-admin-border bg-admin-surface p-8 text-center text-admin-ink-soft">Sin cortes registrados.</p>;
   }
 
+  const allSelected = cuts.length > 0 && cuts.every((c) => selected.has(c.id));
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleAll(checked: boolean) {
+    setSelected(checked ? new Set(cuts.map((c) => c.id)) : new Set());
+  }
+
+  function runBulk(value: boolean) {
+    startBulkTransition(async () => {
+      const res = await bulkSetCutCashCollectedAction([...selected], value);
+      if (res.ok) {
+        setSelected(new Set());
+        router.refresh();
+      }
+    });
+  }
+
   return (
     <section className="overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+      {isAdmin && selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 border-b border-admin-border bg-admin-primary-soft px-5 py-3">
+          <span className="text-[0.84rem] font-semibold text-admin-primary-deep">{selected.size} seleccionado{selected.size === 1 ? "" : "s"}</span>
+          <button
+            type="button"
+            disabled={bulkPending}
+            onClick={() => runBulk(true)}
+            className="rounded-full bg-admin-primary px-4 py-1.5 text-[0.8rem] font-semibold text-white disabled:opacity-60"
+          >
+            {bulkPending ? "Marcando…" : "Marcar recogido"}
+          </button>
+          <button
+            type="button"
+            disabled={bulkPending}
+            onClick={() => runBulk(false)}
+            className="rounded-full border border-admin-border px-4 py-1.5 text-[0.8rem] font-semibold text-admin-ink disabled:opacity-60"
+          >
+            Quitar marca
+          </button>
+          <button type="button" disabled={bulkPending} onClick={() => setSelected(new Set())} className="text-[0.8rem] text-admin-ink-soft hover:underline">
+            Cancelar selección
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[0.86rem]">
           <thead>
             <tr className="border-b border-admin-border text-admin-ink-soft">
+              {isAdmin && (
+                <th className="px-5 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={(e) => toggleAll(e.target.checked)}
+                    className="h-4 w-4 accent-admin-primary"
+                    aria-label="Seleccionar todos"
+                  />
+                </th>
+              )}
               <th className="px-5 py-3 font-medium">Fecha</th>
               <th className="px-5 py-3 font-medium">Turno</th>
               <th className="px-5 py-3 font-medium">Empleado</th>
@@ -59,7 +124,15 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
           </thead>
           <tbody>
             {cuts.map((cut) => (
-              <CutRow key={cut.id} cut={cut} isAdmin={isAdmin} onEdit={() => setEditingCut(cut)} onNote={() => setNotingCut(cut)} />
+              <CutRow
+                key={cut.id}
+                cut={cut}
+                isAdmin={isAdmin}
+                selected={selected.has(cut.id)}
+                onToggleSelect={(checked) => toggleOne(cut.id, checked)}
+                onEdit={() => setEditingCut(cut)}
+                onNote={() => setNotingCut(cut)}
+              />
             ))}
           </tbody>
         </table>
@@ -71,12 +144,37 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
   );
 }
 
-function CutRow({ cut, isAdmin, onEdit, onNote }: { cut: Row; isAdmin: boolean; onEdit: () => void; onNote: () => void }) {
+function CutRow({
+  cut,
+  isAdmin,
+  selected,
+  onToggleSelect,
+  onEdit,
+  onNote,
+}: {
+  cut: Row;
+  isAdmin: boolean;
+  selected: boolean;
+  onToggleSelect: (checked: boolean) => void;
+  onEdit: () => void;
+  onNote: () => void;
+}) {
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState(cut.status);
 
   return (
-    <tr className="border-b border-admin-border last:border-0">
+    <tr className={`border-b border-admin-border last:border-0 ${selected ? "bg-admin-primary-soft/40" : ""}`}>
+      {isAdmin && (
+        <td className="px-5 py-3">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onToggleSelect(e.target.checked)}
+            className="h-4 w-4 accent-admin-primary"
+            aria-label={`Seleccionar corte del ${fmtDate(cut.cut_date)}`}
+          />
+        </td>
+      )}
       <td className="px-5 py-3 text-admin-ink-soft">{fmtDate(cut.cut_date)}</td>
       <td className="px-5 py-3 text-admin-ink-soft">{cut.shift}</td>
       <td className="px-5 py-3 font-semibold text-admin-ink">{cut.employeeName}</td>

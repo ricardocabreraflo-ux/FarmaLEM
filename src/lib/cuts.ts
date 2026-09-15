@@ -193,6 +193,13 @@ export async function setCutCashCollected(id: string, value: boolean): Promise<v
   if (error) throw new Error(`No se pudo actualizar la marca de efectivo recogido: ${error.message}`);
 }
 
+/** Igual que setCutCashCollected pero para varios cortes de un jalón (seleccionar y marcar todos). */
+export async function bulkSetCutCashCollected(ids: string[], value: boolean): Promise<void> {
+  if (ids.length === 0) return;
+  const { error } = await supabaseAdmin().from("cuts").update({ cash_collected: value }).in("id", ids);
+  if (error) throw new Error(`No se pudo actualizar la marca de efectivo recogido: ${error.message}`);
+}
+
 /**
  * Cuánto efectivo debería seguir físicamente en la caja ahorita mismo: la
  * suma de "Efectivo entregado" de todos los cortes ya Aprobados que todavía
