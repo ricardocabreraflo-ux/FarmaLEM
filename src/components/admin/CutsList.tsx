@@ -6,6 +6,7 @@ import { isCutDateLocked } from "@/lib/cuts-lock";
 import type { Profile } from "@/lib/profiles";
 import { approveCutAction } from "@/app/admin/cortes/actions";
 import { EditCutModal } from "@/components/admin/EditCutModal";
+import { CutNoteModal } from "@/components/admin/CutNoteModal";
 
 const STATUS_STYLE: Record<Cut["status"], string> = {
   "Por revisar": "bg-admin-pending-bg text-admin-pending-text",
@@ -28,6 +29,7 @@ interface Row extends Cut {
 
 export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: boolean; employees: Profile[] }) {
   const [editingCut, setEditingCut] = useState<Row | null>(null);
+  const [notingCut, setNotingCut] = useState<Row | null>(null);
 
   if (cuts.length === 0) {
     return <p className="rounded-2xl border border-admin-border bg-admin-surface p-8 text-center text-admin-ink-soft">Sin cortes registrados.</p>;
@@ -47,6 +49,7 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
               <th className="px-5 py-3 text-right font-medium">Tarjeta</th>
               <th className="px-5 py-3 text-right font-medium">Efectivo entregado</th>
               <th className="px-5 py-3 font-medium">Estado</th>
+              {isAdmin && <th className="px-5 py-3 font-medium">Nota</th>}
               <th className="px-5 py-3"></th>
               {isAdmin && <th className="px-5 py-3"></th>}
               {isAdmin && <th className="px-5 py-3"></th>}
@@ -54,18 +57,19 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
           </thead>
           <tbody>
             {cuts.map((cut) => (
-              <CutRow key={cut.id} cut={cut} isAdmin={isAdmin} onEdit={() => setEditingCut(cut)} />
+              <CutRow key={cut.id} cut={cut} isAdmin={isAdmin} onEdit={() => setEditingCut(cut)} onNote={() => setNotingCut(cut)} />
             ))}
           </tbody>
         </table>
       </div>
 
       {editingCut && <EditCutModal cut={editingCut} employees={employees} onClose={() => setEditingCut(null)} />}
+      {notingCut && <CutNoteModal cutId={notingCut.id} initialNotes={notingCut.notes} onClose={() => setNotingCut(null)} />}
     </section>
   );
 }
 
-function CutRow({ cut, isAdmin, onEdit }: { cut: Row; isAdmin: boolean; onEdit: () => void }) {
+function CutRow({ cut, isAdmin, onEdit, onNote }: { cut: Row; isAdmin: boolean; onEdit: () => void; onNote: () => void }) {
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState(cut.status);
 
@@ -81,6 +85,13 @@ function CutRow({ cut, isAdmin, onEdit }: { cut: Row; isAdmin: boolean; onEdit: 
       <td className="px-5 py-3">
         <span className={`rounded-full px-2.5 py-1 text-[0.76rem] font-semibold ${STATUS_STYLE[status]}`}>{status}</span>
       </td>
+      {isAdmin && (
+        <td className="px-5 py-3 max-w-[180px]">
+          <button type="button" onClick={onNote} className="text-left text-[0.82rem] font-semibold text-admin-primary hover:underline">
+            {cut.notes ? <span className="line-clamp-2 whitespace-normal font-normal text-admin-ink-soft">{cut.notes}</span> : "+ Nota"}
+          </button>
+        </td>
+      )}
       <td className="px-5 py-3">
         {cut.photoUrl && (
           <a href={cut.photoUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-admin-primary hover:underline">

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireSession, requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
-import { createCut, replaceCut, getCutByShift, approveCut, updateCut, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
+import { createCut, replaceCut, getCutByShift, approveCut, updateCut, updateCutNotes, uploadCutPhoto, type CutStatus } from "@/lib/cuts";
 import { createWithdrawal } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
 import { logAction } from "@/lib/history";
@@ -131,4 +131,21 @@ export async function approveCutAction(id: string) {
   await approveCut(id, session.uid);
   await logAction(session.uid, "Aprobó corte", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/cortes");
+}
+
+export interface UpdateCutNotesResult {
+  ok: boolean;
+  error?: string;
+}
+
+export async function updateCutNotesAction(id: string, notes: string): Promise<UpdateCutNotesResult> {
+  const session = await requireAdminSession();
+  try {
+    await updateCutNotes(id, notes.trim() || null);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo guardar la nota." };
+  }
+  await logAction(session.uid, "Agregó nota a corte", `#${id.slice(0, 8).toUpperCase()}`);
+  revalidatePath("/admin/cortes");
+  return { ok: true };
 }

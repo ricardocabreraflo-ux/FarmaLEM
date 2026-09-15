@@ -18,6 +18,7 @@ export interface Cut {
   created_by: string;
   approved_by: string | null;
   approved_at: string | null;
+  notes: string | null;
   created_at: string;
 }
 
@@ -177,6 +178,12 @@ export async function updateCut(id: string, input: UpdateCutInput): Promise<void
     if (error.code === "23514") throw new Error("Efectivo + tarjeta debe ser igual a la venta total.");
     throw new Error(error.message);
   }
+}
+
+/** Nota/observación libre de un corte (aclaraciones al revisar) — independiente de las cifras y el estado. */
+export async function updateCutNotes(id: string, notes: string | null): Promise<void> {
+  const { error } = await supabaseAdmin().from("cuts").update({ notes }).eq("id", id);
+  if (error) throw new Error(`No se pudo guardar la nota: ${error.message}`);
 }
 
 export async function approveCut(id: string, approvedBy: string): Promise<void> {
