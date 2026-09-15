@@ -9,6 +9,7 @@ import { listReceipts } from "@/lib/purchase-receipts";
 import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ReceiptEnteredCheckbox } from "@/components/admin/ReceiptEnteredCheckbox";
+import { ReceiptStockedCheckbox } from "@/components/admin/ReceiptStockedCheckbox";
 
 export const metadata: Metadata = { title: "Recepción de mercancía" };
 export const dynamic = "force-dynamic";
@@ -84,6 +85,7 @@ export default async function ComprasPage() {
                 <th className="px-5 py-3 text-right font-medium">Piezas</th>
                 <th className="px-5 py-3 text-right font-medium">Importe</th>
                 <th className="px-5 py-3 font-medium">Estado</th>
+                <th className="px-5 py-3 text-center font-medium">Farmacia</th>
                 <th className="px-5 py-3 text-center font-medium">Sistema</th>
                 <th className="px-5 py-3"></th>
               </tr>
@@ -91,7 +93,7 @@ export default async function ComprasPage() {
             <tbody>
               {receipts.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center text-admin-ink-soft">
+                  <td colSpan={9} className="px-5 py-8 text-center text-admin-ink-soft">
                     Sin recepciones capturadas
                   </td>
                 </tr>
@@ -111,6 +113,15 @@ export default async function ComprasPage() {
                     >
                       {r.status}
                     </span>
+                  </td>
+                  <td className="px-5 py-3 text-center">
+                    {isAdmin ? (
+                      <ReceiptStockedCheckbox receiptId={r.id} initialValue={r.stocked_at_pharmacy} />
+                    ) : r.stocked_at_pharmacy ? (
+                      "✓"
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td className="px-5 py-3 text-center">
                     {isAdmin ? (

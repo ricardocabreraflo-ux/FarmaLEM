@@ -20,6 +20,7 @@ export interface PurchaseReceipt {
   notes: string | null;
   status: ReceiptStatus;
   entered_in_system: boolean;
+  stocked_at_pharmacy: boolean;
   created_by: string;
   created_at: string;
 }
@@ -211,6 +212,12 @@ export async function updateReceiptSupplier(id: string, supplierId: string): Pro
 export async function setReceiptEnteredInSystem(id: string, value: boolean): Promise<void> {
   const { error } = await supabaseAdmin().from("purchase_receipts").update({ entered_in_system: value }).eq("id", id);
   if (error) throw new Error(`No se pudo actualizar la marca de sistema: ${error.message}`);
+}
+
+/** Marca/desmarca una recepción como ya acomodada físicamente en la farmacia — independiente de si ya se capturó en el otro sistema. */
+export async function setReceiptStockedAtPharmacy(id: string, value: boolean): Promise<void> {
+  const { error } = await supabaseAdmin().from("purchase_receipts").update({ stocked_at_pharmacy: value }).eq("id", id);
+  if (error) throw new Error(`No se pudo actualizar la marca de farmacia: ${error.message}`);
 }
 
 /**

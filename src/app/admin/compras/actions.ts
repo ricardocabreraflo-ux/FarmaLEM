@@ -5,7 +5,14 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import { logAction } from "@/lib/history";
 import { listSupplierCatalog, type SupplierProduct } from "@/lib/supplier-products";
 import { findLatestPurchaseByBarcode } from "@/lib/purchases";
-import { deleteReceipt, completeReceiptLine, updateReceiptSupplier, updateReceiptDetails, setReceiptEnteredInSystem } from "@/lib/purchase-receipts";
+import {
+  deleteReceipt,
+  completeReceiptLine,
+  updateReceiptSupplier,
+  updateReceiptDetails,
+  setReceiptEnteredInSystem,
+  setReceiptStockedAtPharmacy,
+} from "@/lib/purchase-receipts";
 import { getCatalogEntryByBarcode } from "@/lib/product-catalog";
 import { createSupplier } from "@/lib/suppliers";
 
@@ -146,6 +153,24 @@ export async function setReceiptEnteredInSystemAction(receiptId: string, value: 
   await requireAdminSession();
   try {
     await setReceiptEnteredInSystem(receiptId, value);
+    revalidatePath("/admin/compras");
+    revalidatePath(`/admin/compras/${receiptId}`);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar." };
+  }
+}
+
+export interface SetReceiptStockedResult {
+  ok: boolean;
+  error?: string;
+}
+
+/** Marca/desmarca una recepción como ya acomodada en la farmacia. */
+export async function setReceiptStockedAtPharmacyAction(receiptId: string, value: boolean): Promise<SetReceiptStockedResult> {
+  await requireAdminSession();
+  try {
+    await setReceiptStockedAtPharmacy(receiptId, value);
     revalidatePath("/admin/compras");
     revalidatePath(`/admin/compras/${receiptId}`);
     return { ok: true };
