@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listStockoutReports, type StockoutShift } from "@/lib/stockout-reports";
+import { listStockoutCategories } from "@/lib/stockout-categories";
 import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { StockoutForm } from "@/components/admin/StockoutForm";
@@ -26,7 +27,7 @@ export default async function NegadosPage() {
   const profile = await getProfileById(session.uid);
   if (!(await canAccessModule("/admin/negados", isAdmin, profile?.role_id ?? null))) redirect("/admin");
 
-  const [reports, employees] = await Promise.all([listStockoutReports(), listProfiles()]);
+  const [reports, employees, categories] = await Promise.all([listStockoutReports(), listProfiles(), listStockoutCategories()]);
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
 
   const today = new Date().toISOString().slice(0, 10);
@@ -82,7 +83,7 @@ export default async function NegadosPage() {
       )}
 
       <div className="mt-6">
-        <StockoutForm defaultShift={defaultShift} isAdmin={isAdmin} />
+        <StockoutForm defaultShift={defaultShift} isAdmin={isAdmin} categories={categories.map((c) => c.name)} />
       </div>
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">

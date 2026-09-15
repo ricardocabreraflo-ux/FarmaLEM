@@ -4,22 +4,25 @@ import { getProfileById } from "@/lib/profiles";
 import { getBreakevenMargin } from "@/lib/breakeven";
 import { hasDeletePin } from "@/lib/security-settings";
 import { getModuleEditorStructure } from "@/lib/panel-modules";
+import { listStockoutCategories } from "@/lib/stockout-categories";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { BreakevenMarginForm } from "@/components/admin/BreakevenMarginForm";
 import { DeletePinForm } from "@/components/admin/DeletePinForm";
 import { PanelModulesModal } from "@/components/admin/PanelModulesModal";
 import { RolesPanel } from "@/components/admin/RolesPanel";
+import { StockoutCategoriesPanel } from "@/components/admin/StockoutCategoriesPanel";
 
 export const metadata: Metadata = { title: "Configuración" };
 export const dynamic = "force-dynamic";
 
 export default async function ConfiguracionPage() {
   const session = await requireAdminSession();
-  const [profile, marginPercent, pinSet, moduleStructure] = await Promise.all([
+  const [profile, marginPercent, pinSet, moduleStructure, stockoutCategories] = await Promise.all([
     getProfileById(session.uid),
     getBreakevenMargin(),
     hasDeletePin(),
     getModuleEditorStructure(),
+    listStockoutCategories(),
   ]);
   const { roles, entries: moduleEntries } = moduleStructure;
 
@@ -58,6 +61,15 @@ export default async function ConfiguracionPage() {
           necesites (por ejemplo Supervisor) y dale &ldquo;Permisos&rdquo; a cada uno para decidir qué módulos ve.
         </p>
         <RolesPanel initialRoles={roles} pinConfigured={pinSet} />
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">
+        <h2 className="font-display text-base text-admin-ink">Negados y faltantes &middot; Categorías</h2>
+        <p className="mt-1 text-[0.84rem] text-admin-ink-soft">
+          Las categorías que se pueden elegir al registrar un negado o faltante (Patente, Suelto, Perfumería…). Agrega, renombra o borra las que
+          necesites.
+        </p>
+        <StockoutCategoriesPanel initialCategories={stockoutCategories} />
       </section>
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">

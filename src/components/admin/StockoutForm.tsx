@@ -12,7 +12,7 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function StockoutForm({ defaultShift, isAdmin }: { defaultShift: StockoutShift; isAdmin: boolean }) {
+export function StockoutForm({ defaultShift, isAdmin, categories }: { defaultShift: StockoutShift; isAdmin: boolean; categories: string[] }) {
   const router = useRouter();
   const registrarRef = useRef<HTMLButtonElement>(null);
   const [pending, startTransition] = useTransition();
@@ -147,9 +147,9 @@ export function StockoutForm({ defaultShift, isAdmin }: { defaultShift: Stockout
         />
         <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoría (Patente, Suelto, Perfumería…)" list="stockout-categorias" className={inputClass} />
         <datalist id="stockout-categorias">
-          <option value="Patente" />
-          <option value="Suelto" />
-          <option value="Perfumería" />
+          {categories.map((c) => (
+            <option key={c} value={c} />
+          ))}
         </datalist>
         <input value={presentation} onChange={(e) => setPresentation(e.target.value)} placeholder="Presentación (tableta, jarabe…)" className={inputClass} />
         <input value={gramaje} onChange={(e) => setGramaje(e.target.value)} placeholder="Gramaje" className={inputClass} />

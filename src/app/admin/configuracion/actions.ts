@@ -8,6 +8,13 @@ import { hashPassword } from "@/lib/password";
 import { logAction } from "@/lib/history";
 import { getModuleEditorStructure, movePanelModule, updatePanelModule, setRolePermissions, type ModuleEditorEntry } from "@/lib/panel-modules";
 import { createRole, deleteRole, duplicateRole, listRoles, renameRole, type Role } from "@/lib/roles";
+import {
+  createStockoutCategory,
+  deleteStockoutCategory,
+  listStockoutCategories,
+  renameStockoutCategory,
+  type StockoutCategory,
+} from "@/lib/stockout-categories";
 
 export interface BreakevenMarginFormState {
   error?: string;
@@ -175,4 +182,48 @@ export async function deleteRoleAction(id: string, pin: string): Promise<RoleAct
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo eliminar el rol." };
   }
   return afterRoleChange(session, "Eliminó un rol", id);
+}
+
+export interface StockoutCategoryActionResult {
+  ok: boolean;
+  error?: string;
+  categories?: StockoutCategory[];
+}
+
+async function afterCategoryChange(session: Awaited<ReturnType<typeof requireAdminSession>>, action: string, detail: string): Promise<StockoutCategoryActionResult> {
+  await logAction(session.uid, action, detail);
+  revalidatePath("/admin/configuracion");
+  revalidatePath("/admin/negados");
+  const categories = await listStockoutCategories();
+  return { ok: true, categories };
+}
+
+export async function createStockoutCategoryAction(name: string): Promise<StockoutCategoryActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await createStockoutCategory(name);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo crear la categoría." };
+  }
+  return afterCategoryChange(session, "Creó categoría de negados", name);
+}
+
+export async function renameStockoutCategoryAction(id: string, name: string): Promise<StockoutCategoryActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await renameStockoutCategory(id, name);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo renombrar la categoría." };
+  }
+  return afterCategoryChange(session, "Renombró categoría de negados", name);
+}
+
+export async function deleteStockoutCategoryAction(id: string): Promise<StockoutCategoryActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await deleteStockoutCategory(id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar la categoría." };
+  }
+  return afterCategoryChange(session, "Borró categoría de negados", id);
 }
