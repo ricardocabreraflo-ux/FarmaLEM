@@ -318,6 +318,16 @@ export function IconGastos({ className }: { className?: string }) {
   );
 }
 
+export function IconNegados({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 3 2 20h20L12 3Z" />
+      <path d="M12 10v4.5" />
+      <circle cx="12" cy="17.3" r="0.35" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function IconAyuda({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>
