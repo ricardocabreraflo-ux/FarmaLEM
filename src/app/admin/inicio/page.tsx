@@ -249,7 +249,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
             {announcements.map((a) => {
               const card = (
-                <div className="w-[280px] shrink-0 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+                <div className="w-[380px] max-w-[85vw] shrink-0 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
                   <div className="aspect-[900/373] w-full bg-admin-bg">
                     {a.imageUrl && <img src={a.imageUrl} alt={a.title} className="h-full w-full object-cover object-top" />}
                   </div>
