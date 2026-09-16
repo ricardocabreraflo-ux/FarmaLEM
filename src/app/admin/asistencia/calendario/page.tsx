@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
+import { requireSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listShiftScheduleForMonth, listWeekLabels } from "@/lib/shift-schedule";
 import { buildMonthWeeks } from "@/lib/calendar-weeks";
+import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ShiftScheduleGrid } from "@/components/admin/ShiftScheduleGrid";
 import { GenerateNextMonthButton } from "@/components/admin/GenerateNextMonthButton";
@@ -23,12 +25,15 @@ function nextMonth(month: string) {
 }
 
 export default async function CalendarioTurnosPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
-  const session = await requireAdminSession();
+  const session = await requireSession();
+  const isAdmin = session.role === "admin";
+  const profile = await getProfileById(session.uid);
+  if (!(await canAccessModule("/admin/asistencia/calendario", isAdmin, profile?.role_id ?? null))) redirect("/admin");
+
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
 
-  const [profile, employees, assignments, weekLabels] = await Promise.all([
-    getProfileById(session.uid),
+  const [employees, assignments, weekLabels] = await Promise.all([
     listProfiles(),
     listShiftScheduleForMonth(month),
     listWeekLabels(),
@@ -39,17 +44,21 @@ export default async function CalendarioTurnosPage({ searchParams }: { searchPar
   return (
     <AdminShell activeHref="/admin/asistencia/calendario" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
       <h1 className="font-display text-2xl text-admin-ink capitalize">Calendario de turnos &middot; {monthLabel(month)}</h1>
-      <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Toca un turno para asignar quién lo cubre. Esto precarga el turno esperado en Asistencia.</p>
+      <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">
+        {isAdmin ? "Toca un turno para asignar quién lo cubre. Esto precarga el turno esperado en Asistencia." : "Consulta quién cubre cada turno."}
+      </p>
 
       <MonthFilterForm month={month} />
 
       <div className="mt-5">
-        <ShiftScheduleGrid weeks={weeks} assignments={assignments} employees={activeEmployees} weekLabels={weekLabels} />
+        <ShiftScheduleGrid weeks={weeks} assignments={assignments} employees={activeEmployees} weekLabels={weekLabels} readOnly={!isAdmin} />
       </div>
 
-      <div className="mt-5">
-        <GenerateNextMonthButton targetMonth={nextMonth(month)} />
-      </div>
+      {isAdmin && (
+        <div className="mt-5">
+          <GenerateNextMonthButton targetMonth={nextMonth(month)} />
+        </div>
+      )}
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-bg p-5 text-[0.82rem] text-admin-ink-soft">
         <p className="font-bold text-admin-ink">Notas</p>

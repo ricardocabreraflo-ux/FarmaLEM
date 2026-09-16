@@ -25,11 +25,13 @@ export function ShiftScheduleGrid({
   assignments,
   employees,
   weekLabels = {},
+  readOnly = false,
 }: {
   weeks: CalendarWeek[];
   assignments: ShiftAssignment[];
   employees: Profile[];
   weekLabels?: Record<string, string>;
+  readOnly?: boolean;
 }) {
   const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
 
@@ -69,9 +71,10 @@ export function ShiftScheduleGrid({
                       <td key={day.date} className={`px-1.5 py-1.5 align-top print:px-0.5 print:py-0.5 ${day.inMonth ? "" : "opacity-40"}`}>
                         <button
                           type="button"
+                          disabled={readOnly}
                           onClick={() => setEditingCell({ date: day.date, shift })}
-                          className={`flex w-full flex-col items-start rounded-lg px-2 py-1.5 text-left leading-tight transition-colors print:px-1 print:py-0.5 print:leading-none ${
-                            name ? "bg-admin-primary-soft text-admin-primary-deep" : isVacant ? "bg-admin-bad-bg text-admin-bad-text" : "text-admin-ink-soft hover:bg-admin-bg"
+                          className={`flex w-full flex-col items-start rounded-lg px-2 py-1.5 text-left leading-tight transition-colors print:px-1 print:py-0.5 print:leading-none disabled:cursor-default ${
+                            name ? "bg-admin-primary-soft text-admin-primary-deep" : isVacant ? "bg-admin-bad-bg text-admin-bad-text" : "text-admin-ink-soft not-disabled:hover:bg-admin-bg"
                           }`}
                         >
                           <span className="text-[0.68rem] font-semibold opacity-70 print:text-[0.52rem]">{shift === "Matutino" ? "M" : "V"}</span>
@@ -83,7 +86,11 @@ export function ShiftScheduleGrid({
                   })}
                   {shiftIdx === 0 && (
                     <td rowSpan={2} className="border-l border-admin-border px-1.5 py-2 align-middle print:hidden">
-                      <WeekLabelSelect weekStart={week.days[0].date} value={weekLabels[week.days[0].date] ?? ""} />
+                      {readOnly ? (
+                        <span className="block w-14 text-center text-[0.75rem] font-bold text-admin-primary-deep">{weekLabels[week.days[0].date] ?? ""}</span>
+                      ) : (
+                        <WeekLabelSelect weekStart={week.days[0].date} value={weekLabels[week.days[0].date] ?? ""} />
+                      )}
                     </td>
                   )}
                 </tr>
