@@ -32,3 +32,9 @@ export function mondayOf(date: string): string {
   const dow = new Date(`${date}T12:00:00`).getDay(); // 0 domingo ... 6 sábado
   return addDays(date, -((dow + 6) % 7));
 }
+
+/** Último día de ese mes (YYYY-MM), como YYYY-MM-DD. */
+export function monthEnd(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return `${month}-${pad(new Date(y, m, 0).getDate())}`;
+}

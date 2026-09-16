@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listAttendanceForMonth } from "@/lib/attendance";
-import { mexicoCityToday, listEventsForEmployeeRange, type TimeClockEvent } from "@/lib/time-clock";
+import { mexicoCityToday, listEventsForEmployeeRange, pairPunchesByDay } from "@/lib/time-clock";
+import { monthEnd } from "@/lib/dates";
 import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AttendanceList } from "@/components/admin/AttendanceList";
@@ -27,28 +28,6 @@ function fmtDate(v: string) {
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
-}
-
-function dateInMexico(iso: string) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date(iso));
-}
-
-function monthEnd(month: string) {
-  const [y, m] = month.split("-").map(Number);
-  return `${month}-${String(new Date(y, m, 0).getDate()).padStart(2, "0")}`;
-}
-
-/** Agrupa Entrada/Salida por día (a lo más una de cada una por día, el reloj alterna) para el historial personal. */
-function pairPunchesByDay(events: TimeClockEvent[]) {
-  const byDate = new Map<string, { entrada: string | null; salida: string | null }>();
-  for (const e of events) {
-    const d = dateInMexico(e.occurred_at);
-    const entry = byDate.get(d) ?? { entrada: null, salida: null };
-    if (e.event_type === "Entrada") entry.entrada = e.occurred_at;
-    else entry.salida = e.occurred_at;
-    byDate.set(d, entry);
-  }
-  return [...byDate.entries()].sort((a, b) => b[0].localeCompare(a[0]));
 }
 
 export default async function AsistenciaPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {

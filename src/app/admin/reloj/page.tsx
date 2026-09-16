@@ -2,13 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
-import { lastEventToday } from "@/lib/time-clock";
+import { lastEventToday, mexicoCityToday, listEventsForEmployeeRange, pairPunchesByDay } from "@/lib/time-clock";
+import { monthEnd } from "@/lib/dates";
 import { logoutToTurno } from "@/app/admin/turno/actions";
 import { PunchPanel } from "@/components/admin/PunchPanel";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = { title: "Reloj checador" };
 export const dynamic = "force-dynamic";
+
+function fmtDate(v: string) {
+  return new Date(`${v}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
+}
 
 export default async function RelojPage() {
   const session = await requireSession();
@@ -40,7 +49,14 @@ export default async function RelojPage() {
     );
   }
 
-  const [profile, last] = await Promise.all([getProfileById(session.uid), lastEventToday(session.uid)]);
+  const today = mexicoCityToday();
+  const month = today.slice(0, 7);
+  const [profile, last, myPunches] = await Promise.all([
+    getProfileById(session.uid),
+    lastEventToday(session.uid),
+    listEventsForEmployeeRange(session.uid, `${month}-01`, monthEnd(month)),
+  ]);
+  const punchDays = pairPunchesByDay(myPunches);
 
   return (
     <AdminShell activeHref="/admin/reloj" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -67,6 +83,35 @@ export default async function RelojPage() {
           Capturar corte
         </Link>
       </div>
+
+      <h2 className="mt-8 font-display text-base text-admin-ink">Mi reloj checador</h2>
+      <p className="mt-1 text-[0.82rem] text-admin-ink-soft">Tus entradas y salidas marcadas este mes.</p>
+      <section className="mt-3 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+        {punchDays.length === 0 ? (
+          <p className="px-5 py-8 text-center text-admin-ink-soft">Sin movimientos este mes.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-[0.86rem]">
+              <thead>
+                <tr className="border-b border-admin-border text-admin-ink-soft">
+                  <th className="px-5 py-3 font-medium">Fecha</th>
+                  <th className="px-5 py-3 font-medium">Entrada</th>
+                  <th className="px-5 py-3 font-medium">Salida</th>
+                </tr>
+              </thead>
+              <tbody>
+                {punchDays.map(([date, p]) => (
+                  <tr key={date} className="border-b border-admin-border last:border-0">
+                    <td className="px-5 py-3 text-admin-ink-soft">{fmtDate(date)}</td>
+                    <td className="px-5 py-3 font-data tabular-nums text-admin-ink">{p.entrada ? fmtTime(p.entrada) : "—"}</td>
+                    <td className="px-5 py-3 font-data tabular-nums text-admin-ink">{p.salida ? fmtTime(p.salida) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </AdminShell>
   );
 }

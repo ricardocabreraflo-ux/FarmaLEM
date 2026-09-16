@@ -99,6 +99,23 @@ export async function listEventsForEmployeeRange(employeeId: string, startDate: 
   return data as TimeClockEvent[];
 }
 
+function dateInMexico(iso: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date(iso));
+}
+
+/** Agrupa Entrada/Salida por día (a lo más una de cada una por día, el reloj alterna) para el historial personal. */
+export function pairPunchesByDay(events: TimeClockEvent[]): [string, { entrada: string | null; salida: string | null }][] {
+  const byDate = new Map<string, { entrada: string | null; salida: string | null }>();
+  for (const e of events) {
+    const d = dateInMexico(e.occurred_at);
+    const entry = byDate.get(d) ?? { entrada: null, salida: null };
+    if (e.event_type === "Entrada") entry.entrada = e.occurred_at;
+    else entry.salida = e.occurred_at;
+    byDate.set(d, entry);
+  }
+  return [...byDate.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+}
+
 /** Entradas (no Salidas) entre dos fechas (inclusive), para el reporte semanal de nómina. */
 export async function listEntradasForRange(startDate: string, endDate: string): Promise<TimeClockEvent[]> {
   const start = dayRange(startDate).start;
