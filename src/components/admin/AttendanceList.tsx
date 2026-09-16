@@ -18,7 +18,7 @@ interface Row extends AttendanceRow {
   employeeName: string;
 }
 
-export function AttendanceList({ rows }: { rows: Row[] }) {
+export function AttendanceList({ rows, isAdmin = true }: { rows: Row[]; isAdmin?: boolean }) {
   const [items, setItems] = useState(rows);
 
   if (items.length === 0) {
@@ -35,13 +35,13 @@ export function AttendanceList({ rows }: { rows: Row[] }) {
               <th className="px-5 py-3 font-medium">Empleado</th>
               <th className="px-5 py-3 font-medium">Turno</th>
               <th className="px-5 py-3 font-medium">Estado</th>
-              <th className="px-5 py-3 text-right font-medium">Pago del turno</th>
-              <th className="px-5 py-3"></th>
+              {isAdmin && <th className="px-5 py-3 text-right font-medium">Pago del turno</th>}
+              {isAdmin && <th className="px-5 py-3"></th>}
             </tr>
           </thead>
           <tbody>
             {items.map((row) => (
-              <AttendanceItem key={row.id} row={row} onRemoved={() => setItems((prev) => prev.filter((r) => r.id !== row.id))} />
+              <AttendanceItem key={row.id} row={row} isAdmin={isAdmin} onRemoved={() => setItems((prev) => prev.filter((r) => r.id !== row.id))} />
             ))}
           </tbody>
         </table>
@@ -50,7 +50,7 @@ export function AttendanceList({ rows }: { rows: Row[] }) {
   );
 }
 
-function AttendanceItem({ row, onRemoved }: { row: Row; onRemoved: () => void }) {
+function AttendanceItem({ row, isAdmin, onRemoved }: { row: Row; isAdmin: boolean; onRemoved: () => void }) {
   const [pending, startTransition] = useTransition();
   const paid = PAID.has(row.status);
 
@@ -64,22 +64,24 @@ function AttendanceItem({ row, onRemoved }: { row: Row; onRemoved: () => void })
           {row.status}
         </span>
       </td>
-      <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{paid ? fmtMoney(row.rate) : "—"}</td>
-      <td className="px-5 py-3 text-right">
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => {
-            onRemoved();
-            startTransition(async () => {
-              await deleteAttendanceAction(row.id);
-            });
-          }}
-          className="font-semibold text-admin-ink-soft hover:text-admin-bad-text disabled:opacity-60"
-        >
-          Quitar
-        </button>
-      </td>
+      {isAdmin && <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{paid ? fmtMoney(row.rate) : "—"}</td>}
+      {isAdmin && (
+        <td className="px-5 py-3 text-right">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              onRemoved();
+              startTransition(async () => {
+                await deleteAttendanceAction(row.id);
+              });
+            }}
+            className="font-semibold text-admin-ink-soft hover:text-admin-bad-text disabled:opacity-60"
+          >
+            Quitar
+          </button>
+        </td>
+      )}
     </tr>
   );
 }

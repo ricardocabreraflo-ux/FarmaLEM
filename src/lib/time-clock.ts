@@ -84,6 +84,21 @@ export async function listEventsForDate(date: string): Promise<TimeClockEvent[]>
   return data as TimeClockEvent[];
 }
 
+/** Todos los movimientos (Entrada y Salida) de un empleado entre dos fechas (inclusive) — para que vea su propio historial en Asistencia. */
+export async function listEventsForEmployeeRange(employeeId: string, startDate: string, endDate: string): Promise<TimeClockEvent[]> {
+  const start = dayRange(startDate).start;
+  const end = dayRange(endDate).end;
+  const { data, error } = await supabaseAdmin()
+    .from("time_clock_events")
+    .select()
+    .eq("employee_id", employeeId)
+    .gte("occurred_at", start)
+    .lte("occurred_at", end)
+    .order("occurred_at", { ascending: false });
+  if (error) throw new Error(`No se pudo leer el reloj checador: ${error.message}`);
+  return data as TimeClockEvent[];
+}
+
 /** Entradas (no Salidas) entre dos fechas (inclusive), para el reporte semanal de nómina. */
 export async function listEntradasForRange(startDate: string, endDate: string): Promise<TimeClockEvent[]> {
   const start = dayRange(startDate).start;
