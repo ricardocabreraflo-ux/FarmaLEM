@@ -8,6 +8,7 @@ import { listCutsForMonth, listCutsForRange, type Cut } from "@/lib/cuts";
 import { listOrders } from "@/lib/orders";
 import { lastEventToday, mexicoCityToday, type TimeClockEvent } from "@/lib/time-clock";
 import { addDays, mondayOf } from "@/lib/dates";
+import { listActiveAnnouncements } from "@/lib/announcements";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = { title: "Inicio" };
@@ -212,13 +213,14 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
   const monday = mondayOf(today);
   const sunday = addDays(monday, 6);
 
-  const [profile, last, weekSales, bonusTiers, weekAttendance, weekCuts] = await Promise.all([
+  const [profile, last, weekSales, bonusTiers, weekAttendance, weekCuts, announcements] = await Promise.all([
     getProfileById(uid),
     lastEventToday(uid),
     computeWeekFromRecords(uid, monday, sunday, { includePending: true }),
     listBonusTiers(today.slice(0, 7)),
     listAttendanceForRange(monday, sunday),
     listCutsForRange(monday, sunday, uid),
+    listActiveAnnouncements(),
   ]);
 
   const shift = profile?.shift ?? "";
@@ -240,6 +242,34 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">
         Hola, {profile?.full_name ?? ""} &middot; Turno {shift}
       </p>
+
+      {announcements.length > 0 && (
+        <section className="mt-5">
+          <span className="text-[0.78rem] font-bold uppercase tracking-wide text-admin-ink-soft">Novedades del panel</span>
+          <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+            {announcements.map((a) => {
+              const card = (
+                <div className="w-[280px] shrink-0 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+                  <div className="aspect-[900/373] w-full bg-admin-bg">
+                    {a.imageUrl && <img src={a.imageUrl} alt={a.title} className="h-full w-full object-cover object-top" />}
+                  </div>
+                  <div className="p-3.5">
+                    <p className="font-semibold text-admin-ink">{a.title}</p>
+                    <p className="mt-0.5 text-[0.8rem] text-admin-ink-soft">{a.description}</p>
+                  </div>
+                </div>
+              );
+              return a.href ? (
+                <Link key={a.id} href={a.href} className="block transition-transform duration-150 ease-out active:scale-[0.98]">
+                  {card}
+                </Link>
+              ) : (
+                <div key={a.id}>{card}</div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-5 sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
