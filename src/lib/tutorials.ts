@@ -94,6 +94,10 @@ const TUTORIALS: TutorialContent[] = [
     minutes: 2,
     steps: [
       {
+        title: "Novedades del panel",
+        body: "A veces, arriba de todo, aparecen una o varias tarjetas bajo “Novedades del panel” — avisos de administración sobre cambios o funciones nuevas en el panel. No siempre hay alguna: solo se ve cuando administración publicó un aviso vigente.",
+      },
+      {
         title: "Meta de la semana",
         body: "Arriba de todo ves cuánto llevas vendido esta semana (de lunes a domingo) contra la meta, incluyendo los cortes que ya capturaste aunque administración todavía no los apruebe. Debajo, tu última marca del reloj checador y cuántos días has trabajado esta semana.",
         image: "/tutoriales/inicio-01-meta.png",
