@@ -55,6 +55,20 @@ Mismo botón, mismo lugar.
 queda incompleto en los reportes, aunque tu asistencia ya haya quedado bien
 por la entrada.
 
+## Además: tu historial del mes
+
+Debajo del botón de marcar, en esa misma pantalla, está **"Mi reloj
+checador"** con todas tus entradas y salidas marcadas este mes.
+
+![Tabla "Mi reloj checador" con las entradas y salidas del mes](img/reloj-04-mi-historial.png)
+
+*En computadora:*
+
+![Lo mismo en pantalla de computadora](img/reloj-04-mi-historial-desktop.png)
+
+Útil para revisar tú misma si algún día quedó sin marcar, sin tener que
+pedirle a administración que te lo confirme.
+
 ---
 
 ## Cambiar de turno en la misma computadora

@@ -104,6 +104,12 @@ corte"** verás el aviso **"Recuperamos lo que tenías escrito de un intento
 anterior — revísalo antes de guardar."** con tus datos ya puestos. Solo
 revísalo antes de guardar, por si algo quedó a medias.
 
+## Filtrar la lista de Cortes por fechas
+
+En la lista de **Cortes**, además del selector de mes, hay **"O filtra por
+un rango de fechas específico"** — útil para revisar, por ejemplo, justo
+una quincena o una semana que cruza dos meses.
+
 ---
 
 ## Sobre el pago de nómina (fines de semana)
