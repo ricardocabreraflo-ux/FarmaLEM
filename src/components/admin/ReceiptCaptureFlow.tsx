@@ -95,6 +95,14 @@ function buildDraftLines(lines: ParsedLine[], catalog: Map<string, SupplierProdu
 const inputClass =
   "w-full rounded-lg border border-admin-border bg-admin-input-bg px-2.5 py-1.5 text-[0.84rem] text-admin-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-admin-primary";
 
+// No se puede combinar con `inputClass`: dos utilidades de Tailwind para el mismo
+// color (bg-admin-input-bg vs bg-admin-bad-bg) compiten por orden de generación
+// del CSS, no por orden en el className, así que el rojo a veces perdía en
+// silencio. Este set es una alternativa completa, sin ninguna propiedad
+// compartida con `inputClass`, para que nunca haya ambigüedad.
+const dateInputWarnClass =
+  "w-full rounded-lg border border-admin-bad-text bg-admin-bad-bg px-2.5 py-1.5 text-[0.84rem] font-semibold text-admin-bad-text outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-admin-primary";
+
 const MATCH_LABEL: Record<Match, string> = { catalogo: "catálogo", producto: "producto", nuevo: "nuevo" };
 const MATCH_CLASS: Record<Match, string> = {
   catalogo: "bg-admin-ok-bg text-admin-ok-text",
@@ -646,9 +654,7 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers, createdBy }: {
                         <td className="px-2 py-1.5">
                           <input
                             type="date"
-                            className={`${inputClass} w-[140px] ${
-                              isExpiringSoon(l.expiresOn, today) ? "border-admin-bad-text bg-admin-bad-bg font-semibold text-admin-bad-text" : ""
-                            }`}
+                            className={`${isExpiringSoon(l.expiresOn, today) ? dateInputWarnClass : inputClass} w-[140px]`}
                             value={l.expiresOn}
                             onChange={(e) => update(l.key, { expiresOn: e.target.value })}
                           />
