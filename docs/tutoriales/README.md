@@ -10,6 +10,7 @@ cada paso.
 | 2 | [Cómo usar Inicio](02-inicio.md) | Mostrador |
 | 3 | [Cómo usar el reloj checador](03-reloj-checador.md) | Mostrador (+ sección para administración) |
 | 4 | [Cómo capturar el corte del día](04-capturar-corte-del-dia.md) | Mostrador (+ sección para administración) |
+| 5 | [Cómo usar Negados y faltantes](05-negados-y-faltantes.md) | Mostrador (+ sección para administración) |
 
 Se irán agregando más conforme se usen nuevas pantallas del panel (sueldos,
 inventario, etc.).
