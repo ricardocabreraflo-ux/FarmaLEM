@@ -16,10 +16,12 @@ cada paso.
 | 8 | [Cómo consultar tus Bonos semanales](08-bonos-semanales.md) | Mostrador (+ sección para administración) |
 | 9 | [Cómo usar Distribución de anaqueles](09-anaqueles.md) | Todo el equipo |
 | 10 | [Cómo usar el Calendario de actividades](10-actividades.md) | Todo el equipo |
+| 11 | [Cómo consultar el Catálogo de productos](11-catalogo.md) | Mostrador Plus (+ sección para administración) |
+| 12 | [Cómo usar Recepción de mercancía](12-compras.md) | Mostrador Plus (+ sección para administración) |
 
 Se irán agregando más conforme se usen nuevas pantallas del panel (sueldos,
 inventario, etc.).
 
 > Las capturas de pantalla se hicieron con empleadas de ejemplo (**Ana
-> Demo** / **Luis Demo**) en una copia de prueba de la app — nunca con datos
-> ni cuentas reales del equipo.
+> Demo** / **Luis Demo** / **Mariana Demo**) en una copia de prueba de la
+> app — nunca con datos ni cuentas reales del equipo.
