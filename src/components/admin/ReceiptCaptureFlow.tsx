@@ -42,6 +42,13 @@ function money(n: number | null | undefined) {
 function round2(n: number) {
   return Math.round(n * 100) / 100;
 }
+const EXPIRY_WARNING_MONTHS = 6;
+function isExpiringSoon(dateStr: string, today: string): boolean {
+  if (!dateStr) return false;
+  const threshold = new Date(`${today}T12:00:00`);
+  threshold.setMonth(threshold.getMonth() + EXPIRY_WARNING_MONTHS);
+  return new Date(`${dateStr}T12:00:00`) <= threshold;
+}
 function emptyLine(): DraftLine {
   return {
     key: newKey(),
@@ -311,6 +318,8 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers, createdBy }: {
     });
   }, [lines, filterMatch, sort]);
 
+  const today = mexicoCityToday();
+
   function toggleSort(key: ColumnKey) {
     setSort((prev) => {
       if (!prev || prev.key !== key) return { key, dir: "asc" };
@@ -521,6 +530,10 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers, createdBy }: {
               <span>
                 <span className={`rounded-full px-2 py-0.5 font-semibold ${MATCH_CLASS.nuevo}`}>nuevo</span> captura código de barras, descripción y precio una sola vez
               </span>
+              <span>
+                <span className="rounded-full bg-admin-bad-bg px-2 py-0.5 font-semibold text-admin-bad-text">caducidad en rojo</span> vence en {EXPIRY_WARNING_MONTHS} meses o menos —
+                gestiona el cambio con el proveedor antes de que pasen más días
+              </span>
             </p>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -631,7 +644,14 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers, createdBy }: {
                       )}
                       {!hiddenColumns.has("caducidad") && (
                         <td className="px-2 py-1.5">
-                          <input type="date" className={`${inputClass} w-[140px]`} value={l.expiresOn} onChange={(e) => update(l.key, { expiresOn: e.target.value })} />
+                          <input
+                            type="date"
+                            className={`${inputClass} w-[140px] ${
+                              isExpiringSoon(l.expiresOn, today) ? "border-admin-bad-text bg-admin-bad-bg font-semibold text-admin-bad-text" : ""
+                            }`}
+                            value={l.expiresOn}
+                            onChange={(e) => update(l.key, { expiresOn: e.target.value })}
+                          />
                         </td>
                       )}
                       <td className="px-2 py-1.5">

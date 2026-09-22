@@ -7,6 +7,7 @@ import { listSuppliers } from "@/lib/suppliers";
 import { getReceipt, getReceiptPhotoUrls, listReceiptLines } from "@/lib/purchase-receipts";
 import { listPurchasesForReceipt } from "@/lib/purchases";
 import { canAccessModule } from "@/lib/panel-modules";
+import { mexicoCityToday } from "@/lib/dates";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { DeleteReceiptButton } from "@/components/admin/DeleteReceiptButton";
 import { PendingReceiptLinesEditor } from "@/components/admin/PendingReceiptLinesEditor";
@@ -23,6 +24,14 @@ function fmtMoney(n: number | null) {
 function fmtDate(v: string | null) {
   if (!v) return "—";
   return new Date(`${v}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+const EXPIRY_WARNING_MONTHS = 6;
+function isExpiringSoon(v: string | null) {
+  if (!v) return false;
+  const threshold = new Date(`${mexicoCityToday()}T12:00:00`);
+  threshold.setMonth(threshold.getMonth() + EXPIRY_WARNING_MONTHS);
+  return new Date(`${v}T12:00:00`) <= threshold;
 }
 
 export default async function ReceiptDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -151,7 +160,9 @@ export default async function ReceiptDetailPage({ params }: { params: Promise<{ 
                   <td className="px-4 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(i.quantity * i.cost)}</td>
                   <td className="px-4 py-3 text-right font-data tabular-nums text-admin-ink-soft">{fmtMoney(i.price)}</td>
                   <td className="px-4 py-3 text-admin-ink-soft">{i.lot ?? "—"}</td>
-                  <td className="px-4 py-3 text-admin-ink-soft">{fmtDate(i.expires_on)}</td>
+                  <td className="px-4 py-3 text-admin-ink-soft">
+                    <span className={isExpiringSoon(i.expires_on) ? "rounded px-1 py-0.5 font-semibold bg-admin-bad-bg text-admin-bad-text" : ""}>{fmtDate(i.expires_on)}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>

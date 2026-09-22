@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { findByBarcodeAction, completeReceiptLineAction } from "@/app/admin/compras/actions";
+import { mexicoCityToday } from "@/lib/dates";
 import type { PurchaseReceiptLine } from "@/lib/purchase-receipts";
 
 const inputClass =
@@ -15,6 +16,14 @@ function money(n: number) {
 function fmtDate(v: string | null) {
   if (!v) return "—";
   return new Date(`${v}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+const EXPIRY_WARNING_MONTHS = 6;
+function isExpiringSoon(v: string | null) {
+  if (!v) return false;
+  const threshold = new Date(`${mexicoCityToday()}T12:00:00`);
+  threshold.setMonth(threshold.getMonth() + EXPIRY_WARNING_MONTHS);
+  return new Date(`${v}T12:00:00`) <= threshold;
 }
 
 interface Draft {
@@ -111,7 +120,7 @@ export function PendingReceiptLinesEditor({ lines, isAdmin }: { lines: PurchaseR
                   <td className="px-4 py-2.5 text-admin-ink-soft">
                     {l.lot ?? "—"}
                     <br />
-                    {fmtDate(l.expires_on)}
+                    <span className={isExpiringSoon(l.expires_on) ? "rounded px-1 py-0.5 font-semibold bg-admin-bad-bg text-admin-bad-text" : ""}>{fmtDate(l.expires_on)}</span>
                   </td>
                   <td className="px-4 py-2.5 text-admin-ink-soft">{l.barcode || "—"}</td>
                   <td className="px-4 py-2.5 font-semibold text-admin-ink">{l.description || "—"}</td>
@@ -163,7 +172,7 @@ export function PendingReceiptLinesEditor({ lines, isAdmin }: { lines: PurchaseR
                   <td className="px-4 py-2.5 text-admin-ink-soft">
                     {l.lot ?? "—"}
                     <br />
-                    {fmtDate(l.expires_on)}
+                    <span className={isExpiringSoon(l.expires_on) ? "rounded px-1 py-0.5 font-semibold bg-admin-bad-bg text-admin-bad-text" : ""}>{fmtDate(l.expires_on)}</span>
                   </td>
                   <td className="px-4 py-2.5">
                     <input
