@@ -13,6 +13,13 @@
 
 ---
 
+## Novedades del panel
+
+A veces, arriba de todo, aparecen una o varias tarjetas bajo **"Novedades
+del panel"** — avisos de administración sobre cambios o funciones nuevas en
+el panel. No siempre hay alguna: solo se ve cuando administración publicó
+un aviso vigente.
+
 ## Meta de la semana
 
 Arriba de todo ves cuánto llevas vendido esta semana (de lunes a domingo)
