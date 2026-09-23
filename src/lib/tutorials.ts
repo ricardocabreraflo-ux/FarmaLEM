@@ -533,6 +533,26 @@ const TUTORIALS: TutorialContent[] = [
       },
     ],
   },
+  {
+    slug: "proveedores",
+    title: "Cómo consultar Proveedores",
+    audience: "Mostrador Plus",
+    summary: "El catálogo de proveedores que se usa al capturar una recepción de mercancía — de solo lectura.",
+    minutes: 1,
+    steps: [
+      {
+        title: "La lista de proveedores",
+        body: "Menú ☰ → Mercancía → “Proveedores”. Es el catálogo reutilizable de proveedores, con su nombre, contacto y si está activo. Es de solo lectura para ti: no puedes dar de alta un proveedor nuevo ni editar uno existente (esos botones son solo de administración) — pero ese mismo catálogo es el que eliges al consultar una recepción en Recepción de mercancía.",
+        image: "/tutoriales/proveedores-01-lista.png",
+        imageWidth: 352,
+        imageHeight: 388,
+        imageDesktop: "/tutoriales/proveedores-01-lista-desktop.png",
+        imageDesktopWidth: 1192,
+        imageDesktopHeight: 285,
+        imageAlt: "Lista de proveedores con nombre, contacto y estado",
+      },
+    ],
+  },
 ];
 
 async function visibilityMap(): Promise<Map<string, boolean>> {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Supplier } from "@/lib/suppliers";
 import { EditSupplierModal } from "@/components/admin/EditSupplierModal";
 
-export function SuppliersList({ suppliers }: { suppliers: Supplier[] }) {
+export function SuppliersList({ suppliers, isAdmin }: { suppliers: Supplier[]; isAdmin: boolean }) {
   const [editing, setEditing] = useState<Supplier | null>(null);
 
   return (
@@ -40,9 +40,11 @@ export function SuppliersList({ suppliers }: { suppliers: Supplier[] }) {
                 </span>
               </td>
               <td className="px-5 py-3 text-right">
-                <button type="button" onClick={() => setEditing(s)} className="font-semibold text-admin-primary hover:underline">
-                  Editar
-                </button>
+                {isAdmin && (
+                  <button type="button" onClick={() => setEditing(s)} className="font-semibold text-admin-primary hover:underline">
+                    Editar
+                  </button>
+                )}
               </td>
             </tr>
           ))}
