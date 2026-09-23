@@ -34,6 +34,8 @@ export interface Tutorial {
   minutes: number;
   visible: boolean;
   steps: TutorialStep[];
+  /** Key en NAV_STRUCTURE (nav-structure.ts) de la pantalla real que documenta este tutorial — null si no corresponde a una pantalla propia (p. ej. el flujo de inicio de sesión). Sirve para saber si un rol puede ver esa pantalla hoy. */
+  moduleKey: string | null;
 }
 
 type TutorialContent = Omit<Tutorial, "visible">;
@@ -41,6 +43,7 @@ type TutorialContent = Omit<Tutorial, "visible">;
 const TUTORIALS: TutorialContent[] = [
   {
     slug: "como-entrar",
+    moduleKey: null,
     title: "Cómo entrar al panel",
     section: "Primeros pasos",
     audience: "Todo el equipo",
@@ -91,6 +94,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "inicio",
+    moduleKey: "/admin/inicio",
     title: "Cómo usar Inicio",
     section: "Primeros pasos",
     audience: "Mostrador",
@@ -153,6 +157,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "reloj-checador",
+    moduleKey: "/admin/reloj",
     title: "Cómo usar el reloj checador",
     section: "Personal",
     audience: "Mostrador",
@@ -231,6 +236,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "capturar-corte",
+    moduleKey: "/admin/cortes",
     title: "Cómo capturar el corte del día",
     section: "Caja",
     audience: "Mostrador",
@@ -283,6 +289,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "negados-y-faltantes",
+    moduleKey: "/admin/negados",
     title: "Cómo usar Negados y faltantes",
     section: "Mercancía",
     audience: "Mostrador",
@@ -354,6 +361,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "asistencia",
+    moduleKey: "/admin/asistencia",
     title: "Cómo consultar tu Asistencia",
     section: "Personal",
     audience: "Mostrador",
@@ -380,6 +388,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "calendario-de-turnos",
+    moduleKey: "/admin/asistencia/calendario",
     title: "Cómo consultar el Calendario de turnos",
     section: "Personal",
     audience: "Mostrador",
@@ -406,6 +415,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "bonos-semanales",
+    moduleKey: "/admin/bonos",
     title: "Cómo consultar tus Bonos semanales",
     section: "Personal",
     audience: "Mostrador",
@@ -431,6 +441,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "anaqueles",
+    moduleKey: "/admin/anaqueles",
     title: "Cómo usar Distribución de anaqueles",
     section: "Personal",
     audience: "Todo el equipo",
@@ -452,6 +463,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "actividades",
+    moduleKey: "/admin/actividades",
     title: "Cómo usar el Calendario de actividades",
     section: "Personal",
     audience: "Todo el equipo",
@@ -478,6 +490,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "catalogo",
+    moduleKey: "/admin/catalogo",
     title: "Cómo consultar el Catálogo de productos",
     section: "Mercancía",
     audience: "Mostrador Plus",
@@ -504,6 +517,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "compras",
+    moduleKey: "/admin/compras",
     title: "Cómo usar Recepción de mercancía",
     section: "Mercancía",
     audience: "Mostrador Plus",
@@ -549,6 +563,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "proveedores",
+    moduleKey: "/admin/proveedores",
     title: "Cómo consultar Proveedores",
     section: "Mercancía",
     audience: "Mostrador Plus",
@@ -570,6 +585,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "salidas",
+    moduleKey: "/admin/salidas",
     title: "Cómo usar Salidas de efectivo",
     section: "Caja",
     audience: "Administración",
@@ -602,6 +618,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "bonos-extra",
+    moduleKey: "/admin/bonos-extra",
     title: "Cómo registrar Bonos extraordinarios",
     section: "Personal",
     audience: "Administración",
@@ -634,6 +651,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "empleados",
+    moduleKey: "/admin/empleados",
     title: "Cómo usar Empleados",
     section: "Personal",
     audience: "Administración",
@@ -666,6 +684,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "sueldos",
+    moduleKey: "/admin/sueldos",
     title: "Cómo usar Sueldos y salarios",
     section: "Personal",
     audience: "Administración",
@@ -698,6 +717,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "inventario",
+    moduleKey: "/admin/inventario",
     title: "Cómo usar Inventario",
     section: "Mercancía",
     audience: "Administración",
@@ -730,6 +750,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "ventas",
+    moduleKey: "/admin/ventas",
     title: "Cómo consultar la Comparativa de ventas",
     section: "Finanzas",
     audience: "Administración",
@@ -752,6 +773,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "finanzas",
+    moduleKey: "/admin/finanzas",
     title: "Cómo usar el Estado de resultados",
     section: "Finanzas",
     audience: "Administración",
@@ -774,6 +796,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "gastos",
+    moduleKey: "/admin/finanzas/gastos",
     title: "Cómo usar Gastos fijos y variables",
     section: "Finanzas",
     audience: "Administración",
@@ -796,6 +819,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "punto-equilibrio",
+    moduleKey: "/admin/punto-equilibrio",
     title: "Cómo consultar el Punto de equilibrio",
     section: "Finanzas",
     audience: "Administración",
@@ -817,6 +841,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "simulador-escenarios",
+    moduleKey: "/admin/punto-equilibrio/simulador",
     title: "Cómo usar el Simulador de escenarios",
     section: "Finanzas",
     audience: "Administración",
@@ -838,6 +863,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "pedidos",
+    moduleKey: "/admin",
     title: "Cómo usar Pedidos",
     section: "Administración general",
     audience: "Administración",
@@ -859,6 +885,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "historial",
+    moduleKey: "/admin/historial",
     title: "Cómo consultar el Historial",
     section: "Administración general",
     audience: "Administración",
@@ -880,6 +907,7 @@ const TUTORIALS: TutorialContent[] = [
   },
   {
     slug: "configuracion",
+    moduleKey: "/admin/configuracion",
     title: "Cómo usar Configuración",
     section: "Administración general",
     audience: "Administración",

@@ -256,6 +256,27 @@ export async function canAccessModule(key: string, isAdmin: boolean, roleId: str
 }
 
 /**
+ * Qué roles (de permisos, no admin/empleada) pueden ver cada pantalla hoy —
+ * en un solo viaje a la base de datos, para paneles de solo lectura como
+ * Ayuda que necesitan consultarlo para muchas pantallas a la vez en vez de
+ * llamar `canAccessModule` una por una.
+ */
+export async function getLeafVisibilityByRole(): Promise<Map<string, Set<string>>> {
+  const [rows, roles] = await Promise.all([getPanelModuleRows(), listRoles()]);
+  const allRoleIds = roles.map((r) => r.id);
+  const map = new Map<string, Set<string>>();
+  for (const leaf of allLeaves()) {
+    if (leaf.locked) {
+      map.set(leaf.key, new Set(leaf.defaultAdminOnly ? [] : allRoleIds));
+      continue;
+    }
+    const row = rowFor(rows, leaf.key, allRoleIds, leaf.defaultAdminOnly);
+    map.set(leaf.key, row.enabled ? new Set(row.visible_role_ids) : new Set());
+  }
+  return map;
+}
+
+/**
  * Guarda de una vez los permisos de un rol para todas las pantallas
  * (botón "Guardar" del modal de permisos por rol) — solo escribe los
  * módulos cuyo estado para este rol realmente cambió.
