@@ -44,6 +44,31 @@ function isLeafVisible(leaf: NavLeafDef, rows: Map<string, PanelModuleRow>, allR
   return row.visible_role_ids.includes(roleId);
 }
 
+/**
+ * Capacidades extra que no son una pantalla propia del menú, sino un nivel
+ * distinto dentro de una pantalla que ya ve todo el mundo (p. ej. Cortes: la
+ * captura la puede hacer cualquier vendedora, pero el reporte completo con
+ * montos de todas/todos no). Se guardan y editan con el mismo mecanismo de
+ * `panel_modules` (visible_role_ids por key), solo que la key no corresponde
+ * a ningún NavLeafDef de NAV_STRUCTURE.
+ */
+interface ExtraCapability {
+  key: string;
+  label: string;
+  groupLabel: string;
+}
+
+const EXTRA_CAPABILITIES: ExtraCapability[] = [{ key: "cortes:reporte", label: "Cortes: ver el reporte completo (no solo capturar)", groupLabel: "Caja" }];
+
+/** Para una capacidad extra (no un NavLeafDef): admin siempre puede; el resto según su rol. */
+export async function hasCapability(key: string, isAdmin: boolean, roleId: string | null): Promise<boolean> {
+  if (isAdmin) return true;
+  if (!roleId) return false;
+  const [rows, roles] = await Promise.all([getPanelModuleRows(), listRoles()]);
+  const allRoleIds = roles.map((r) => r.id);
+  return rowFor(rows, key, allRoleIds, false).visible_role_ids.includes(roleId);
+}
+
 // --- Menú resuelto para renderizar el panel (AdminShell) ---------------
 
 export interface ResolvedLeaf {
@@ -157,6 +182,25 @@ export async function getModuleEditorStructure(): Promise<{ roles: Role[]; entri
   return { roles, entries: scored.sort((a, b) => a.order - b.order).map((s) => s.entry) };
 }
 
+/**
+ * Igual que `getModuleEditorStructure`, más las capacidades extra — solo
+ * para el modal de "Permisos de [rol]" (RolePermissionsModal). El editor de
+ * módulos de /admin/configuracion (activar/desactivar y reordenar
+ * pantallas) usa `getModuleEditorStructure` sola: las capacidades extra no
+ * son pantallas del menú y no tienen ni "activo/inactivo" ni orden propio.
+ */
+export async function getRolePermissionsEntries(): Promise<{ roles: Role[]; entries: ModuleEditorEntry[] }> {
+  const { roles, entries } = await getModuleEditorStructure();
+  const [rows, allRoleIds] = await Promise.all([getPanelModuleRows(), listRoles().then((rs) => rs.map((r) => r.id))]);
+
+  const extraItems: ModuleEditorLeaf[] = EXTRA_CAPABILITIES.map((cap) => {
+    const row = rowFor(rows, cap.key, allRoleIds, false);
+    return { type: "leaf", key: cap.key, label: cap.label, locked: false, defaultAdminOnly: false, enabled: true, visibleRoleIds: row.visible_role_ids };
+  });
+  if (extraItems.length === 0) return { roles, entries };
+  return { roles, entries: [...entries, { type: "group", key: "extra", label: "Capacidades extra", enabled: true, items: extraItems }] };
+}
+
 // --- Mutaciones -----------------------------------------------------------
 
 function findEntry(key: string): NavEntryDef | NavLeafDef | undefined {
@@ -221,15 +265,21 @@ export async function setRolePermissions(roleId: string, visibleKeys: Set<string
   const allRoleIds = roles.map((r) => r.id);
   const db = supabaseAdmin();
 
-  for (const leaf of allLeaves()) {
-    if (leaf.locked) continue;
-    const row = rowFor(rows, leaf.key, allRoleIds, leaf.defaultAdminOnly);
-    const shouldBeVisible = visibleKeys.has(leaf.key);
+  const keys: { key: string; defaultAdminOnly: boolean }[] = [
+    ...allLeaves()
+      .filter((leaf) => !leaf.locked)
+      .map((leaf) => ({ key: leaf.key, defaultAdminOnly: leaf.defaultAdminOnly })),
+    ...EXTRA_CAPABILITIES.map((cap) => ({ key: cap.key, defaultAdminOnly: false })),
+  ];
+
+  for (const { key, defaultAdminOnly } of keys) {
+    const row = rowFor(rows, key, allRoleIds, defaultAdminOnly);
+    const shouldBeVisible = visibleKeys.has(key);
     const isVisible = row.visible_role_ids.includes(roleId);
     if (shouldBeVisible === isVisible) continue;
 
     const nextRoleIds = shouldBeVisible ? [...row.visible_role_ids, roleId] : row.visible_role_ids.filter((id) => id !== roleId);
-    const { error } = await db.from("panel_modules").upsert({ key: leaf.key, visible_role_ids: nextRoleIds }, { onConflict: "key" });
+    const { error } = await db.from("panel_modules").upsert({ key, visible_role_ids: nextRoleIds }, { onConflict: "key" });
     if (error) throw new Error(error.message);
   }
 }

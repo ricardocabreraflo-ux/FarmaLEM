@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
 import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listCutsForMonth, listCutsForRange, getCutPhotoUrl, getPendingCashCollection } from "@/lib/cuts";
+import { hasCapability } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { CutsList } from "@/components/admin/CutsList";
 import { MonthPicker } from "@/components/admin/MonthPicker";
@@ -27,12 +28,39 @@ export default async function CortesPage({
 }) {
   const session = await requireSession();
   const isAdmin = session.role === "admin";
-  const { mes, guardado, desde, hasta } = await searchParams;
+  const { guardado } = await searchParams;
+
+  const profile = await getProfileById(session.uid);
+  const canViewFull = await hasCapability("cortes:reporte", isAdmin, profile?.role_id ?? null);
+
+  if (!canViewFull) {
+    return (
+      <AdminShell activeHref="/admin/cortes" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
+        <h1 className="font-display text-2xl text-admin-ink">Cortes</h1>
+        <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Un registro por trabajador y turno.</p>
+
+        {guardado === "1" && (
+          <>
+            <p className="mt-4 rounded-xl bg-admin-ok-bg px-4 py-3 text-[0.85rem] font-semibold text-admin-ok-text">✓ Corte guardado correctamente.</p>
+            <script dangerouslySetInnerHTML={{ __html: `try{localStorage.removeItem("farmalem-cutform-draft")}catch(e){}` }} />
+          </>
+        )}
+
+        <Link
+          href="/admin/cortes/nuevo"
+          className="mt-5 block w-full max-w-[380px] rounded-2xl bg-admin-primary px-6 py-5 text-center text-[0.95rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
+        >
+          + Capturar corte
+        </Link>
+      </AdminShell>
+    );
+  }
+
+  const { mes, desde, hasta } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
   const inRange = Boolean(desde && hasta);
 
-  const [profile, cuts, employees, pendingCash] = await Promise.all([
-    getProfileById(session.uid),
+  const [cuts, employees, pendingCash] = await Promise.all([
     inRange ? listCutsForRange(desde!, hasta!, isAdmin ? undefined : session.uid) : listCutsForMonth(month, isAdmin ? undefined : session.uid),
     listProfiles(),
     isAdmin ? getPendingCashCollection() : Promise.resolve(null),
@@ -57,9 +85,11 @@ export default async function CortesPage({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-2xl text-admin-ink">Cortes</h1>
         <div className="flex items-center gap-3">
-          <Link href={`/admin/cortes/reporte?mes=${month}`} target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
-            Reporte mensual
-          </Link>
+          {isAdmin && (
+            <Link href={`/admin/cortes/reporte?mes=${month}`} target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+              Reporte mensual
+            </Link>
+          )}
           <Link
             href="/admin/cortes/nuevo"
             className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"

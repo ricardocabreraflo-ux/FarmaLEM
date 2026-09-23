@@ -6,7 +6,7 @@ import { saveBreakevenMargin } from "@/lib/breakeven";
 import { saveDeletePinHash } from "@/lib/security-settings";
 import { hashPassword } from "@/lib/password";
 import { logAction } from "@/lib/history";
-import { getModuleEditorStructure, movePanelModule, updatePanelModule, setRolePermissions, type ModuleEditorEntry } from "@/lib/panel-modules";
+import { getModuleEditorStructure, getRolePermissionsEntries, movePanelModule, updatePanelModule, setRolePermissions, type ModuleEditorEntry } from "@/lib/panel-modules";
 import { createRole, deleteRole, duplicateRole, listRoles, renameRole, type Role } from "@/lib/roles";
 import {
   createStockoutCategory,
@@ -75,10 +75,16 @@ async function moduleResult(ok: true): Promise<ModuleActionResult> {
   return { ok, entries, roles };
 }
 
+/** Igual que moduleResult, pero con las capacidades extra incluidas — solo para el modal de permisos por rol. */
+async function rolePermissionsResult(ok: true): Promise<ModuleActionResult> {
+  const { roles, entries } = await getRolePermissionsEntries();
+  return { ok, entries, roles };
+}
+
 /** Para abrir "Permisos" desde un rol en Usuarios · Roles: trae la estructura del panel bajo demanda. */
 export async function getModuleEditorStructureAction(): Promise<ModuleActionResult> {
   await requireAdminSession();
-  return moduleResult(true);
+  return rolePermissionsResult(true);
 }
 
 /** Botón "Guardar" del modal de permisos por rol — aplica todos los cambios marcados de una vez. */
@@ -91,7 +97,7 @@ export async function saveRolePermissionsAction(roleId: string, roleName: string
   }
   await logAction(session.uid, "Guardó permisos de rol", roleName);
   revalidatePath("/admin/configuracion");
-  return moduleResult(true);
+  return rolePermissionsResult(true);
 }
 
 export async function toggleModuleAction(key: string, enabled: boolean): Promise<ModuleActionResult> {
