@@ -941,10 +941,15 @@ const TUTORIALS: TutorialContent[] = [
   },
 ];
 
+/** Si falla la consulta (tabla sin migrar, corte de red…), no tumbamos Ayuda: todo se ve visible por default, igual que un tutorial sin fila todavía. */
 async function visibilityMap(): Promise<Map<string, boolean>> {
-  const { data, error } = await supabaseAdmin().from("tutorial_settings").select("slug, visible");
-  if (error) throw new Error(`No se pudo leer la configuración de Ayuda: ${error.message}`);
-  return new Map((data ?? []).map((row) => [row.slug as string, row.visible as boolean]));
+  try {
+    const { data, error } = await supabaseAdmin().from("tutorial_settings").select("slug, visible");
+    if (error) throw new Error(error.message);
+    return new Map((data ?? []).map((row) => [row.slug as string, row.visible as boolean]));
+  } catch {
+    return new Map();
+  }
 }
 
 /** Sin fila en tutorial_settings todavía = visible por default (recién agregado y nadie lo ha apagado). */
