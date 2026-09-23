@@ -18,6 +18,7 @@ cada paso.
 | 10 | [Cómo usar el Calendario de actividades](10-actividades.md) | Todo el equipo |
 | 11 | [Cómo consultar el Catálogo de productos](11-catalogo.md) | Mostrador Plus (+ sección para administración) |
 | 12 | [Cómo usar Recepción de mercancía](12-compras.md) | Mostrador Plus (+ sección para administración) |
+| 13 | [Cómo consultar Proveedores](13-proveedores.md) | Mostrador Plus (+ sección para administración) |
 
 Se irán agregando más conforme se usen nuevas pantallas del panel (sueldos,
 inventario, etc.).
