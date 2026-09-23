@@ -10,4 +10,4 @@
  *   Y (1.1 → 1.2)     función nueva para el equipo.
  *   X (1.x → 2.0)     cambio muy grande/drástico en el panel.
  */
-export const APP_VERSION = "1.2";
+export const APP_VERSION = "1.3";
