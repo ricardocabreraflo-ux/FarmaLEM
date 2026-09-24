@@ -49,6 +49,17 @@ function isExpiringSoon(dateStr: string, today: string): boolean {
   threshold.setMonth(threshold.getMonth() + EXPIRY_WARNING_MONTHS);
   return new Date(`${dateStr}T12:00:00`) <= threshold;
 }
+
+/** La lectura del ticket (o el proveedor) a veces trae una fecha que no existe (p. ej. 29 feb en un año no bisiesto) — Postgres la rechaza y tronaría el guardado completo. */
+function isValidCalendarDate(value: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return false;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  const date = new Date(y, mo - 1, d);
+  return date.getFullYear() === y && date.getMonth() === mo - 1 && date.getDate() === d;
+}
 function emptyLine(): DraftLine {
   return {
     key: newKey(),
@@ -350,6 +361,12 @@ export function ReceiptCaptureFlow({ suppliers: initialSuppliers, createdBy }: {
     if (!supplierId) return setError("Selecciona el proveedor.");
     if (supplierId === NEW_SUPPLIER && !newSupplierName.trim()) return setError("Escribe el nombre del proveedor nuevo.");
     if (!lines.length) return setError("No hay renglones que guardar.");
+    const badDateLines = lines.filter((l) => l.expiresOn && !isValidCalendarDate(l.expiresOn));
+    if (badDateLines.length > 0) {
+      return setError(
+        `La fecha de caducidad no existe en: ${badDateLines.map((l) => l.ticketDescription.trim() || l.description.trim() || "renglón sin descripción").join(", ")}. Corrígela o bórrala antes de guardar.`
+      );
+    }
 
     let finalSupplierId = supplierId;
     if (supplierId === NEW_SUPPLIER) {
