@@ -41,6 +41,7 @@ export function CutForm({
   const [cashDelivered, setCashDelivered] = useState("");
   const [nomina, setNomina] = useState("");
   const [hasCounted, setHasCounted] = useState(false);
+  const [cashBreakdown, setCashBreakdown] = useState<Record<string, number> | null>(null);
   const [showDenomModal, setShowDenomModal] = useState(false);
   const [restoredDraft, setRestoredDraft] = useState(false);
   const hydratedRef = useRef(false);
@@ -224,11 +225,14 @@ export function CutForm({
         )}
       </div>
 
+      <input type="hidden" name="cashBreakdown" value={cashBreakdown ? JSON.stringify(cashBreakdown) : ""} />
+
       <DenominationsModal
         show={showDenomModal}
         expected={expectedCash}
-        onConfirm={(computedTotal) => {
+        onConfirm={(computedTotal, breakdown) => {
           setCashDelivered(computedTotal.toFixed(2));
+          setCashBreakdown(breakdown);
           setHasCounted(true);
           setShowDenomModal(false);
         }}

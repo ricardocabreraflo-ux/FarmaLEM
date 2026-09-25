@@ -7,7 +7,7 @@ interface Denomination {
   value: number;
 }
 
-const BILLS: Denomination[] = [
+export const BILLS: Denomination[] = [
   { label: "$1000", value: 1000 },
   { label: "$500", value: 500 },
   { label: "$200", value: 200 },
@@ -16,7 +16,7 @@ const BILLS: Denomination[] = [
   { label: "$20", value: 20 },
 ];
 
-const COINS: Denomination[] = [
+export const COINS: Denomination[] = [
   { label: "$20", value: 20 },
   { label: "$10", value: 10 },
   { label: "$5", value: 5 },
@@ -24,6 +24,11 @@ const COINS: Denomination[] = [
   { label: "$1", value: 1 },
   { label: "$0.50", value: 0.5 },
 ];
+
+/** Llave del conteo por denominación (usada en el estado local y guardada en cuts.cash_breakdown). */
+export function denomKey(group: "billete" | "moneda", value: number): string {
+  return `${group}-${value}`;
+}
 
 function fmtMoney(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(n);
@@ -37,7 +42,7 @@ export function DenominationsModal({
 }: {
   show: boolean;
   expected?: number;
-  onConfirm: (total: number) => void;
+  onConfirm: (total: number, breakdown: Record<string, number>) => void;
   onClose: () => void;
 }) {
   // El estado vive mientras el componente esté montado, así que aunque se
@@ -47,15 +52,22 @@ export function DenominationsModal({
 
   if (!show) return null;
 
-  function key(group: "billete" | "moneda", value: number) {
-    return `${group}-${value}`;
-  }
+  const key = denomKey;
 
   function total() {
     let sum = 0;
     for (const d of BILLS) sum += (Number(counts[key("billete", d.value)]) || 0) * d.value;
     for (const d of COINS) sum += (Number(counts[key("moneda", d.value)]) || 0) * d.value;
     return sum;
+  }
+
+  function breakdown(): Record<string, number> {
+    const out: Record<string, number> = {};
+    for (const [k, v] of Object.entries(counts)) {
+      const n = Number(v);
+      if (n > 0) out[k] = n;
+    }
+    return out;
   }
 
   const grandTotal = total();
@@ -118,7 +130,7 @@ export function DenominationsModal({
             </button>
             <button
               type="button"
-              onClick={() => onConfirm(grandTotal)}
+              onClick={() => onConfirm(grandTotal, breakdown())}
               className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"
             >
               Usar este total

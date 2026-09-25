@@ -31,7 +31,12 @@ export default async function CortesPage({
   const { guardado } = await searchParams;
 
   const profile = await getProfileById(session.uid);
-  const canViewFull = await hasCapability("cortes:reporte", isAdmin, profile?.role_id ?? null);
+  // Poder revisar/aprobar cortes de otras personas implica también ver el reporte
+  // completo (no tendría caso aprobar lo que no puedes ver) y ver los cortes de
+  // todo el equipo, no solo los propios.
+  const canReview = isAdmin || (await hasCapability("cortes:revisar", isAdmin, profile?.role_id ?? null));
+  const canViewFull = canReview || (await hasCapability("cortes:reporte", isAdmin, profile?.role_id ?? null));
+  const seeAllEmployees = isAdmin || canReview;
 
   if (!canViewFull) {
     return (
@@ -61,7 +66,9 @@ export default async function CortesPage({
   const inRange = Boolean(desde && hasta);
 
   const [cuts, employees, pendingCash] = await Promise.all([
-    inRange ? listCutsForRange(desde!, hasta!, isAdmin ? undefined : session.uid) : listCutsForMonth(month, isAdmin ? undefined : session.uid),
+    inRange
+      ? listCutsForRange(desde!, hasta!, seeAllEmployees ? undefined : session.uid)
+      : listCutsForMonth(month, seeAllEmployees ? undefined : session.uid),
     listProfiles(),
     isAdmin ? getPendingCashCollection() : Promise.resolve(null),
   ]);
@@ -159,7 +166,7 @@ export default async function CortesPage({
       </section>
 
       <div className="mt-6">
-        <CutsList cuts={rows} isAdmin={isAdmin} employees={employees.filter((e) => e.role === "employee")} />
+        <CutsList cuts={rows} isAdmin={isAdmin} canReview={canReview} employees={employees.filter((e) => e.role === "employee")} />
       </div>
     </AdminShell>
   );

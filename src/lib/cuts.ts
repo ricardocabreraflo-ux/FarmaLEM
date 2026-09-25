@@ -20,6 +20,8 @@ export interface Cut {
   approved_at: string | null;
   notes: string | null;
   cash_collected: boolean;
+  /** Conteo de billetes/monedas de "Contar efectivo" — llaves "billete-1000", "moneda-0.5", etc.; null si se escribió el total directo. */
+  cash_breakdown: Record<string, number> | null;
   created_at: string;
 }
 
@@ -88,6 +90,7 @@ interface CreateCutInput {
   createdBy: string;
   status: CutStatus;
   photoPath: string | null;
+  cashBreakdown: Record<string, number> | null;
 }
 
 export async function createCut(input: CreateCutInput): Promise<void> {
@@ -102,6 +105,7 @@ export async function createCut(input: CreateCutInput): Promise<void> {
     created_by: input.createdBy,
     status: input.status,
     photo_path: input.photoPath,
+    cash_breakdown: input.cashBreakdown,
   });
   if (error) {
     if (error.code === "23505") throw new Error("Ya existe un corte capturado para esa fecha y ese turno.");
@@ -117,6 +121,7 @@ interface ReplaceCutInput {
   cashDelivered: number;
   status: CutStatus;
   photoPath: string | null;
+  cashBreakdown: Record<string, number> | null;
 }
 
 /**
@@ -134,6 +139,7 @@ export async function replaceCut(id: string, input: ReplaceCutInput): Promise<vo
       cash_delivered: input.cashDelivered,
       status: input.status,
       photo_path: input.photoPath,
+      cash_breakdown: input.cashBreakdown,
     })
     .eq("id", id);
   if (error) {

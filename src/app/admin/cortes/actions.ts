@@ -18,11 +18,33 @@ import {
 } from "@/lib/cuts";
 import { createWithdrawal } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
+import { hasCapability } from "@/lib/panel-modules";
 import { logAction } from "@/lib/history";
 import { sendCutWhatsAppNotification } from "@/lib/whatsapp";
 
 export interface CutFormState {
   error?: string;
+}
+
+/** Igual que requireAdminSession, pero también deja pasar a quien tenga la capacidad "cortes:revisar" (Configuración → Permisos → Capacidades extra). */
+async function requireCutReviewSession() {
+  const session = await requireSession();
+  if (session.role === "admin") return session;
+  const profile = await getProfileById(session.uid);
+  if (!(await hasCapability("cortes:revisar", false, profile?.role_id ?? null))) redirect("/admin/cortes");
+  return session;
+}
+
+/** El campo oculto "cashBreakdown" trae el JSON armado por DenominationsModal, o vacío si se escribió el total a mano. */
+function parseCashBreakdown(raw: FormDataEntryValue | null): Record<string, number> | null {
+  if (typeof raw !== "string" || !raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, number>;
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function createCutForm(_prevState: CutFormState | undefined, formData: FormData): Promise<CutFormState> {
@@ -38,6 +60,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
   const nomina = Number(formData.get("nomina") ?? 0);
   const markPending = formData.get("markPending") === "1";
   const photo = formData.get("photo");
+  const cashBreakdown = parseCashBreakdown(formData.get("cashBreakdown"));
 
   // Una empleada solo puede capturar su propio corte; solo administración
   // puede elegir a nombre de quién se está capturando.
@@ -70,9 +93,9 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
 
   try {
     if (existing) {
-      await replaceCut(existing.id, { total, cash, card, cashDelivered, status, photoPath });
+      await replaceCut(existing.id, { total, cash, card, cashDelivered, status, photoPath, cashBreakdown });
     } else {
-      await createCut({ cutDate, shift, employeeId, total, cash, card, cashDelivered, createdBy: session.uid, status, photoPath });
+      await createCut({ cutDate, shift, employeeId, total, cash, card, cashDelivered, createdBy: session.uid, status, photoPath, cashBreakdown });
     }
   } catch (err) {
     return { error: err instanceof Error ? err.message : "No se pudo guardar el corte." };
@@ -111,7 +134,7 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
 }
 
 export async function updateCutForm(_prevState: CutFormState | undefined, formData: FormData): Promise<CutFormState> {
-  const session = await requireAdminSession();
+  const session = await requireCutReviewSession();
 
   const id = String(formData.get("id") ?? "");
   const cutDate = String(formData.get("cutDate") ?? "");
@@ -138,7 +161,7 @@ export async function updateCutForm(_prevState: CutFormState | undefined, formDa
 }
 
 export async function approveCutAction(id: string) {
-  const session = await requireAdminSession();
+  const session = await requireCutReviewSession();
   await approveCut(id, session.uid);
   await logAction(session.uid, "Aprobó corte", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/cortes");

@@ -9,6 +9,7 @@ import { approveCutAction, bulkSetCutCashCollectedAction } from "@/app/admin/cor
 import { EditCutModal } from "@/components/admin/EditCutModal";
 import { CutNoteModal } from "@/components/admin/CutNoteModal";
 import { CutCashCollectedCheckbox } from "@/components/admin/CutCashCollectedCheckbox";
+import { CutBreakdownModal } from "@/components/admin/CutBreakdownModal";
 
 const STATUS_STYLE: Record<Cut["status"], string> = {
   "Por revisar": "bg-admin-pending-bg text-admin-pending-text",
@@ -29,10 +30,11 @@ interface Row extends Cut {
   photoUrl: string | null;
 }
 
-export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: boolean; employees: Profile[] }) {
+export function CutsList({ cuts, isAdmin, canReview, employees }: { cuts: Row[]; isAdmin: boolean; canReview: boolean; employees: Profile[] }) {
   const router = useRouter();
   const [editingCut, setEditingCut] = useState<Row | null>(null);
   const [notingCut, setNotingCut] = useState<Row | null>(null);
+  const [viewingBreakdown, setViewingBreakdown] = useState<Row | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkPending, startBulkTransition] = useTransition();
 
@@ -118,8 +120,9 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
               {isAdmin && <th className="px-5 py-3 font-medium">Nota</th>}
               {isAdmin && <th className="px-5 py-3 text-center font-medium">Recogido</th>}
               <th className="px-5 py-3"></th>
-              {isAdmin && <th className="px-5 py-3"></th>}
-              {isAdmin && <th className="px-5 py-3"></th>}
+              <th className="px-5 py-3"></th>
+              {canReview && <th className="px-5 py-3"></th>}
+              {canReview && <th className="px-5 py-3"></th>}
             </tr>
           </thead>
           <tbody>
@@ -128,10 +131,12 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
                 key={cut.id}
                 cut={cut}
                 isAdmin={isAdmin}
+                canReview={canReview}
                 selected={selected.has(cut.id)}
                 onToggleSelect={(checked) => toggleOne(cut.id, checked)}
                 onEdit={() => setEditingCut(cut)}
                 onNote={() => setNotingCut(cut)}
+                onViewBreakdown={() => setViewingBreakdown(cut)}
               />
             ))}
           </tbody>
@@ -140,6 +145,9 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
 
       {editingCut && <EditCutModal cut={editingCut} employees={employees} onClose={() => setEditingCut(null)} />}
       {notingCut && <CutNoteModal cutId={notingCut.id} initialNotes={notingCut.notes} onClose={() => setNotingCut(null)} />}
+      {viewingBreakdown && viewingBreakdown.cash_breakdown && (
+        <CutBreakdownModal breakdown={viewingBreakdown.cash_breakdown} cashDelivered={viewingBreakdown.cash_delivered} onClose={() => setViewingBreakdown(null)} />
+      )}
     </section>
   );
 }
@@ -147,17 +155,21 @@ export function CutsList({ cuts, isAdmin, employees }: { cuts: Row[]; isAdmin: b
 function CutRow({
   cut,
   isAdmin,
+  canReview,
   selected,
   onToggleSelect,
   onEdit,
   onNote,
+  onViewBreakdown,
 }: {
   cut: Row;
   isAdmin: boolean;
+  canReview: boolean;
   selected: boolean;
   onToggleSelect: (checked: boolean) => void;
   onEdit: () => void;
   onNote: () => void;
+  onViewBreakdown: () => void;
 }) {
   const [pending, startTransition] = useTransition();
   const [status, setStatus] = useState(cut.status);
@@ -204,7 +216,14 @@ function CutRow({
           </a>
         )}
       </td>
-      {isAdmin && (
+      <td className="px-5 py-3">
+        {cut.cash_breakdown && Object.keys(cut.cash_breakdown).length > 0 && (
+          <button type="button" onClick={onViewBreakdown} className="font-semibold text-admin-primary hover:underline">
+            Ver desglose
+          </button>
+        )}
+      </td>
+      {canReview && (
         <td className="px-5 py-3 text-right">
           {status !== "Aprobado" && (
             <button
@@ -223,7 +242,7 @@ function CutRow({
           )}
         </td>
       )}
-      {isAdmin && (
+      {canReview && (
         <td className="px-5 py-3 text-right">
           {isCutDateLocked(cut.cut_date) ? (
             <span className="text-[0.78rem] font-semibold text-admin-ink-soft" title="Junio 2026 y antes ya quedó cerrado.">

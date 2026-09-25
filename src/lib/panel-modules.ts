@@ -56,17 +56,23 @@ interface ExtraCapability {
   key: string;
   label: string;
   groupLabel: string;
+  /** true = nadie la tiene por default (hay que otorgarla a mano, para capacidades nuevas que dan permiso de escribir algo que antes era solo de admin). false = todos los roles la tienen por default (para no quitarle a nadie algo que ya podía ver). */
+  defaultAdminOnly: boolean;
 }
 
-const EXTRA_CAPABILITIES: ExtraCapability[] = [{ key: "cortes:reporte", label: "Cortes: ver el reporte completo (no solo capturar)", groupLabel: "Caja" }];
+const EXTRA_CAPABILITIES: ExtraCapability[] = [
+  { key: "cortes:reporte", label: "Cortes: ver el reporte completo (no solo capturar)", groupLabel: "Caja", defaultAdminOnly: false },
+  { key: "cortes:revisar", label: "Cortes: aprobar y editar cortes (revisión)", groupLabel: "Caja", defaultAdminOnly: true },
+];
 
 /** Para una capacidad extra (no un NavLeafDef): admin siempre puede; el resto según su rol. */
 export async function hasCapability(key: string, isAdmin: boolean, roleId: string | null): Promise<boolean> {
   if (isAdmin) return true;
   if (!roleId) return false;
+  const defaultAdminOnly = EXTRA_CAPABILITIES.find((c) => c.key === key)?.defaultAdminOnly ?? true;
   const [rows, roles] = await Promise.all([getPanelModuleRows(), listRoles()]);
   const allRoleIds = roles.map((r) => r.id);
-  return rowFor(rows, key, allRoleIds, false).visible_role_ids.includes(roleId);
+  return rowFor(rows, key, allRoleIds, defaultAdminOnly).visible_role_ids.includes(roleId);
 }
 
 // --- Menú resuelto para renderizar el panel (AdminShell) ---------------
@@ -194,8 +200,8 @@ export async function getRolePermissionsEntries(): Promise<{ roles: Role[]; entr
   const [rows, allRoleIds] = await Promise.all([getPanelModuleRows(), listRoles().then((rs) => rs.map((r) => r.id))]);
 
   const extraItems: ModuleEditorLeaf[] = EXTRA_CAPABILITIES.map((cap) => {
-    const row = rowFor(rows, cap.key, allRoleIds, false);
-    return { type: "leaf", key: cap.key, label: cap.label, locked: false, defaultAdminOnly: false, enabled: true, visibleRoleIds: row.visible_role_ids };
+    const row = rowFor(rows, cap.key, allRoleIds, cap.defaultAdminOnly);
+    return { type: "leaf", key: cap.key, label: cap.label, locked: false, defaultAdminOnly: cap.defaultAdminOnly, enabled: true, visibleRoleIds: row.visible_role_ids };
   });
   if (extraItems.length === 0) return { roles, entries };
   return { roles, entries: [...entries, { type: "group", key: "extra", label: "Capacidades extra", enabled: true, items: extraItems }] };
@@ -290,7 +296,7 @@ export async function setRolePermissions(roleId: string, visibleKeys: Set<string
     ...allLeaves()
       .filter((leaf) => !leaf.locked)
       .map((leaf) => ({ key: leaf.key, defaultAdminOnly: leaf.defaultAdminOnly })),
-    ...EXTRA_CAPABILITIES.map((cap) => ({ key: cap.key, defaultAdminOnly: false })),
+    ...EXTRA_CAPABILITIES.map((cap) => ({ key: cap.key, defaultAdminOnly: cap.defaultAdminOnly })),
   ];
 
   for (const { key, defaultAdminOnly } of keys) {
