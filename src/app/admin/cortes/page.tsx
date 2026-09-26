@@ -97,6 +97,11 @@ export default async function CortesPage({
               Reporte mensual
             </Link>
           )}
+          {canReview && (
+            <Link href="/admin/cortes/entrega" target="_blank" className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
+              Reporte de entrega
+            </Link>
+          )}
           <Link
             href="/admin/cortes/nuevo"
             className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"

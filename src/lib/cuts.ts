@@ -219,6 +219,26 @@ export async function getPendingCashCollection(): Promise<{ total: number; count
   return { total: rows.reduce((s, r) => s + r.cash_delivered, 0), count: rows.length };
 }
 
+/**
+ * Cortes ya Aprobados que todavía no se marcan "Recogido" — el detalle
+ * detrás de getPendingCashCollection, para el reporte de entrega de efectivo
+ * de quien los revisó. `approvedBy` filtra a solo los que esa persona aprobó
+ * (para que cada quien reporte lo que ella misma recibió y va a entregar).
+ */
+export async function listCutsPendingCollection(approvedBy?: string): Promise<Cut[]> {
+  let query = supabaseAdmin()
+    .from("cuts")
+    .select()
+    .eq("status", "Aprobado")
+    .eq("cash_collected", false)
+    .order("cut_date", { ascending: true })
+    .order("shift", { ascending: true });
+  if (approvedBy) query = query.eq("approved_by", approvedBy);
+  const { data, error } = await query;
+  if (error) throw new Error(`No se pudieron leer los cortes pendientes de entrega: ${error.message}`);
+  return data as Cut[];
+}
+
 export async function approveCut(id: string, approvedBy: string): Promise<void> {
   const { error } = await supabaseAdmin()
     .from("cuts")
