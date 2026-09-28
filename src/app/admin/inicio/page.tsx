@@ -213,15 +213,15 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
   const monday = mondayOf(today);
   const sunday = addDays(monday, 6);
 
-  const [profile, last, weekSales, bonusTiers, weekAttendance, weekCuts, announcements] = await Promise.all([
+  const [profile, last, weekSales, bonusTiers, weekAttendance, weekCuts] = await Promise.all([
     getProfileById(uid),
     lastEventToday(uid),
     computeWeekFromRecords(uid, monday, sunday, { includePending: true }),
     listBonusTiers(today.slice(0, 7)),
     listAttendanceForRange(monday, sunday),
     listCutsForRange(monday, sunday, uid),
-    listActiveAnnouncements(),
   ]);
+  const announcements = await listActiveAnnouncements(profile?.role_id ?? null);
 
   const shift = profile?.shift ?? "";
   const tiers = tierProgress(weekSales.sales, shift, bonusTiers);
