@@ -15,6 +15,7 @@ import {
   renameStockoutCategory,
   type StockoutCategory,
 } from "@/lib/stockout-categories";
+import { savePushSubscription, deletePushSubscription, hasPushSubscription, sendPushToAdmins, type PushSubscriptionInput } from "@/lib/push";
 
 export interface BreakevenMarginFormState {
   error?: string;
@@ -232,4 +233,42 @@ export async function deleteStockoutCategoryAction(id: string): Promise<Stockout
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar la categoría." };
   }
   return afterCategoryChange(session, "Borró categoría de negados", id);
+}
+
+export interface PushActionResult {
+  ok: boolean;
+  error?: string;
+  subscribed?: boolean;
+}
+
+export async function savePushSubscriptionAction(sub: PushSubscriptionInput): Promise<PushActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await savePushSubscription(session.uid, sub);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo activar la notificación." };
+  }
+  return { ok: true, subscribed: true };
+}
+
+export async function deletePushSubscriptionAction(endpoint: string): Promise<PushActionResult> {
+  await requireAdminSession();
+  try {
+    await deletePushSubscription(endpoint);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo desactivar la notificación." };
+  }
+  return { ok: true, subscribed: false };
+}
+
+export async function checkPushSubscriptionAction(endpoint: string): Promise<PushActionResult> {
+  const session = await requireAdminSession();
+  const subscribed = await hasPushSubscription(session.uid, endpoint);
+  return { ok: true, subscribed };
+}
+
+export async function sendTestPushAction(): Promise<PushActionResult> {
+  await requireAdminSession();
+  await sendPushToAdmins({ title: "FarmaLEM", body: "Notificación de prueba — si la ves, ya está listo." });
+  return { ok: true };
 }

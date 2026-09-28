@@ -11,6 +11,7 @@ import { DeletePinForm } from "@/components/admin/DeletePinForm";
 import { PanelModulesModal } from "@/components/admin/PanelModulesModal";
 import { RolesPanel } from "@/components/admin/RolesPanel";
 import { StockoutCategoriesPanel } from "@/components/admin/StockoutCategoriesPanel";
+import { PushNotificationSettings } from "@/components/admin/PushNotificationSettings";
 
 export const metadata: Metadata = { title: "Configuración" };
 export const dynamic = "force-dynamic";
@@ -70,6 +71,17 @@ export default async function ConfiguracionPage() {
           necesites.
         </p>
         <StockoutCategoriesPanel initialCategories={stockoutCategories} />
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">
+        <h2 className="font-display text-base text-admin-ink">Notificaciones</h2>
+        <p className="mt-1 text-[0.84rem] text-admin-ink-soft">
+          Aviso directo en este dispositivo (celular o computadora) cuando alguien marca su entrada o salida en el reloj checador — a diferencia de
+          WhatsApp, no depende de una plantilla aprobada por Meta. Se activa por separado en cada dispositivo donde quieras recibirlas.
+        </p>
+        <div className="mt-4">
+          <PushNotificationSettings />
+        </div>
       </section>
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">

@@ -4,6 +4,7 @@ import { upsertAttendance } from "@/lib/attendance";
 import { mexicoCityToday } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
 import { sendPunchWhatsAppNotification } from "@/lib/whatsapp";
+import { sendPushToAdmins } from "@/lib/push";
 
 export { mexicoCityToday };
 
@@ -73,6 +74,13 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
   }
 
   await sendPunchWhatsAppNotification({ employeeName: employee.full_name, type, shift: employee.shift, occurredAt });
+
+  const timeLabel = new Date(occurredAt).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
+  await sendPushToAdmins({
+    title: `${type === "Entrada" ? "🟢" : "🔴"} ${employee.full_name}`,
+    body: `Marcó su ${type} del turno ${employee.shift} a las ${timeLabel}`,
+    url: "/admin/reloj/bitacora",
+  });
 
   return { type, occurredAt };
 }
