@@ -26,7 +26,10 @@ export interface PushPayload {
 function configureWebPush(): boolean {
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  if (!publicKey || !privateKey) return false;
+  if (!publicKey || !privateKey) {
+    console.warn("[push] faltan las llaves VAPID — se omite el aviso");
+    return false;
+  }
   webPush.setVapidDetails("mailto:ricardo.cabreraflo@gmail.com", publicKey, privateKey);
   return true;
 }

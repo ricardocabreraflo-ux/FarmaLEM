@@ -21,6 +21,7 @@ import { getProfileById } from "@/lib/profiles";
 import { hasCapability } from "@/lib/panel-modules";
 import { logAction } from "@/lib/history";
 import { sendCutWhatsAppNotification } from "@/lib/whatsapp";
+import { sendPushToAdmins } from "@/lib/push";
 
 export interface CutFormState {
   error?: string;
@@ -127,6 +128,11 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
     shift,
     cutDate,
     total,
+  });
+  await sendPushToAdmins({
+    title: `💰 Corte ${shift}`,
+    body: `${employeeProfile?.full_name ?? "Equipo"} registró la venta del día: $${total.toFixed(2)}`,
+    url: "/admin/cortes",
   });
 
   revalidatePath("/admin/cortes");
