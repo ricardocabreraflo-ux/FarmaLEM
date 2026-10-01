@@ -118,8 +118,12 @@ Deno.serve(async (req) => {
     try {
       await saveRest(db, raw, input, receiptId, uploadedPaths);
     } catch (err) {
-      if (uploadedPaths.length > 0) await raw.storage.from(PHOTO_BUCKET).remove(uploadedPaths).catch(() => {});
-      await db.from("purchase_receipts").delete().eq("id", receiptId).catch(() => {});
+      try {
+        if (uploadedPaths.length > 0) await raw.storage.from(PHOTO_BUCKET).remove(uploadedPaths);
+        await db.from("purchase_receipts").delete().eq("id", receiptId);
+      } catch (cleanupErr) {
+        console.error("save-receipt cleanup failed:", cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr));
+      }
       throw err;
     }
 
@@ -175,13 +179,17 @@ async function saveRest(
   if (linesErr) throw new Error(`No se pudieron guardar los renglones: ${linesErr.message}`);
 
   const resolvedIdx: number[] = [];
-  const equivalences: Record<string, unknown>[] = [];
+  // Por supplier_code, no por línea: un mismo código de proveedor puede venir
+  // repetido en dos renglones del ticket, y un solo upsert con ON CONFLICT no
+  // admite afectar la misma fila dos veces ("cannot affect row a second
+  // time") — se queda con la última ocurrencia.
+  const equivalences = new Map<string, Record<string, unknown>>();
   for (let i = 0; i < input.lines.length; i++) {
     const l = input.lines[i];
     if (!isResolved(l)) continue;
     resolvedIdx.push(i);
     if (l.supplierCode) {
-      equivalences.push({
+      equivalences.set(l.supplierCode, {
         supplier_id: input.supplierId,
         supplier_code: l.supplierCode,
         supplier_description: l.ticketDescription,
@@ -249,12 +257,12 @@ async function saveRest(
     if (linkErr) throw new Error(`No se pudo ligar los renglones a sus movimientos: ${linkErr.message}`);
   }
 
-  if (equivalences.length > 0) {
+  if (equivalences.size > 0) {
     const now = new Date().toISOString();
     const { error: eqErr } = await db
       .from("supplier_products")
       .upsert(
-        equivalences.map((e) => ({ ...e, last_seen_at: now, updated_at: now })),
+        [...equivalences.values()].map((e) => ({ ...e, last_seen_at: now, updated_at: now })),
         { onConflict: "supplier_id,supplier_code" }
       );
     if (eqErr) throw new Error(`No se pudieron guardar las equivalencias: ${eqErr.message}`);
