@@ -1,6 +1,11 @@
 import "server-only";
 import webPush from "web-push";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { logAction } from "@/lib/history";
+
+// TEMPORAL: para diagnosticar por qué no llegan los avisos en producción —
+// quitar junto con las llamadas a logAction() de abajo una vez resuelto.
+const DEBUG_ADMIN_ID = "02c49bd0-7202-4fad-b937-e939562a4c8a";
 
 /**
  * Notificaciones push del navegador/PWA (Web Push) — a diferencia de WhatsApp,
@@ -60,10 +65,16 @@ export async function hasPushSubscription(employeeId: string, endpoint: string):
  */
 export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
   try {
-    if (!configureWebPush()) return;
+    if (!configureWebPush()) {
+      await logAction(DEBUG_ADMIN_ID, "[debug push]", "faltan llaves VAPID en runtime");
+      return;
+    }
     const db = supabaseAdmin();
     const { data: admins, error: adminsErr } = await db.from("profiles").select("id").eq("role", "admin");
-    if (adminsErr || !admins || admins.length === 0) return;
+    if (adminsErr || !admins || admins.length === 0) {
+      await logAction(DEBUG_ADMIN_ID, "[debug push]", `sin admins — error: ${adminsErr?.message ?? "ninguno"}`);
+      return;
+    }
 
     const { data: subs, error: subsErr } = await db
       .from("push_subscriptions")
@@ -72,14 +83,21 @@ export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
         "employee_id",
         admins.map((a) => a.id)
       );
-    if (subsErr || !subs || subs.length === 0) return;
+    if (subsErr || !subs || subs.length === 0) {
+      await logAction(DEBUG_ADMIN_ID, "[debug push]", `sin suscripciones — error: ${subsErr?.message ?? "ninguna"}`);
+      return;
+    }
+
+    await logAction(DEBUG_ADMIN_ID, "[debug push]", `intentando enviar a ${subs.length} suscripción(es): ${payload.title}`);
 
     await Promise.all(
       subs.map(async (s) => {
         try {
           await webPush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(payload));
+          await logAction(DEBUG_ADMIN_ID, "[debug push]", `OK · ${s.endpoint.slice(0, 40)}`);
         } catch (err) {
           const statusCode = (err as { statusCode?: number })?.statusCode;
+          await logAction(DEBUG_ADMIN_ID, "[debug push]", `FAIL ${statusCode} · ${s.endpoint.slice(0, 40)} · ${err instanceof Error ? err.message : String(err)}`);
           if (statusCode === 404 || statusCode === 410) {
             await deletePushSubscription(s.endpoint);
           } else {
@@ -89,6 +107,7 @@ export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
       })
     );
   } catch (err) {
+    await logAction(DEBUG_ADMIN_ID, "[debug push]", `error inesperado: ${err instanceof Error ? err.message : String(err)}`);
     console.error("[push] error inesperado:", err instanceof Error ? err.message : err);
   }
 }
