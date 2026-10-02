@@ -62,6 +62,9 @@ export const NAV_STRUCTURE: NavEntryDef[] = [
     leaf("/admin/compras", "Recepción de mercancía", "IconCompras", true),
     leaf("/admin/catalogo", "Catálogo de productos", "IconVentas", true),
     leaf("/admin/negados", "Negados y faltantes", "IconNegados", false),
+    // admin-only por ahora: todavía no se publica a vendedoras (pendiente de que
+    // Ricardo lo revise y decida habilitarlo desde Configuración > Permisos).
+    leaf("/admin/caducidad-corta", "Caducidad corta", "IconCaducidad", true),
   ]),
   group("finanzas", "Finanzas", "IconFinanzas", [
     leaf("/admin/ventas", "Comparativa de ventas", "IconVentas", true),

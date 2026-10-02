@@ -328,6 +328,17 @@ export function IconNegados({ className }: { className?: string }) {
   );
 }
 
+export function IconCaducidad({ className }: { className?: string }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 3h12" />
+      <path d="M6 21h12" />
+      <path d="M8 3c0 4 2.5 5.5 4 7.5C13.5 8.5 16 7 16 3" />
+      <path d="M8 21c0-4 2.5-5.5 4-7.5 1.5 2 4 3.5 4 7.5" />
+    </svg>
+  );
+}
+
 export function IconAyuda({ className }: { className?: string }) {
   return (
     <svg {...base} className={className}>
