@@ -1,4 +1,4 @@
-import type { CalendarDay } from "@/lib/actividades";
+import type { CalendarDay, InventoryCategory } from "@/lib/actividades";
 import { INVENTORY_CATEGORIES } from "@/lib/actividades";
 
 const WEEKDAY_HEADS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -20,6 +20,18 @@ export function CategoryLegend() {
   );
 }
 
+function CategoryBadge({ prefix, category }: { prefix: string; category: InventoryCategory }) {
+  return (
+    <span
+      className="inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[0.66rem] font-bold whitespace-nowrap"
+      style={{ background: category.softVar, color: category.colorVar }}
+    >
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: category.colorVar }} />
+      {prefix} {category.label}
+    </span>
+  );
+}
+
 export function ActivityCalendarGrid({ weeks }: { weeks: CalendarDay[][] }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
@@ -37,13 +49,8 @@ export function ActivityCalendarGrid({ weeks }: { weeks: CalendarDay[][] }) {
             className={`flex min-h-[5.4rem] flex-col gap-1.5 border-r border-b border-admin-border p-2 ${day.inMonth ? "" : "opacity-45"}`}
           >
             <span className="font-display text-[0.85rem] font-bold text-admin-ink">{day.day}</span>
-            <span
-              className="inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[0.66rem] font-bold whitespace-nowrap"
-              style={{ background: day.category.softVar, color: day.category.colorVar }}
-            >
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: day.category.colorVar }} />
-              {day.category.label}
-            </span>
+            {day.categoryMatutino && <CategoryBadge prefix="M" category={day.categoryMatutino} />}
+            {day.categoryVespertino && <CategoryBadge prefix="V" category={day.categoryVespertino} />}
             {day.weekendShiftLabel && (
               <span className="text-[0.62rem] leading-tight text-admin-ink-soft">+ vitrina/anaqueles · {day.weekendShiftLabel}</span>
             )}

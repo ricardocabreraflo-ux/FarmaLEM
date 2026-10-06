@@ -38,7 +38,7 @@ export default async function ActividadesPage({ searchParams }: { searchParams: 
         </Link>
       </div>
       <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">
-        Limpieza semanal por anaquel (fija) más el inventario del día (rota solo, sin repetirse, entre las 8 categorías).
+        Limpieza semanal por anaquel (fija) más el inventario del día por turno (M = Matutino, V = Vespertino — cada quien rota solo, sin repetirse, entre las 8 categorías).
       </p>
 
       <MonthPicker month={month} basePath="/admin/actividades" />
@@ -51,8 +51,9 @@ export default async function ActividadesPage({ searchParams }: { searchParams: 
 
       <h2 className="mt-6 font-display text-lg text-admin-ink">Inventario del día &middot; {monthLabel(month)}</h2>
       <p className="mt-1 text-[0.82rem] text-admin-ink-soft">
-        Se cuenta entre las que estén ese día, sin importar el turno. Sábado y domingo además llevan la vitrina y los 2 anaqueles del turno en
-        curso — eso lo define{" "}
+        Cada turno cuenta su propia categoría — matutino y vespertino nunca cuentan la misma el mismo día. Sábado solo trabaja matutino y domingo
+        solo vespertino, así que ese día nada más cuenta el turno que está, y además lleva la vitrina y los 2 anaqueles que le tocan — eso lo
+        define{" "}
         <Link href="/admin/anaqueles" className="font-semibold text-admin-primary hover:underline">
           Distribución de anaqueles
         </Link>

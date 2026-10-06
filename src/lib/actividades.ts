@@ -7,8 +7,8 @@ export interface InventoryCategory {
 
 /**
  * Las 8 categorías de inventario de la farmacia, en el orden fijo del ciclo
- * de rotación. El orden importa: define qué categoría cae cada día (ver
- * categoryForDate).
+ * de rotación. El orden importa: define qué categoría le toca a cada turno
+ * cada día (ver categoryForShift).
  */
 export const INVENTORY_CATEGORIES: InventoryCategory[] = [
   { key: "sueltos", label: "Sueltos", colorVar: "var(--admin-primary)", softVar: "var(--admin-primary-soft)" },
@@ -23,24 +23,37 @@ export const INVENTORY_CATEGORIES: InventoryCategory[] = [
 
 /**
  * Día 0 del ciclo — a partir de aquí se cuenta cuántos días han pasado para
- * saber qué categoría toca. Como el ciclo es de 8 días y la semana es de 7,
- * la categoría de cada día de la semana va recorriendo la semana poco a
- * poco (nunca se queda pegada al mismo día) sin necesitar ningún ajuste
- * manual mes a mes.
+ * saber qué categoría le toca a matutino ese día; vespertino va 4 categorías
+ * adelante (la mitad del ciclo de 8), así nunca coincide con matutino el
+ * mismo día y, con el paso de los días, igual va recorriendo las 8 sin
+ * repetirse. Domingo no trabaja matutino y sábado no trabaja vespertino —
+ * ese día nada más se cuenta el turno que sí está.
  */
 const ROTATION_EPOCH = new Date(Date.UTC(2026, 0, 1));
+const VESPERTINO_OFFSET = 4; // mitad de las 8 categorías
+
+/** domingo=0 ... sábado=6 (Date.getUTCDay()). */
+const MATUTINO_OFF_WEEKDAY = 0; // domingo
+const VESPERTINO_OFF_WEEKDAY = 6; // sábado
 
 function daysSinceEpoch(date: Date): number {
   const utcDate = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
   return Math.round((utcDate - ROTATION_EPOCH.getTime()) / 86_400_000);
 }
 
-/** dateStr en formato 'YYYY-MM-DD'. */
-export function categoryForDate(dateStr: string): InventoryCategory {
+function categoryForOffset(count: number): InventoryCategory {
+  const idx = ((count % 8) + 8) % 8;
+  return INVENTORY_CATEGORIES[idx];
+}
+
+/** dateStr en formato 'YYYY-MM-DD'. null si ese turno no trabaja ese día de la semana. */
+export function categoryForShift(dateStr: string, shift: "matutino" | "vespertino"): InventoryCategory | null {
   const [y, m, d] = dateStr.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
-  const idx = ((daysSinceEpoch(date) % 8) + 8) % 8;
-  return INVENTORY_CATEGORIES[idx];
+  const offWeekday = shift === "matutino" ? MATUTINO_OFF_WEEKDAY : VESPERTINO_OFF_WEEKDAY;
+  if (date.getUTCDay() === offWeekday) return null;
+  const count = daysSinceEpoch(date) + (shift === "vespertino" ? VESPERTINO_OFFSET : 0);
+  return categoryForOffset(count);
 }
 
 export interface CalendarDay {
@@ -49,7 +62,8 @@ export interface CalendarDay {
   inMonth: boolean;
   isWeekend: boolean;
   weekendShiftLabel: string | null;
-  category: InventoryCategory;
+  categoryMatutino: InventoryCategory | null;
+  categoryVespertino: InventoryCategory | null;
 }
 
 const WEEKEND_SHIFT_LABEL: Record<number, string | null> = {
@@ -89,7 +103,8 @@ export function buildMonthCalendar(month: string): CalendarDay[][] {
         inMonth: cursor.getUTCMonth() + 1 === m && cursor.getUTCFullYear() === y,
         isWeekend: weekday === 0 || weekday === 6,
         weekendShiftLabel: WEEKEND_SHIFT_LABEL[weekday] ?? null,
-        category: categoryForDate(dateStr),
+        categoryMatutino: categoryForShift(dateStr, "matutino"),
+        categoryVespertino: categoryForShift(dateStr, "vespertino"),
       });
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }
