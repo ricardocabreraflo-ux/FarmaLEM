@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { buildMonthCalendar } from "@/lib/actividades";
+import { listInventoryChecksForMonth } from "@/lib/activity-inventory-checks";
 import { mexicoCityToday } from "@/lib/dates";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MonthPicker } from "@/components/admin/MonthPicker";
@@ -20,11 +21,12 @@ function monthLabel(month: string) {
 
 export default async function ActividadesPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const session = await requireSession();
+  const isAdmin = session.role === "admin";
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
 
-  const profile = await getProfileById(session.uid);
   const weeks = buildMonthCalendar(month);
+  const [profile, checkedKeys] = await Promise.all([getProfileById(session.uid), isAdmin ? listInventoryChecksForMonth(month) : Promise.resolve(undefined)]);
 
   return (
     <AdminShell activeHref="/admin/actividades" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -63,7 +65,7 @@ export default async function ActividadesPage({ searchParams }: { searchParams: 
         <CategoryLegend />
       </div>
       <div className="mt-3">
-        <ActivityCalendarGrid weeks={weeks} />
+        <ActivityCalendarGrid weeks={weeks} checkedKeys={checkedKeys} showChecks={isAdmin} />
       </div>
     </AdminShell>
   );
