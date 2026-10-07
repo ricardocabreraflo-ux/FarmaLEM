@@ -10,6 +10,7 @@ import { lastEventToday, mexicoCityToday, type TimeClockEvent } from "@/lib/time
 import { addDays, mondayOf } from "@/lib/dates";
 import { listActiveAnnouncements } from "@/lib/announcements";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AnnouncementAckButton } from "@/components/admin/AnnouncementAckButton";
 
 export const metadata: Metadata = { title: "Inicio" };
 export const dynamic = "force-dynamic";
@@ -221,7 +222,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
     listAttendanceForRange(monday, sunday),
     listCutsForRange(monday, sunday, uid),
   ]);
-  const announcements = await listActiveAnnouncements(profile?.role_id ?? null);
+  const announcements = await listActiveAnnouncements(profile?.role_id ?? null, uid);
 
   const shift = profile?.shift ?? "";
   const tiers = tierProgress(weekSales.sales, shift, bonusTiers);
@@ -248,8 +249,8 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
           <span className="text-[0.78rem] font-bold uppercase tracking-wide text-admin-ink-soft">Novedades del panel</span>
           <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
             {announcements.map((a) => {
-              const card = (
-                <div className="w-[380px] max-w-[85vw] shrink-0 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+              const body = (
+                <>
                   <div className="aspect-[900/373] w-full bg-admin-bg">
                     {a.imageUrl && <img src={a.imageUrl} alt={a.title} className="h-full w-full object-cover object-top" />}
                   </div>
@@ -257,14 +258,21 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
                     <p className="font-semibold text-admin-ink">{a.title}</p>
                     <p className="mt-0.5 text-[0.8rem] text-admin-ink-soft">{a.description}</p>
                   </div>
-                </div>
+                </>
               );
-              return a.href ? (
-                <Link key={a.id} href={a.href} className="block transition-transform duration-150 ease-out active:scale-[0.98]">
-                  {card}
-                </Link>
-              ) : (
-                <div key={a.id}>{card}</div>
+              return (
+                <div key={a.id} className="w-[380px] max-w-[85vw] shrink-0 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+                  {a.href ? (
+                    <Link href={a.href} className="block transition-transform duration-150 ease-out active:scale-[0.98]">
+                      {body}
+                    </Link>
+                  ) : (
+                    body
+                  )}
+                  <div className="border-t border-admin-border px-3.5 py-3">
+                    <AnnouncementAckButton id={a.id} initialAcked={a.acked} />
+                  </div>
+                </div>
               );
             })}
           </div>
