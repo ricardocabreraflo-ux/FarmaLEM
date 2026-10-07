@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
-import { buildMonthCalendar } from "@/lib/actividades";
+import { buildMonthCalendar, getWeeklyScheduleForMonth } from "@/lib/actividades";
 import { mexicoCityToday } from "@/lib/dates";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { ActivityCalendarGrid, CategoryLegend } from "@/components/admin/ActivityCalendarGrid";
@@ -22,6 +22,7 @@ export default async function ImprimirActividadesPage({ searchParams }: { search
   const month = mes || mexicoCityToday().slice(0, 7);
 
   const weeks = buildMonthCalendar(month);
+  const weeklySchedule = await getWeeklyScheduleForMonth(month);
 
   return (
     <main className="force-light-admin mx-auto max-w-[1000px] px-6 py-10 print:px-0 print:py-1">
@@ -69,7 +70,7 @@ export default async function ImprimirActividadesPage({ searchParams }: { search
 
       <h2 className="mt-5 font-display text-base text-admin-ink print:mt-3 print:text-[0.9rem]">Limpieza semanal</h2>
       <div className="mt-2 print:mt-1.5 print:break-inside-avoid">
-        <FixedWeeklyScheduleTable />
+        <FixedWeeklyScheduleTable schedule={weeklySchedule} />
       </div>
 
       <h2 className="print-page-break mt-5 font-display text-base text-admin-ink print:mt-0 print:text-[0.9rem]">Inventario del día</h2>

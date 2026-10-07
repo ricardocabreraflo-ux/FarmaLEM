@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
-import { buildMonthCalendar } from "@/lib/actividades";
+import { buildMonthCalendar, getWeeklyScheduleForMonth } from "@/lib/actividades";
 import { listInventoryChecksForMonth } from "@/lib/activity-inventory-checks";
 import { mexicoCityToday } from "@/lib/dates";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -26,7 +26,11 @@ export default async function ActividadesPage({ searchParams }: { searchParams: 
   const month = mes || mexicoCityToday().slice(0, 7);
 
   const weeks = buildMonthCalendar(month);
-  const [profile, checkedKeys] = await Promise.all([getProfileById(session.uid), isAdmin ? listInventoryChecksForMonth(month) : Promise.resolve(undefined)]);
+  const [profile, checkedKeys, weeklySchedule] = await Promise.all([
+    getProfileById(session.uid),
+    isAdmin ? listInventoryChecksForMonth(month) : Promise.resolve(undefined),
+    getWeeklyScheduleForMonth(month),
+  ]);
 
   return (
     <AdminShell activeHref="/admin/actividades" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -46,9 +50,15 @@ export default async function ActividadesPage({ searchParams }: { searchParams: 
       <MonthPicker month={month} basePath="/admin/actividades" />
 
       <h2 className="mt-6 font-display text-lg text-admin-ink">Limpieza semanal</h2>
-      <p className="mt-1 text-[0.82rem] text-admin-ink-soft">Igual todas las semanas del año — no cambia por mes.</p>
+      <p className="mt-1 text-[0.82rem] text-admin-ink-soft">
+        La rutina de cada día es igual todo el año — qué anaqueles le tocan a cada turno este mes sigue a{" "}
+        <Link href="/admin/anaqueles" className="font-semibold text-admin-primary hover:underline">
+          Distribución de anaqueles
+        </Link>
+        .
+      </p>
       <div className="mt-2">
-        <FixedWeeklyScheduleTable />
+        <FixedWeeklyScheduleTable schedule={weeklySchedule} />
       </div>
 
       <h2 className="mt-6 font-display text-lg text-admin-ink">Inventario del día &middot; {monthLabel(month)}</h2>
