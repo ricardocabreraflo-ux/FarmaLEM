@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { requireSession } from "@/lib/admin-auth";
 import { buildMonthCalendar } from "@/lib/actividades";
 import { mexicoCityToday } from "@/lib/dates";
 import { PrintButton } from "@/components/admin/PrintButton";
@@ -17,7 +17,7 @@ function monthLabel(month: string) {
 }
 
 export default async function ImprimirActividadesPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
-  await requireAdminSession();
+  await requireSession();
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
 

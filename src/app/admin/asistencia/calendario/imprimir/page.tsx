@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { redirect } from "next/navigation";
+import { requireSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
-import { listProfiles } from "@/lib/profiles";
+import { getProfileById, listProfiles } from "@/lib/profiles";
 import { listShiftScheduleForMonth, listWeekLabels } from "@/lib/shift-schedule";
 import { buildMonthWeeks } from "@/lib/calendar-weeks";
+import { canAccessModule } from "@/lib/panel-modules";
 import { ShiftScheduleGrid } from "@/components/admin/ShiftScheduleGrid";
 import { PrintButton } from "@/components/admin/PrintButton";
 
@@ -17,7 +19,11 @@ function monthLabel(month: string) {
 }
 
 export default async function ImprimirCalendarioPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
-  await requireAdminSession();
+  const session = await requireSession();
+  const isAdmin = session.role === "admin";
+  const profile = await getProfileById(session.uid);
+  if (!(await canAccessModule("/admin/asistencia/calendario", isAdmin, profile?.role_id ?? null))) redirect("/admin");
+
   const { mes } = await searchParams;
   const month = mes || mexicoCityToday().slice(0, 7);
 
