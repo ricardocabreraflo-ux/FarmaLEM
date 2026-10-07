@@ -29,6 +29,7 @@ export default async function ImprimirActividadesPage({ searchParams }: { search
         @media print {
           .print\\:hidden { display: none !important; }
           @page { margin: 10mm; size: landscape; }
+          .print-page-break { break-before: page; }
         }
         .force-light-admin {
           --admin-bg: #f3f6f4;
@@ -71,7 +72,7 @@ export default async function ImprimirActividadesPage({ searchParams }: { search
         <FixedWeeklyScheduleTable />
       </div>
 
-      <h2 className="mt-5 font-display text-base text-admin-ink print:mt-3 print:text-[0.9rem]">Inventario del día</h2>
+      <h2 className="print-page-break mt-5 font-display text-base text-admin-ink print:mt-0 print:text-[0.9rem]">Inventario del día</h2>
       <div className="mt-2 print:mt-1.5">
         <CategoryLegend />
       </div>
