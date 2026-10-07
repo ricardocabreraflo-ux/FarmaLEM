@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
-import { buildMonthCalendar, getWeeklyScheduleForMonth } from "@/lib/actividades";
+import { buildMonthCalendar } from "@/lib/actividades";
+import { getWeeklyScheduleForMonth } from "@/lib/weekly-schedule";
 import { mexicoCityToday } from "@/lib/dates";
 import { PrintButton } from "@/components/admin/PrintButton";
 import { ActivityCalendarGrid, CategoryLegend } from "@/components/admin/ActivityCalendarGrid";

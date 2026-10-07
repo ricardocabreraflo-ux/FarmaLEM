@@ -43,6 +43,7 @@ export const NAV_STRUCTURE: NavEntryDef[] = [
   leaf("/admin/pedidos", "Pedidos", "IconPedidos", true, false, "/admin"),
   group("caja", "Caja", "IconCaja", [
     leaf("/admin/cortes", "Cortes", "IconCortes"),
+    leaf("/admin/diferencias", "Diferencias de inventario", "IconNegados"),
     leaf("/admin/salidas", "Salidas de efectivo", "IconSalidas", true),
   ]),
   group("personal", "Personal", "IconEmpleados", [
