@@ -7,6 +7,7 @@ import { monthEnd } from "@/lib/dates";
 import { logoutToTurno } from "@/app/admin/turno/actions";
 import { PunchPanel } from "@/components/admin/PunchPanel";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { PushNotificationSettings } from "@/components/admin/PushNotificationSettings";
 
 export const metadata: Metadata = { title: "Reloj checador" };
 export const dynamic = "force-dynamic";
@@ -85,6 +86,16 @@ export default async function RelojPage() {
         >
           Capturar corte
         </Link>
+
+        <div className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-5">
+          <h2 className="font-display text-base text-admin-ink">Notificaciones</h2>
+          <p className="mt-1 text-[0.82rem] text-admin-ink-soft">
+            Actívalas en este dispositivo para recibir avisos cuando checas tu entrada: tu plan del día, promociones y cómo te fue en tu semana.
+          </p>
+          <div className="mt-3">
+            <PushNotificationSettings />
+          </div>
+        </div>
       </div>
 
       <h2 className="mt-8 font-display text-base text-admin-ink">Mi reloj checador</h2>

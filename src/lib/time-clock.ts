@@ -4,7 +4,8 @@ import { upsertAttendance } from "@/lib/attendance";
 import { mexicoCityToday, mondayOf, addDays } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
 import { sendPunchWhatsAppNotification } from "@/lib/whatsapp";
-import { sendPushToAdmins } from "@/lib/push";
+import { sendPushToAdmins, sendPushToEmployee } from "@/lib/push";
+import { buildEntradaDailyBrief, buildEntradaPromoPush } from "@/lib/employee-notifications";
 
 export { mexicoCityToday };
 
@@ -132,6 +133,10 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
       note: "Registrado por reloj checador",
       createdBy,
     });
+
+    const [daily, promo] = await Promise.all([buildEntradaDailyBrief(employee, today), buildEntradaPromoPush()]);
+    await sendPushToEmployee(employee.id, daily);
+    if (promo) await sendPushToEmployee(employee.id, promo);
   }
 
   await sendPunchWhatsAppNotification({ employeeName: employee.full_name, type, shift: employee.shift, occurredAt });

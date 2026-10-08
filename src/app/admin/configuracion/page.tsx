@@ -5,12 +5,14 @@ import { getBreakevenMargin } from "@/lib/breakeven";
 import { hasDeletePin } from "@/lib/security-settings";
 import { getModuleEditorStructure } from "@/lib/panel-modules";
 import { listStockoutCategories } from "@/lib/stockout-categories";
+import { listPromotions } from "@/lib/promotions";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { BreakevenMarginForm } from "@/components/admin/BreakevenMarginForm";
 import { DeletePinForm } from "@/components/admin/DeletePinForm";
 import { PanelModulesModal } from "@/components/admin/PanelModulesModal";
 import { RolesPanel } from "@/components/admin/RolesPanel";
 import { StockoutCategoriesPanel } from "@/components/admin/StockoutCategoriesPanel";
+import { PromotionsPanel } from "@/components/admin/PromotionsPanel";
 import { PushNotificationSettings } from "@/components/admin/PushNotificationSettings";
 
 export const metadata: Metadata = { title: "Configuración" };
@@ -18,12 +20,13 @@ export const dynamic = "force-dynamic";
 
 export default async function ConfiguracionPage() {
   const session = await requireAdminSession();
-  const [profile, marginPercent, pinSet, moduleStructure, stockoutCategories] = await Promise.all([
+  const [profile, marginPercent, pinSet, moduleStructure, stockoutCategories, promotions] = await Promise.all([
     getProfileById(session.uid),
     getBreakevenMargin(),
     hasDeletePin(),
     getModuleEditorStructure(),
     listStockoutCategories(),
+    listPromotions(),
   ]);
   const { roles, entries: moduleEntries } = moduleStructure;
 
@@ -71,6 +74,15 @@ export default async function ConfiguracionPage() {
           necesites.
         </p>
         <StockoutCategoriesPanel initialCategories={stockoutCategories} />
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">
+        <h2 className="font-display text-base text-admin-ink">Promociones del día</h2>
+        <p className="mt-1 text-[0.84rem] text-admin-ink-soft">
+          Captura y activa las promociones que quieras que el equipo ofrezca (3x2, productos con corta caducidad, ofertas de temporada…). Las que
+          estén &quot;Activa&quot; se mandan por notificación push a quien checa su entrada ese día.
+        </p>
+        <PromotionsPanel initialPromotions={promotions} />
       </section>
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">

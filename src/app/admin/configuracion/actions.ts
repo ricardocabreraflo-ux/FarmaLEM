@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminSession } from "@/lib/admin-auth";
+import { requireAdminSession, requireSession } from "@/lib/admin-auth";
 import { saveBreakevenMargin } from "@/lib/breakeven";
 import { saveDeletePinHash } from "@/lib/security-settings";
 import { hashPassword } from "@/lib/password";
@@ -15,7 +15,8 @@ import {
   renameStockoutCategory,
   type StockoutCategory,
 } from "@/lib/stockout-categories";
-import { savePushSubscription, deletePushSubscription, hasPushSubscription, sendPushToAdmins, type PushSubscriptionInput } from "@/lib/push";
+import { savePushSubscription, deletePushSubscription, hasPushSubscription, sendPushToEmployee, type PushSubscriptionInput } from "@/lib/push";
+import { createPromotion, setPromotionActive, deletePromotion, listPromotions, type Promotion } from "@/lib/promotions";
 
 export interface BreakevenMarginFormState {
   error?: string;
@@ -242,7 +243,7 @@ export interface PushActionResult {
 }
 
 export async function savePushSubscriptionAction(sub: PushSubscriptionInput): Promise<PushActionResult> {
-  const session = await requireAdminSession();
+  const session = await requireSession();
   try {
     await savePushSubscription(session.uid, sub);
   } catch (err) {
@@ -252,7 +253,7 @@ export async function savePushSubscriptionAction(sub: PushSubscriptionInput): Pr
 }
 
 export async function deletePushSubscriptionAction(endpoint: string): Promise<PushActionResult> {
-  await requireAdminSession();
+  await requireSession();
   try {
     await deletePushSubscription(endpoint);
   } catch (err) {
@@ -262,13 +263,56 @@ export async function deletePushSubscriptionAction(endpoint: string): Promise<Pu
 }
 
 export async function checkPushSubscriptionAction(endpoint: string): Promise<PushActionResult> {
-  const session = await requireAdminSession();
+  const session = await requireSession();
   const subscribed = await hasPushSubscription(session.uid, endpoint);
   return { ok: true, subscribed };
 }
 
 export async function sendTestPushAction(): Promise<PushActionResult> {
-  await requireAdminSession();
-  await sendPushToAdmins({ title: "FarmaLEM", body: "Notificación de prueba — si la ves, ya está listo." });
+  const session = await requireSession();
+  await sendPushToEmployee(session.uid, { title: "FarmaLEM", body: "Notificación de prueba — si la ves, ya está listo." });
   return { ok: true };
+}
+
+export interface PromotionActionResult {
+  ok: boolean;
+  error?: string;
+  promotions?: Promotion[];
+}
+
+async function afterPromotionChange(session: Awaited<ReturnType<typeof requireAdminSession>>, action: string, detail: string): Promise<PromotionActionResult> {
+  await logAction(session.uid, action, detail);
+  revalidatePath("/admin/configuracion");
+  const promotions = await listPromotions();
+  return { ok: true, promotions };
+}
+
+export async function createPromotionAction(title: string, description: string): Promise<PromotionActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await createPromotion(title, description.trim() || null, session.uid);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo crear la promoción." };
+  }
+  return afterPromotionChange(session, "Creó una promoción", title);
+}
+
+export async function setPromotionActiveAction(id: string, active: boolean): Promise<PromotionActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await setPromotionActive(id, active);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar la promoción." };
+  }
+  return afterPromotionChange(session, "Activó/desactivó una promoción", `${id}: ${active ? "activa" : "inactiva"}`);
+}
+
+export async function deletePromotionAction(id: string): Promise<PromotionActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await deletePromotion(id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar la promoción." };
+  }
+  return afterPromotionChange(session, "Borró una promoción", id);
 }

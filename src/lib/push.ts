@@ -1,17 +1,12 @@
 import "server-only";
 import webPush from "web-push";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { logAction } from "@/lib/history";
-
-// TEMPORAL: para diagnosticar por qué no llegan los avisos en producción —
-// quitar junto con las llamadas a logAction() de abajo una vez resuelto.
-const DEBUG_ADMIN_ID = "02c49bd0-7202-4fad-b937-e939562a4c8a";
 
 /**
  * Notificaciones push del navegador/PWA (Web Push) — a diferencia de WhatsApp,
  * no depende de una plantilla aprobada por Meta: llegan directo al celular o
- * computadora de quien activó "Notificaciones" en Configuración, aunque no
- * tenga la pestaña abierta. Requiere en .env.local:
+ * computadora de quien activó "Notificaciones", aunque no tenga la pestaña
+ * abierta. Requiere en .env.local:
  *   NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
  *   VAPID_PRIVATE_KEY=...
  * (generadas una sola vez con `npx web-push generate-vapid-keys`).
@@ -56,25 +51,37 @@ export async function hasPushSubscription(employeeId: string, endpoint: string):
   return Boolean(data);
 }
 
-/**
- * Manda un push a todas las suscripciones de administración — nunca truena el
- * flujo que la llama (igual que las notificaciones de WhatsApp): si faltan las
- * llaves VAPID, si no hay nadie suscrito, o si Meta/el navegador rechaza el
- * envío, solo queda registrado en logs. Una suscripción caducada (404/410) se
- * borra sola para no reintentarla siempre.
- */
+interface SubRow {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+/** Nunca truena el flujo que la llama. Una suscripción caducada (404/410) se borra sola para no reintentarla siempre. */
+async function sendToSubscriptions(subs: SubRow[], payload: PushPayload): Promise<void> {
+  await Promise.all(
+    subs.map(async (s) => {
+      try {
+        await webPush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(payload));
+      } catch (err) {
+        const statusCode = (err as { statusCode?: number })?.statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          await deletePushSubscription(s.endpoint);
+        } else {
+          console.error("[push] no se pudo enviar:", err instanceof Error ? err.message : err);
+        }
+      }
+    })
+  );
+}
+
+/** Manda un push a todas las suscripciones de administración. */
 export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
   try {
-    if (!configureWebPush()) {
-      await logAction(DEBUG_ADMIN_ID, "[debug push]", "faltan llaves VAPID en runtime");
-      return;
-    }
+    if (!configureWebPush()) return;
     const db = supabaseAdmin();
     const { data: admins, error: adminsErr } = await db.from("profiles").select("id").eq("role", "admin");
-    if (adminsErr || !admins || admins.length === 0) {
-      await logAction(DEBUG_ADMIN_ID, "[debug push]", `sin admins — error: ${adminsErr?.message ?? "ninguno"}`);
-      return;
-    }
+    if (adminsErr || !admins || admins.length === 0) return;
 
     const { data: subs, error: subsErr } = await db
       .from("push_subscriptions")
@@ -83,31 +90,28 @@ export async function sendPushToAdmins(payload: PushPayload): Promise<void> {
         "employee_id",
         admins.map((a) => a.id)
       );
-    if (subsErr || !subs || subs.length === 0) {
-      await logAction(DEBUG_ADMIN_ID, "[debug push]", `sin suscripciones — error: ${subsErr?.message ?? "ninguna"}`);
-      return;
-    }
+    if (subsErr || !subs || subs.length === 0) return;
 
-    await logAction(DEBUG_ADMIN_ID, "[debug push]", `intentando enviar a ${subs.length} suscripción(es): ${payload.title}`);
-
-    await Promise.all(
-      subs.map(async (s) => {
-        try {
-          await webPush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, JSON.stringify(payload));
-          await logAction(DEBUG_ADMIN_ID, "[debug push]", `OK · ${s.endpoint.slice(0, 40)}`);
-        } catch (err) {
-          const statusCode = (err as { statusCode?: number })?.statusCode;
-          await logAction(DEBUG_ADMIN_ID, "[debug push]", `FAIL ${statusCode} · ${s.endpoint.slice(0, 40)} · ${err instanceof Error ? err.message : String(err)}`);
-          if (statusCode === 404 || statusCode === 410) {
-            await deletePushSubscription(s.endpoint);
-          } else {
-            console.error("[push] no se pudo enviar:", err instanceof Error ? err.message : err);
-          }
-        }
-      })
-    );
+    await sendToSubscriptions(subs as SubRow[], payload);
   } catch (err) {
-    await logAction(DEBUG_ADMIN_ID, "[debug push]", `error inesperado: ${err instanceof Error ? err.message : String(err)}`);
     console.error("[push] error inesperado:", err instanceof Error ? err.message : err);
   }
+}
+
+/** Manda un push a todas las suscripciones de esa persona (cualquier rol) — p. ej. avisos al equipo cuando checan su Entrada. */
+export async function sendPushToEmployee(employeeId: string, payload: PushPayload): Promise<void> {
+  try {
+    if (!configureWebPush()) return;
+    const { data: subs, error: subsErr } = await supabaseAdmin().from("push_subscriptions").select("endpoint, p256dh, auth").eq("employee_id", employeeId);
+    if (subsErr || !subs || subs.length === 0) return;
+
+    await sendToSubscriptions(subs as SubRow[], payload);
+  } catch (err) {
+    console.error("[push] error inesperado:", err instanceof Error ? err.message : err);
+  }
+}
+
+/** Manda el mismo push a varias personas de un jalón (p. ej. recordatorios del toldo/luces a quien tenga ese turno). */
+export async function sendPushToEmployees(employeeIds: string[], payload: PushPayload): Promise<void> {
+  await Promise.all(employeeIds.map((id) => sendPushToEmployee(id, payload)));
 }
