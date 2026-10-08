@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { upsertAttendance } from "@/lib/attendance";
-import { mexicoCityToday } from "@/lib/dates";
+import { mexicoCityToday, mondayOf, addDays } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
 import { sendPunchWhatsAppNotification } from "@/lib/whatsapp";
 import { sendPushToAdmins } from "@/lib/push";
@@ -15,6 +15,54 @@ export interface TimeClockEvent {
   employee_id: string;
   event_type: ClockEventType;
   occurred_at: string;
+  is_late: boolean | null;
+  late_minutes: number | null;
+}
+
+/**
+ * Tolerancia de 10 minutos: llegan a revisar valores y dejar su punto de
+ * venta listo antes de abrir — después de esta hora ya es retardo. Turnos
+ * sin horario definido (p. ej. Administración) no tienen a qué compararse.
+ */
+const SHIFT_CUTOFF: Record<string, { hour: number; minute: number }> = {
+  Matutino: { hour: 8, minute: 0 },
+  Vespertino: { hour: 15, minute: 0 },
+};
+
+function mexicoCityTimeOfDay(iso: string): { hour: number; minute: number } {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(
+    new Date(iso)
+  );
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  return { hour, minute };
+}
+
+/** null si ese turno no tiene horario definido (no aplica tolerancia). */
+function computeLateness(shift: string, occurredAt: string): { isLate: boolean; lateMinutes: number } | null {
+  const cutoff = SHIFT_CUTOFF[shift];
+  if (!cutoff) return null;
+  const { hour, minute } = mexicoCityTimeOfDay(occurredAt);
+  const diff = hour * 60 + minute - (cutoff.hour * 60 + cutoff.minute);
+  return { isLate: diff > 0, lateMinutes: Math.max(diff, 0) };
+}
+
+/** Cuántas Entradas con retardo lleva ese empleado esta semana (lunes a domingo) — incluye la de hoy si ya se guardó. */
+export async function countLateEntriesThisWeek(employeeId: string): Promise<number> {
+  const monday = mondayOf(mexicoCityToday());
+  const sunday = addDays(monday, 6);
+  const { start } = dayRange(monday);
+  const { end } = dayRange(sunday);
+  const { count, error } = await supabaseAdmin()
+    .from("time_clock_events")
+    .select("id", { count: "exact", head: true })
+    .eq("employee_id", employeeId)
+    .eq("event_type", "Entrada")
+    .eq("is_late", true)
+    .gte("occurred_at", start)
+    .lte("occurred_at", end);
+  if (error) throw new Error(`No se pudo contar los retardos: ${error.message}`);
+  return count ?? 0;
 }
 
 function dayRange(date: string) {
@@ -53,12 +101,25 @@ export async function nextEventType(employeeId: string): Promise<ClockEventType>
  * Entrada deja lista la asistencia del día como "Asistió" (se ve al toque en
  * Asistencia/Sueldos); la Salida solo queda en la bitácora del reloj.
  */
-export async function registerPunch(employee: Profile, createdBy: string): Promise<{ type: ClockEventType; occurredAt: string }> {
+export interface RegisterPunchResult {
+  type: ClockEventType;
+  occurredAt: string;
+  isLate: boolean | null;
+  lateMinutes: number | null;
+  weeklyLateCount: number | null;
+}
+
+export async function registerPunch(employee: Profile, createdBy: string): Promise<RegisterPunchResult> {
   const type = await nextEventType(employee.id);
   const occurredAt = new Date().toISOString();
+  const lateness = type === "Entrada" ? computeLateness(employee.shift, occurredAt) : null;
 
-  const { error } = await supabaseAdmin().from("time_clock_events").insert({ employee_id: employee.id, event_type: type, occurred_at: occurredAt });
+  const { error } = await supabaseAdmin()
+    .from("time_clock_events")
+    .insert({ employee_id: employee.id, event_type: type, occurred_at: occurredAt, is_late: lateness?.isLate ?? null, late_minutes: lateness?.lateMinutes ?? null });
   if (error) throw new Error(`No se pudo registrar el movimiento: ${error.message}`);
+
+  const weeklyLateCount = lateness?.isLate ? await countLateEntriesThisWeek(employee.id) : null;
 
   if (type === "Entrada") {
     const { today } = todayRange();
@@ -76,13 +137,14 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
   await sendPunchWhatsAppNotification({ employeeName: employee.full_name, type, shift: employee.shift, occurredAt });
 
   const timeLabel = new Date(occurredAt).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
+  const latenessNote = lateness?.isLate ? ` · retardo de ${lateness.lateMinutes} min (van ${weeklyLateCount} esta semana)` : "";
   await sendPushToAdmins({
-    title: `${type === "Entrada" ? "🟢" : "🔴"} ${employee.full_name}`,
-    body: `Marcó su ${type} del turno ${employee.shift} a las ${timeLabel}`,
+    title: `${lateness?.isLate ? "🔴" : type === "Entrada" ? "🟢" : "🔴"} ${employee.full_name}`,
+    body: `Marcó su ${type} del turno ${employee.shift} a las ${timeLabel}${latenessNote}`,
     url: "/admin/reloj/bitacora",
   });
 
-  return { type, occurredAt };
+  return { type, occurredAt, isLate: lateness?.isLate ?? null, lateMinutes: lateness?.lateMinutes ?? null, weeklyLateCount };
 }
 
 export async function listEventsForDate(date: string): Promise<TimeClockEvent[]> {

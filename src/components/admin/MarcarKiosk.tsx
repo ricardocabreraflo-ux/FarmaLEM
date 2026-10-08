@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { marcarPunch } from "@/app/admin/turno/marcar/actions";
+import { LatenessNotice } from "@/components/admin/LatenessNotice";
 
 export interface MarcarShiftInfo {
   shift: "Matutino" | "Vespertino";
@@ -11,7 +12,14 @@ export interface MarcarShiftInfo {
   ready: boolean;
 }
 
-type Confirmed = { employeeName: string; type: "Entrada" | "Salida"; time: string };
+type Confirmed = {
+  employeeName: string;
+  type: "Entrada" | "Salida";
+  time: string;
+  isLate?: boolean | null;
+  lateMinutes?: number | null;
+  weeklyLateCount?: number | null;
+};
 
 const PIN_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "borrar", "0", "enviar"];
 
@@ -45,7 +53,14 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
     startTransition(async () => {
       const res = await marcarPunch(active.shift, value);
       if (res.ok && res.type && res.time && res.employeeName) {
-        setConfirmed({ employeeName: res.employeeName, type: res.type, time: res.time });
+        setConfirmed({
+          employeeName: res.employeeName,
+          type: res.type,
+          time: res.time,
+          isLate: res.isLate,
+          lateMinutes: res.lateMinutes,
+          weeklyLateCount: res.weeklyLateCount,
+        });
       } else {
         setError(res.error ?? "No se pudo registrar.");
         setPin("");
@@ -83,6 +98,9 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
           <p className="font-display text-lg font-bold text-admin-ink">{confirmed.employeeName}</p>
           <p className="font-data text-3xl font-semibold text-admin-ink">{fmtTime(confirmed.time)}</p>
           <p className="text-[0.85rem] text-admin-ink-soft">{confirmed.type} registrada &middot; {active?.shift}</p>
+          {confirmed.type === "Entrada" && (
+            <LatenessNotice isLate={confirmed.isLate} lateMinutes={confirmed.lateMinutes} weeklyLateCount={confirmed.weeklyLateCount} />
+          )}
           <button type="button" onClick={reset} className="text-[0.82rem] font-semibold text-admin-ink-soft underline decoration-dotted">
             Marcar otra persona
           </button>

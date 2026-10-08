@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
-import { lastEventToday, mexicoCityToday, listEventsForEmployeeRange, pairPunchesByDay } from "@/lib/time-clock";
+import { lastEventToday, mexicoCityToday, listEventsForEmployeeRange, pairPunchesByDay, countLateEntriesThisWeek } from "@/lib/time-clock";
 import { monthEnd } from "@/lib/dates";
 import { logoutToTurno } from "@/app/admin/turno/actions";
 import { PunchPanel } from "@/components/admin/PunchPanel";
@@ -57,6 +57,7 @@ export default async function RelojPage() {
     listEventsForEmployeeRange(session.uid, `${month}-01`, monthEnd(month)),
   ]);
   const punchDays = pairPunchesByDay(myPunches);
+  const weeklyLateCount = last?.is_late ? await countLateEntriesThisWeek(session.uid) : null;
 
   return (
     <AdminShell activeHref="/admin/reloj" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -73,7 +74,9 @@ export default async function RelojPage() {
       <div className="mx-auto mt-5 max-w-[380px]">
         <PunchPanel
           employeeName={profile?.full_name ?? "Sin nombre"}
-          initialLastEvent={last ? { type: last.event_type, time: last.occurred_at } : null}
+          initialLastEvent={
+            last ? { type: last.event_type, time: last.occurred_at, isLate: last.is_late, lateMinutes: last.late_minutes, weeklyLateCount } : null
+          }
         />
 
         <Link

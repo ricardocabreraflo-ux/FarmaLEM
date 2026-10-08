@@ -13,6 +13,9 @@ export interface MarcarResult {
   employeeName?: string;
   type?: "Entrada" | "Salida";
   time?: string;
+  isLate?: boolean | null;
+  lateMinutes?: number | null;
+  weeklyLateCount?: number | null;
 }
 
 /**
@@ -35,9 +38,9 @@ export async function marcarPunch(shift: string, pin: string): Promise<MarcarRes
   }
 
   try {
-    const { type, occurredAt } = await registerPunch(employee, employee.id);
+    const { type, occurredAt, isLate, lateMinutes, weeklyLateCount } = await registerPunch(employee, employee.id);
     await logAction(employee.id, `Marcó ${type} (pantalla independiente)`, shift);
-    return { ok: true, employeeName: employee.full_name, type, time: occurredAt };
+    return { ok: true, employeeName: employee.full_name, type, time: occurredAt, isLate, lateMinutes, weeklyLateCount };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo registrar el movimiento." };
   }

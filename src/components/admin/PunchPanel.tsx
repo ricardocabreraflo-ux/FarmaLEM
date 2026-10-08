@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { punchForSession } from "@/app/admin/reloj/actions";
+import { LatenessNotice } from "@/components/admin/LatenessNotice";
 
-type EventInfo = { type: "Entrada" | "Salida"; time: string } | null;
+type EventInfo = { type: "Entrada" | "Salida"; time: string; isLate?: boolean | null; lateMinutes?: number | null; weeklyLateCount?: number | null } | null;
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
@@ -26,7 +27,7 @@ export function PunchPanel({ employeeName, initialLastEvent }: { employeeName: s
     startTransition(async () => {
       const res = await punchForSession();
       if (res.ok && res.type && res.time) {
-        setLastEvent({ type: res.type, time: res.time });
+        setLastEvent({ type: res.type, time: res.time, isLate: res.isLate, lateMinutes: res.lateMinutes, weeklyLateCount: res.weeklyLateCount });
       } else {
         setError(res.error ?? "No se pudo registrar.");
       }
@@ -37,9 +38,14 @@ export function PunchPanel({ employeeName, initialLastEvent }: { employeeName: s
     <div className="w-full rounded-2xl border border-admin-border bg-admin-surface p-5 text-center">
       <p className="text-[0.85rem] text-admin-ink-soft">{employeeName}</p>
       {lastEvent ? (
-        <p className="mt-1 text-[0.9rem] font-semibold text-admin-ok-text">
-          Ya marcaste tu {lastEvent.type} a las {fmtTime(lastEvent.time)}
-        </p>
+        <>
+          <p className="mt-1 text-[0.9rem] font-semibold text-admin-ok-text">
+            Ya marcaste tu {lastEvent.type} a las {fmtTime(lastEvent.time)}
+          </p>
+          {lastEvent.type === "Entrada" && (
+            <LatenessNotice isLate={lastEvent.isLate} lateMinutes={lastEvent.lateMinutes} weeklyLateCount={lastEvent.weeklyLateCount} />
+          )}
+        </>
       ) : (
         <p className="mt-1 text-[0.9rem] text-admin-ink-soft">Aún no marcas tu entrada hoy.</p>
       )}
