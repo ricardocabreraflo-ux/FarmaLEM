@@ -4,6 +4,7 @@ import type { PushPayload } from "@/lib/push";
 import { categoryForShift } from "@/lib/actividades";
 import { getWeeklyScheduleForMonth } from "@/lib/weekly-schedule";
 import { listActivePromotions } from "@/lib/promotions";
+import { listStockoutReportsForEmployeeOnDate } from "@/lib/stockout-reports";
 
 /** Mensajes motivacionales que acompañan el aviso de "tu plan de hoy" al checar Entrada — rotan según el día. */
 const MOTIVATIONAL_MESSAGES = [
@@ -51,4 +52,24 @@ export async function buildEntradaPromoPush(): Promise<PushPayload | null> {
   if (promos.length === 0) return null;
   const body = promos.map((p) => p.title).join(" · ");
   return { title: "🏷️ Promociones de hoy", body: `Ofrécelas durante tu turno: ${body}`, url: "/admin/inicio" };
+}
+
+/** Aviso a administración al checar Salida con lo que esa persona registró en Negados y faltantes ese día (null si no registró nada). */
+export async function buildSalidaStockoutSummary(employee: Profile, dateStr: string): Promise<PushPayload | null> {
+  const reports = await listStockoutReportsForEmployeeOnDate(employee.id, dateStr);
+  if (reports.length === 0) return null;
+
+  const negados = reports.filter((r) => r.kind === "Negado");
+  const faltantes = reports.filter((r) => r.kind === "Faltante");
+  const items = reports
+    .slice(0, 8)
+    .map((r) => `${r.active_substance} (${r.quantity})`)
+    .join(" · ");
+  const extra = reports.length > 8 ? ` y ${reports.length - 8} más` : "";
+
+  return {
+    title: `📋 ${employee.full_name} — negados y faltantes de su turno`,
+    body: `${negados.length} negado${negados.length === 1 ? "" : "s"}, ${faltantes.length} faltante${faltantes.length === 1 ? "" : "s"}: ${items}${extra}`,
+    url: "/admin/negados",
+  };
 }

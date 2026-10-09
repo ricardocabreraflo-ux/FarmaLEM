@@ -5,7 +5,7 @@ import { mexicoCityToday, mondayOf, addDays } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
 import { sendPunchWhatsAppNotification } from "@/lib/whatsapp";
 import { sendPushToAdmins, sendPushToEmployee } from "@/lib/push";
-import { buildEntradaDailyBrief, buildEntradaPromoPush } from "@/lib/employee-notifications";
+import { buildEntradaDailyBrief, buildEntradaPromoPush, buildSalidaStockoutSummary } from "@/lib/employee-notifications";
 
 export { mexicoCityToday };
 
@@ -121,9 +121,9 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
   if (error) throw new Error(`No se pudo registrar el movimiento: ${error.message}`);
 
   const weeklyLateCount = lateness?.isLate ? await countLateEntriesThisWeek(employee.id) : null;
+  const { today } = todayRange();
 
   if (type === "Entrada") {
-    const { today } = todayRange();
     await upsertAttendance({
       workDate: today,
       employeeId: employee.id,
@@ -137,6 +137,9 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
     const [daily, promo] = await Promise.all([buildEntradaDailyBrief(employee, today), buildEntradaPromoPush()]);
     await sendPushToEmployee(employee.id, daily);
     if (promo) await sendPushToEmployee(employee.id, promo);
+  } else {
+    const stockoutSummary = await buildSalidaStockoutSummary(employee, today);
+    if (stockoutSummary) await sendPushToAdmins(stockoutSummary);
   }
 
   await sendPunchWhatsAppNotification({ employeeName: employee.full_name, type, shift: employee.shift, occurredAt });

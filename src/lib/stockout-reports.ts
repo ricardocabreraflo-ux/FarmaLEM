@@ -26,6 +26,18 @@ export interface StockoutReport {
   created_at: string;
 }
 
+/** Lo que esa persona registró ese día — para el aviso a administración al cerrar su turno (checar Salida). */
+export async function listStockoutReportsForEmployeeOnDate(employeeId: string, date: string): Promise<StockoutReport[]> {
+  const { data, error } = await supabaseAdmin()
+    .from("stockout_reports")
+    .select()
+    .eq("created_by", employeeId)
+    .eq("report_date", date)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`No se pudieron leer los negados y faltantes: ${error.message}`);
+  return data as StockoutReport[];
+}
+
 export async function listStockoutReports(): Promise<StockoutReport[]> {
   const { data, error } = await supabaseAdmin()
     .from("stockout_reports")
