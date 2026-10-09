@@ -30,7 +30,7 @@ const SHIFT_CUTOFF: Record<string, { hour: number; minute: number }> = {
   Vespertino: { hour: 15, minute: 0 },
 };
 
-/** Además de la hora de apertura, se da un colchón de 5 min antes de contarlo como retardo. */
+/** Colchón de 5 min después de la hora de apertura (minutos 1-5 no cuentan); el retardo arranca en el minuto 6. */
 const LATE_GRACE_MINUTES = 5;
 
 function mexicoCityTimeOfDay(iso: string): { hour: number; minute: number } {
@@ -48,7 +48,7 @@ function computeLateness(shift: string, occurredAt: string): { isLate: boolean; 
   if (!cutoff) return null;
   const { hour, minute } = mexicoCityTimeOfDay(occurredAt);
   const diff = hour * 60 + minute - (cutoff.hour * 60 + cutoff.minute);
-  return { isLate: diff >= LATE_GRACE_MINUTES, lateMinutes: Math.max(diff, 0) };
+  return { isLate: diff > LATE_GRACE_MINUTES, lateMinutes: Math.max(diff, 0) };
 }
 
 /** Cuántas Entradas con retardo lleva ese empleado esta semana (lunes a domingo) — incluye la de hoy si ya se guardó. */
