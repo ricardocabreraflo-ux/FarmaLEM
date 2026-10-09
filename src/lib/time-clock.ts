@@ -152,6 +152,14 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
     url: "/admin/reloj/bitacora",
   });
 
+  if (weeklyLateCount === 3) {
+    await sendPushToAdmins({
+      title: `🔴 ${employee.full_name} llegó a 3 retardos esta semana`,
+      body: `Turno ${employee.shift} — ya van 3 retardos esta semana, aplica la consecuencia/descuento acordado.`,
+      url: "/admin/reloj/bitacora",
+    });
+  }
+
   return { type, occurredAt, isLate: lateness?.isLate ?? null, lateMinutes: lateness?.lateMinutes ?? null, weeklyLateCount };
 }
 
