@@ -22,13 +22,16 @@ export interface TimeClockEvent {
 
 /**
  * Tolerancia de 10 minutos: llegan a revisar valores y dejar su punto de
- * venta listo antes de abrir — después de esta hora ya es retardo. Turnos
- * sin horario definido (p. ej. Administración) no tienen a qué compararse.
+ * venta listo antes de abrir. Turnos sin horario definido (p. ej.
+ * Administración) no tienen a qué compararse.
  */
 const SHIFT_CUTOFF: Record<string, { hour: number; minute: number }> = {
   Matutino: { hour: 8, minute: 0 },
   Vespertino: { hour: 15, minute: 0 },
 };
+
+/** Además de la hora de apertura, se da un colchón de 5 min antes de contarlo como retardo. */
+const LATE_GRACE_MINUTES = 5;
 
 function mexicoCityTimeOfDay(iso: string): { hour: number; minute: number } {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(
@@ -45,7 +48,7 @@ function computeLateness(shift: string, occurredAt: string): { isLate: boolean; 
   if (!cutoff) return null;
   const { hour, minute } = mexicoCityTimeOfDay(occurredAt);
   const diff = hour * 60 + minute - (cutoff.hour * 60 + cutoff.minute);
-  return { isLate: diff > 0, lateMinutes: Math.max(diff, 0) };
+  return { isLate: diff >= LATE_GRACE_MINUTES, lateMinutes: Math.max(diff, 0) };
 }
 
 /** Cuántas Entradas con retardo lleva ese empleado esta semana (lunes a domingo) — incluye la de hoy si ya se guardó. */
