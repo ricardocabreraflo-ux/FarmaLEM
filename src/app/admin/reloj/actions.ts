@@ -14,6 +14,8 @@ export interface PunchResult {
   isLate?: boolean | null;
   lateMinutes?: number | null;
   weeklyLateCount?: number | null;
+  isEarlyExit?: boolean | null;
+  earlyExitMinutes?: number | null;
 }
 
 /** Marca la Entrada/Salida de quien ya inició sesión (turno de confianza): sin volver a pedir PIN. */
@@ -23,9 +25,9 @@ export async function punchForSession(): Promise<PunchResult> {
   if (!employee) return { ok: false, error: "No se encontró tu usuario." };
 
   try {
-    const { type, occurredAt, isLate, lateMinutes, weeklyLateCount } = await registerPunch(employee, session.uid);
+    const { type, occurredAt, isLate, lateMinutes, weeklyLateCount, isEarlyExit, earlyExitMinutes } = await registerPunch(employee, session.uid);
     await logAction(session.uid, `Reloj checador · ${type}`, employee.full_name);
-    return { ok: true, employeeName: employee.full_name, type, time: occurredAt, isLate, lateMinutes, weeklyLateCount };
+    return { ok: true, employeeName: employee.full_name, type, time: occurredAt, isLate, lateMinutes, weeklyLateCount, isEarlyExit, earlyExitMinutes };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo registrar el movimiento." };
   }

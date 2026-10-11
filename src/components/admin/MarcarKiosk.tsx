@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { marcarPunch } from "@/app/admin/turno/marcar/actions";
 import { LatenessNotice } from "@/components/admin/LatenessNotice";
+import { EarlyExitNotice } from "@/components/admin/EarlyExitNotice";
 
 export interface MarcarShiftInfo {
   shift: "Matutino" | "Vespertino";
@@ -19,6 +20,8 @@ type Confirmed = {
   isLate?: boolean | null;
   lateMinutes?: number | null;
   weeklyLateCount?: number | null;
+  isEarlyExit?: boolean | null;
+  earlyExitMinutes?: number | null;
 };
 
 const PIN_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "borrar", "0", "enviar"];
@@ -60,6 +63,8 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
           isLate: res.isLate,
           lateMinutes: res.lateMinutes,
           weeklyLateCount: res.weeklyLateCount,
+          isEarlyExit: res.isEarlyExit,
+          earlyExitMinutes: res.earlyExitMinutes,
         });
       } else {
         setError(res.error ?? "No se pudo registrar.");
@@ -98,8 +103,10 @@ export function MarcarKiosk({ shifts }: { shifts: MarcarShiftInfo[] }) {
           <p className="font-display text-lg font-bold text-admin-ink">{confirmed.employeeName}</p>
           <p className="font-data text-3xl font-semibold text-admin-ink">{fmtTime(confirmed.time)}</p>
           <p className="text-[0.85rem] text-admin-ink-soft">{confirmed.type} registrada &middot; {active?.shift}</p>
-          {confirmed.type === "Entrada" && (
+          {confirmed.type === "Entrada" ? (
             <LatenessNotice isLate={confirmed.isLate} lateMinutes={confirmed.lateMinutes} weeklyLateCount={confirmed.weeklyLateCount} />
+          ) : (
+            <EarlyExitNotice isEarlyExit={confirmed.isEarlyExit} earlyExitMinutes={confirmed.earlyExitMinutes} />
           )}
           <button type="button" onClick={reset} className="text-[0.82rem] font-semibold text-admin-ink-soft underline decoration-dotted">
             Marcar otra persona

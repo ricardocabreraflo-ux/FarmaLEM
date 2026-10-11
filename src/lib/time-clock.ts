@@ -18,16 +18,30 @@ export interface TimeClockEvent {
   occurred_at: string;
   is_late: boolean | null;
   late_minutes: number | null;
+  is_early_exit: boolean | null;
+  early_exit_minutes: number | null;
 }
 
 /**
  * Tolerancia de 10 minutos: llegan a revisar valores y dejar su punto de
  * venta listo antes de abrir. Turnos sin horario definido (p. ej.
- * Administración) no tienen a qué compararse.
+ * Administración) no tienen a qué compararse. Entre semana cada turno tiene
+ * su propia hora; sábado y domingo solo hay un turno cubriendo todo el día,
+ * así que llegan a la misma hora sin importar si ese fin de semana les tocó
+ * el grupo matutino o vespertino (ver WEEKEND_ENTRADA_CUTOFF).
  */
 const SHIFT_CUTOFF: Record<string, { hour: number; minute: number }> = {
   Matutino: { hour: 8, minute: 0 },
   Vespertino: { hour: 15, minute: 0 },
+};
+
+/** Sábado y domingo: un solo turno cubre todo el día, entra a las 8:30am. */
+const WEEKEND_ENTRADA_CUTOFF = { hour: 8, minute: 30 };
+
+/** Hora de cierre de sábado y domingo (para avisar si marcan Salida antes de tiempo). getDay(): 0 domingo, 6 sábado. */
+const WEEKEND_SALIDA_TARGET: Record<number, { hour: number; minute: number }> = {
+  6: { hour: 21, minute: 30 }, // sábado 9:30pm
+  0: { hour: 21, minute: 0 }, // domingo 9:00pm
 };
 
 /** Colchón de 5 min después de la hora de apertura (minutos 1-5 no cuentan); el retardo arranca en el minuto 6. */
@@ -42,13 +56,29 @@ function mexicoCityTimeOfDay(iso: string): { hour: number; minute: number } {
   return { hour, minute };
 }
 
-/** null si ese turno no tiene horario definido (no aplica tolerancia). */
+/** 0 domingo ... 6 sábado, según el día en Ciudad de México. */
+function mexicoCityWeekday(iso: string): number {
+  return new Date(`${dateInMexico(iso)}T12:00:00`).getDay();
+}
+
+/** null si ese turno no tiene horario definido (no aplica tolerancia). Sábado/domingo siempre usan la hora de fin de semana, sin importar el turno. */
 function computeLateness(shift: string, occurredAt: string): { isLate: boolean; lateMinutes: number } | null {
-  const cutoff = SHIFT_CUTOFF[shift];
-  if (!cutoff) return null;
+  if (shift !== "Matutino" && shift !== "Vespertino") return null;
+  const weekday = mexicoCityWeekday(occurredAt);
+  const cutoff = weekday === 0 || weekday === 6 ? WEEKEND_ENTRADA_CUTOFF : SHIFT_CUTOFF[shift];
   const { hour, minute } = mexicoCityTimeOfDay(occurredAt);
   const diff = hour * 60 + minute - (cutoff.hour * 60 + cutoff.minute);
   return { isLate: diff > LATE_GRACE_MINUTES, lateMinutes: Math.max(diff, 0) };
+}
+
+/** null entre semana (no hay una sola hora de salida fija que comparar). Sábado/domingo: si marcan Salida antes del cierre, avisa cuánto antes. */
+function computeSalidaEarly(occurredAt: string): { isEarly: boolean; minutesEarly: number } | null {
+  const weekday = mexicoCityWeekday(occurredAt);
+  const target = WEEKEND_SALIDA_TARGET[weekday];
+  if (!target) return null;
+  const { hour, minute } = mexicoCityTimeOfDay(occurredAt);
+  const diff = target.hour * 60 + target.minute - (hour * 60 + minute);
+  return { isEarly: diff > 0, minutesEarly: Math.max(diff, 0) };
 }
 
 /** Cuántas Entradas con retardo lleva ese empleado esta semana (lunes a domingo) — incluye la de hoy si ya se guardó. */
@@ -111,16 +141,25 @@ export interface RegisterPunchResult {
   isLate: boolean | null;
   lateMinutes: number | null;
   weeklyLateCount: number | null;
+  isEarlyExit: boolean | null;
+  earlyExitMinutes: number | null;
 }
 
 export async function registerPunch(employee: Profile, createdBy: string): Promise<RegisterPunchResult> {
   const type = await nextEventType(employee.id);
   const occurredAt = new Date().toISOString();
   const lateness = type === "Entrada" ? computeLateness(employee.shift, occurredAt) : null;
+  const earlyExit = type === "Salida" ? computeSalidaEarly(occurredAt) : null;
 
-  const { error } = await supabaseAdmin()
-    .from("time_clock_events")
-    .insert({ employee_id: employee.id, event_type: type, occurred_at: occurredAt, is_late: lateness?.isLate ?? null, late_minutes: lateness?.lateMinutes ?? null });
+  const { error } = await supabaseAdmin().from("time_clock_events").insert({
+    employee_id: employee.id,
+    event_type: type,
+    occurred_at: occurredAt,
+    is_late: lateness?.isLate ?? null,
+    late_minutes: lateness?.lateMinutes ?? null,
+    is_early_exit: earlyExit?.isEarly ?? null,
+    early_exit_minutes: earlyExit?.minutesEarly ?? null,
+  });
   if (error) throw new Error(`No se pudo registrar el movimiento: ${error.message}`);
 
   const weeklyLateCount = lateness?.isLate ? await countLateEntriesThisWeek(employee.id) : null;
@@ -149,9 +188,10 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
 
   const timeLabel = new Date(occurredAt).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
   const latenessNote = lateness?.isLate ? ` · retardo de ${lateness.lateMinutes} min (van ${weeklyLateCount} esta semana)` : "";
+  const earlyExitNote = earlyExit?.isEarly ? ` · salida anticipada, ${earlyExit.minutesEarly} min antes de su hora` : "";
   await sendPushToAdmins({
-    title: `${lateness?.isLate ? "🔴" : type === "Entrada" ? "🟢" : "🔴"} ${employee.full_name}`,
-    body: `Marcó su ${type} del turno ${employee.shift} a las ${timeLabel}${latenessNote}`,
+    title: `${lateness?.isLate || earlyExit?.isEarly ? "🔴" : type === "Entrada" ? "🟢" : "🔴"} ${employee.full_name}`,
+    body: `Marcó su ${type} del turno ${employee.shift} a las ${timeLabel}${latenessNote}${earlyExitNote}`,
     url: "/admin/reloj/bitacora",
   });
 
@@ -163,7 +203,15 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
     });
   }
 
-  return { type, occurredAt, isLate: lateness?.isLate ?? null, lateMinutes: lateness?.lateMinutes ?? null, weeklyLateCount };
+  return {
+    type,
+    occurredAt,
+    isLate: lateness?.isLate ?? null,
+    lateMinutes: lateness?.lateMinutes ?? null,
+    weeklyLateCount,
+    isEarlyExit: earlyExit?.isEarly ?? null,
+    earlyExitMinutes: earlyExit?.minutesEarly ?? null,
+  };
 }
 
 export async function listEventsForDate(date: string): Promise<TimeClockEvent[]> {

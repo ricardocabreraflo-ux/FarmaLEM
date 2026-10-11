@@ -3,8 +3,17 @@
 import { useState, useTransition } from "react";
 import { punchForSession } from "@/app/admin/reloj/actions";
 import { LatenessNotice } from "@/components/admin/LatenessNotice";
+import { EarlyExitNotice } from "@/components/admin/EarlyExitNotice";
 
-type EventInfo = { type: "Entrada" | "Salida"; time: string; isLate?: boolean | null; lateMinutes?: number | null; weeklyLateCount?: number | null } | null;
+type EventInfo = {
+  type: "Entrada" | "Salida";
+  time: string;
+  isLate?: boolean | null;
+  lateMinutes?: number | null;
+  weeklyLateCount?: number | null;
+  isEarlyExit?: boolean | null;
+  earlyExitMinutes?: number | null;
+} | null;
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
@@ -27,7 +36,15 @@ export function PunchPanel({ employeeName, initialLastEvent }: { employeeName: s
     startTransition(async () => {
       const res = await punchForSession();
       if (res.ok && res.type && res.time) {
-        setLastEvent({ type: res.type, time: res.time, isLate: res.isLate, lateMinutes: res.lateMinutes, weeklyLateCount: res.weeklyLateCount });
+        setLastEvent({
+          type: res.type,
+          time: res.time,
+          isLate: res.isLate,
+          lateMinutes: res.lateMinutes,
+          weeklyLateCount: res.weeklyLateCount,
+          isEarlyExit: res.isEarlyExit,
+          earlyExitMinutes: res.earlyExitMinutes,
+        });
       } else {
         setError(res.error ?? "No se pudo registrar.");
       }
@@ -42,8 +59,10 @@ export function PunchPanel({ employeeName, initialLastEvent }: { employeeName: s
           <p className="mt-1 text-[0.9rem] font-semibold text-admin-ok-text">
             Ya marcaste tu {lastEvent.type} a las {fmtTime(lastEvent.time)}
           </p>
-          {lastEvent.type === "Entrada" && (
+          {lastEvent.type === "Entrada" ? (
             <LatenessNotice isLate={lastEvent.isLate} lateMinutes={lastEvent.lateMinutes} weeklyLateCount={lastEvent.weeklyLateCount} />
+          ) : (
+            <EarlyExitNotice isEarlyExit={lastEvent.isEarlyExit} earlyExitMinutes={lastEvent.earlyExitMinutes} />
           )}
         </>
       ) : (

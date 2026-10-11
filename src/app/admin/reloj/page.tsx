@@ -76,7 +76,17 @@ export default async function RelojPage() {
         <PunchPanel
           employeeName={profile?.full_name ?? "Sin nombre"}
           initialLastEvent={
-            last ? { type: last.event_type, time: last.occurred_at, isLate: last.is_late, lateMinutes: last.late_minutes, weeklyLateCount } : null
+            last
+              ? {
+                  type: last.event_type,
+                  time: last.occurred_at,
+                  isLate: last.is_late,
+                  lateMinutes: last.late_minutes,
+                  weeklyLateCount,
+                  isEarlyExit: last.is_early_exit,
+                  earlyExitMinutes: last.early_exit_minutes,
+                }
+              : null
           }
         />
 

@@ -61,11 +61,21 @@ export default async function BitacoraRelojPage({ searchParams }: { searchParams
                       </span>
                     </td>
                     <td className="px-5 py-3">
-                      {e.event_type !== "Entrada" || e.is_late == null ? (
+                      {e.event_type === "Entrada" ? (
+                        e.is_late == null ? (
+                          "—"
+                        ) : e.is_late ? (
+                          <span className="rounded-full bg-admin-bad-bg px-2.5 py-1 text-[0.76rem] font-semibold text-admin-bad-text">
+                            Retardo {e.late_minutes} min
+                          </span>
+                        ) : (
+                          <span className="text-admin-ink-soft">A tiempo</span>
+                        )
+                      ) : e.is_early_exit == null ? (
                         "—"
-                      ) : e.is_late ? (
+                      ) : e.is_early_exit ? (
                         <span className="rounded-full bg-admin-bad-bg px-2.5 py-1 text-[0.76rem] font-semibold text-admin-bad-text">
-                          Retardo {e.late_minutes} min
+                          Salida {e.early_exit_minutes} min antes
                         </span>
                       ) : (
                         <span className="text-admin-ink-soft">A tiempo</span>
