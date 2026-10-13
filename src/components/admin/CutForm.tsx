@@ -19,6 +19,7 @@ interface CutDraft {
   cashDelivered: string;
   nomina: string;
   hasCounted: boolean;
+  savedAt: string;
 }
 
 export function CutForm({
@@ -48,22 +49,31 @@ export function CutForm({
 
   // Recupera lo que ya se había escrito si la página se tuvo que recargar a
   // medio capturar (p.ej. por una actualización del panel) — para no hacer
-  // que vuelvan a teclear todo. localStorage no existe en el servidor, así
-  // que esto solo se puede leer ya montado en el cliente: es justo el caso
-  // que react-hooks/set-state-in-effect no puede distinguir de un mal uso.
+  // que vuelvan a teclear todo. Solo se restaura si el respaldo es del MISMO
+  // día (savedAt) — si alguien dejó algo a medias ayer y hoy abre "Capturar
+  // corte" de nuevo, ya no se restaura (y se borra ese respaldo viejo): de lo
+  // contrario se le cambiaba la fecha a la de ayer sin que se diera cuenta y
+  // terminaba "corrigiendo" el corte de otro día con los números de hoy.
+  // localStorage no existe en el servidor, así que esto solo se puede leer ya
+  // montado en el cliente: es justo el caso que react-hooks/set-state-in-effect
+  // no puede distinguir de un mal uso.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
         const draft = JSON.parse(raw) as Partial<CutDraft>;
-        if (draft.cutDate) setCutDate(draft.cutDate);
-        if (draft.total) setTotal(draft.total);
-        if (draft.card) setCard(draft.card);
-        if (draft.cashDelivered) setCashDelivered(draft.cashDelivered);
-        if (draft.nomina) setNomina(draft.nomina);
-        if (draft.hasCounted) setHasCounted(true);
-        if (draft.total || draft.card || draft.cashDelivered) setRestoredDraft(true);
+        if (draft.savedAt === mexicoCityToday()) {
+          if (draft.cutDate) setCutDate(draft.cutDate);
+          if (draft.total) setTotal(draft.total);
+          if (draft.card) setCard(draft.card);
+          if (draft.cashDelivered) setCashDelivered(draft.cashDelivered);
+          if (draft.nomina) setNomina(draft.nomina);
+          if (draft.hasCounted) setHasCounted(true);
+          if (draft.total || draft.card || draft.cashDelivered) setRestoredDraft(true);
+        } else {
+          localStorage.removeItem(DRAFT_KEY);
+        }
       }
     } catch {
       // sin localStorage disponible: no pasa nada, solo no hay respaldo
@@ -75,7 +85,7 @@ export function CutForm({
   useEffect(() => {
     if (!hydratedRef.current) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ cutDate, total, card, cashDelivered, nomina, hasCounted }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ cutDate, total, card, cashDelivered, nomina, hasCounted, savedAt: mexicoCityToday() }));
     } catch {
       // localStorage lleno o no disponible: no hay respaldo, pero no rompe la captura
     }
