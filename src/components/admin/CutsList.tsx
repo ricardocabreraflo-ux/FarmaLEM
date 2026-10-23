@@ -117,11 +117,11 @@ export function CutsList({ cuts, isAdmin, canReview, employees }: { cuts: Row[];
               <th className="px-5 py-3 text-right font-medium">Tarjeta</th>
               <th className="px-5 py-3 text-right font-medium">Efectivo entregado</th>
               <th className="px-5 py-3 font-medium">Estado</th>
+              {canReview && <th className="sticky right-0 border-l border-admin-border bg-admin-surface px-5 py-3"></th>}
               {isAdmin && <th className="px-5 py-3 font-medium">Nota</th>}
               {isAdmin && <th className="px-5 py-3 text-center font-medium">Recogido</th>}
               <th className="px-5 py-3"></th>
               <th className="px-5 py-3"></th>
-              {canReview && <th className="px-5 py-3"></th>}
               {canReview && <th className="px-5 py-3"></th>}
             </tr>
           </thead>
@@ -197,6 +197,25 @@ function CutRow({
       <td className="px-5 py-3">
         <span className={`rounded-full px-2.5 py-1 text-[0.76rem] font-semibold ${STATUS_STYLE[status]}`}>{status}</span>
       </td>
+      {canReview && (
+        <td className={`sticky right-0 border-l border-admin-border px-5 py-3 ${selected ? "bg-admin-primary-soft/40" : "bg-admin-surface"}`}>
+          {status !== "Aprobado" && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => {
+                setStatus("Aprobado");
+                startTransition(async () => {
+                  await approveCutAction(cut.id);
+                });
+              }}
+              className="rounded-full bg-admin-primary px-3.5 py-1.5 text-[0.8rem] font-semibold whitespace-nowrap text-white disabled:opacity-60"
+            >
+              Aprobar
+            </button>
+          )}
+        </td>
+      )}
       {isAdmin && (
         <td className="px-5 py-3 max-w-[180px]">
           <button type="button" onClick={onNote} className="text-left text-[0.82rem] font-semibold text-admin-primary hover:underline">
@@ -223,25 +242,6 @@ function CutRow({
           </button>
         )}
       </td>
-      {canReview && (
-        <td className="px-5 py-3 text-right">
-          {status !== "Aprobado" && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => {
-                setStatus("Aprobado");
-                startTransition(async () => {
-                  await approveCutAction(cut.id);
-                });
-              }}
-              className="rounded-full border border-admin-border px-3.5 py-1.5 text-[0.8rem] font-semibold text-admin-ink disabled:opacity-60"
-            >
-              Aprobar
-            </button>
-          )}
-        </td>
-      )}
       {canReview && (
         <td className="px-5 py-3 text-right">
           {isCutDateLocked(cut.cut_date) ? (
