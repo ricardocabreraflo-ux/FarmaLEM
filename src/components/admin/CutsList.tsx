@@ -43,6 +43,7 @@ export function CutsList({ cuts, isAdmin, canReview, employees }: { cuts: Row[];
   }
 
   const allSelected = cuts.length > 0 && cuts.every((c) => selected.has(c.id));
+  const selectedCashTotal = cuts.filter((c) => selected.has(c.id)).reduce((sum, c) => sum + c.cash, 0);
 
   function toggleOne(id: string, checked: boolean) {
     setSelected((prev) => {
@@ -72,6 +73,9 @@ export function CutsList({ cuts, isAdmin, canReview, employees }: { cuts: Row[];
       {isAdmin && selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 border-b border-admin-border bg-admin-primary-soft px-5 py-3">
           <span className="text-[0.84rem] font-semibold text-admin-primary-deep">{selected.size} seleccionado{selected.size === 1 ? "" : "s"}</span>
+          <span className="rounded-full bg-admin-surface px-3 py-1 text-[0.8rem] font-semibold text-admin-ink">
+            Efectivo: {fmtMoney(selectedCashTotal)}
+          </span>
           <button
             type="button"
             disabled={bulkPending}
