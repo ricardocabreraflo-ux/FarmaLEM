@@ -7,6 +7,7 @@ import { mexicoCityToday } from "@/lib/dates";
 import {
   createCut,
   replaceCut,
+  getCut,
   getCutByShift,
   approveCut,
   updateCut,
@@ -16,6 +17,7 @@ import {
   uploadCutPhoto,
   type CutStatus,
 } from "@/lib/cuts";
+import { recalculateBonusWeekCovering } from "@/lib/bonuses";
 import { createWithdrawal } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
 import { hasCapability } from "@/lib/panel-modules";
@@ -122,6 +124,10 @@ export async function createCutForm(_prevState: CutFormState | undefined, formDa
 
   await logAction(session.uid, existing ? "Corrigió corte" : "Creó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
 
+  // Si quedó Aprobado (admin capturando directo) y ya hay una semana de bono guardada que cubre
+  // esta fecha, que se vea reflejado ahí mismo sin tener que ir a "Recalcular mes" a mano.
+  if (status === "Aprobado") await recalculateBonusWeekCovering(employeeId, cutDate, session.uid);
+
   const employeeProfile = await getProfileById(employeeId);
   await sendCutWhatsAppNotification({
     employeeName: employeeProfile?.full_name ?? "Equipo",
@@ -154,6 +160,8 @@ export async function updateCutForm(_prevState: CutFormState | undefined, formDa
 
   if (!id || !cutDate || !shift || !employeeId) return { error: "Fecha, turno y empleado son obligatorios." };
 
+  const previous = await getCut(id);
+
   try {
     await updateCut(id, { cutDate, shift, employeeId, total, cash, card, cashDelivered, status });
   } catch (err) {
@@ -162,14 +170,25 @@ export async function updateCutForm(_prevState: CutFormState | undefined, formDa
 
   await logAction(session.uid, "Editó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);
 
+  // Recalcula la semana de bono que cubría la fecha/empleado original (por si el corte se
+  // movió de fecha o de empleado) y la que cubre la fecha/empleado nuevo — así Bonos
+  // semanales, Sueldos y sus comprobantes quedan al día sin pasar por "Recalcular mes".
+  if (previous) await recalculateBonusWeekCovering(previous.employee_id, previous.cut_date, session.uid);
+  if (!previous || previous.employee_id !== employeeId || previous.cut_date !== cutDate) {
+    await recalculateBonusWeekCovering(employeeId, cutDate, session.uid);
+  }
+
   revalidatePath("/admin/cortes");
   redirect("/admin/cortes");
 }
 
 export async function approveCutAction(id: string) {
   const session = await requireCutReviewSession();
+  const cut = await getCut(id);
   await approveCut(id, session.uid);
   await logAction(session.uid, "Aprobó corte", `#${id.slice(0, 8).toUpperCase()}`);
+  // Si ya hay una semana de bono guardada que cubre esta fecha, que se actualice sola al aprobar.
+  if (cut) await recalculateBonusWeekCovering(cut.employee_id, cut.cut_date, session.uid);
   revalidatePath("/admin/cortes");
 }
 

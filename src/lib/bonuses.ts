@@ -149,6 +149,41 @@ export function weeksOfMonth(month: string): MonthWeekWindow[] {
 }
 
 /**
+ * Si esa fecha cae dentro de una semana de bono ya guardada de ese empleado,
+ * la vuelve a calcular desde los cortes — para que aprobar/editar/corregir un
+ * corte se refleje solo en Bonos semanales, Sueldos y sus comprobantes, sin
+ * tener que entrar a "Recalcular mes" a mano. Si no hay semana guardada para
+ * esa fecha (porque no se ha generado o cae fuera de rango) no hace nada: la
+ * semana se generará con el dato correcto cuando toque (autoGenerateBonusWeeks).
+ * Nunca truena el flujo que la llama — es un efecto secundario, no el guardado
+ * del corte en sí.
+ */
+export async function recalculateBonusWeekCovering(employeeId: string, date: string, updatedBy: string): Promise<void> {
+  try {
+    const db = supabaseAdmin();
+    const { data, error } = await db
+      .from("bonus_weeks")
+      .select()
+      .eq("employee_id", employeeId)
+      .lte("start_date", date)
+      .gte("end_date", date)
+      .maybeSingle();
+    if (error || !data) return;
+
+    const week = data as BonusWeek;
+    const { sales, absent } = await computeWeekFromRecords(week.employee_id, week.start_date, week.end_date);
+    if (sales === week.sales && absent === week.absent) return;
+
+    await saveBonusWeek(
+      { month: week.month, week: week.week, employeeId: week.employee_id, shift: week.shift, startDate: week.start_date, endDate: week.end_date, sales, absent, createdBy: updatedBy },
+      week.id
+    );
+  } catch (err) {
+    console.error("[bonuses] no se pudo recalcular la semana del bono:", err instanceof Error ? err.message : err);
+  }
+}
+
+/**
  * Calcula y guarda en automático las semanas de ese mes que ya terminaron y
  * todavía no tienen fila — para no depender de que alguien entre a
  * "Calcular semana" a mano cada vez. Nunca toca una semana que ya existe
