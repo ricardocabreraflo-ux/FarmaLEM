@@ -8,6 +8,7 @@ import { listBonusTiers, listBonusWeeks, earnedBonus, targetForWeek, autoGenerat
 import { canAccessModule } from "@/lib/panel-modules";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MonthPicker } from "@/components/admin/MonthPicker";
+import { RecalculateMonthButton } from "@/components/admin/RecalculateMonthButton";
 
 export const metadata: Metadata = { title: "Bonos semanales" };
 export const dynamic = "force-dynamic";
@@ -53,6 +54,7 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
             <Link href={`/admin/bonos/metas?mes=${month}`} className="rounded-full border border-admin-border px-5 py-2.5 text-[0.85rem] font-semibold text-admin-ink">
               Configurar metas
             </Link>
+            <RecalculateMonthButton month={month} />
             <Link
               href={`/admin/bonos/nuevo?mes=${month}`}
               className="rounded-full bg-admin-primary px-5 py-2.5 text-[0.85rem] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97]"

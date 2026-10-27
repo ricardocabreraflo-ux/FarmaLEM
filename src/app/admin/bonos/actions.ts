@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { replaceBonusTiers, saveBonusWeek, computeWeekFromRecords, listBonusTiers, type BonusTier } from "@/lib/bonuses";
+import { replaceBonusTiers, saveBonusWeek, computeWeekFromRecords, listBonusTiers, listBonusWeeks, type BonusTier } from "@/lib/bonuses";
 import { logAction } from "@/lib/history";
 
 function previousMonth(month: string): string {
@@ -93,4 +93,38 @@ export async function computeWeekAction(employeeId: string, startDate: string, e
   await requireAdminSession();
   if (!startDate || !endDate) return { sales: 0, absent: false };
   return computeWeekFromRecords(employeeId, startDate, endDate);
+}
+
+export interface RecalculateMonthResult {
+  ok: boolean;
+  error?: string;
+  updated?: number;
+}
+
+/**
+ * Vuelve a calcular las ventas/falta de cada semana ya guardada de ese mes a
+ * partir de los cortes — para cuando se aprueban cortes después de que la
+ * semana se generó sola (autoGenerateBonusWeeks solo crea semanas nuevas,
+ * nunca toca las que ya existen, para no pisar una edición manual). Esto es
+ * la acción explícita que sí las actualiza, a petición de quien la dispare.
+ */
+export async function recalculateMonthBonusWeeksAction(month: string): Promise<RecalculateMonthResult> {
+  const session = await requireAdminSession();
+  if (!month) return { ok: false, error: "Falta el mes." };
+
+  try {
+    const weeks = await listBonusWeeks(month);
+    for (const w of weeks) {
+      const { sales, absent } = await computeWeekFromRecords(w.employee_id, w.start_date, w.end_date);
+      await saveBonusWeek(
+        { month: w.month, week: w.week, employeeId: w.employee_id, shift: w.shift, startDate: w.start_date, endDate: w.end_date, sales, absent, createdBy: session.uid },
+        w.id
+      );
+    }
+    await logAction(session.uid, "Recalculó bonos semanales del mes", month);
+    revalidatePath("/admin/bonos");
+    return { ok: true, updated: weeks.length };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudieron recalcular las semanas." };
+  }
 }
