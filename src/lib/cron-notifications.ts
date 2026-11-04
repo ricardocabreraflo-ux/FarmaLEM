@@ -16,16 +16,30 @@ export async function notifyToldoAbrir(): Promise<void> {
   await sendPushToEmployee(emp.id, { title: "☂️ Toldo", body: "Recuerda dejar el toldo a 45°.", url: "/admin/reloj" });
 }
 
+/** Lunes a viernes 6pm (el cron de pg_cron ya solo dispara esos días) — pide confirmación con un botón en la notificación. */
 export async function notifyToldoCerrar(): Promise<void> {
   const emp = await getActiveEmployeeByShift("Vespertino");
   if (!emp) return;
-  await sendPushToEmployee(emp.id, { title: "☂️ Toldo", body: "Es hora de levantar el toldo (o antes, si ya oscureció).", url: "/admin/reloj" });
+  await sendPushToEmployee(emp.id, {
+    title: "☂️ Recoger el toldo",
+    body: "Es hora de recoger el toldo. Toca \"Ya lo hice\" en cuanto quede.",
+    url: "/admin/reloj",
+    taskKey: "toldo",
+    checkDate: mexicoCityToday(),
+  });
 }
 
+/** Todos los días 6pm — pide confirmación con un botón en la notificación. */
 export async function notifyLuces(): Promise<void> {
   const emp = await getActiveEmployeeByShift("Vespertino");
   if (!emp) return;
-  await sendPushToEmployee(emp.id, { title: "💡 Luces", body: "Enciende las luces de afuera.", url: "/admin/reloj" });
+  await sendPushToEmployee(emp.id, {
+    title: "💡 Encender las luces",
+    body: "Enciende las luces de afuera. Toca \"Ya lo hice\" en cuanto quede.",
+    url: "/admin/reloj",
+    taskKey: "luces",
+    checkDate: mexicoCityToday(),
+  });
 }
 
 function money(n: number): string {

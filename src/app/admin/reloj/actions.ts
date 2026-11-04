@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { registerPunch } from "@/lib/time-clock";
 import { logAction } from "@/lib/history";
+import { confirmOperationalTask, type ConfirmTaskResult } from "@/lib/operational-tasks";
 
 export interface PunchResult {
   ok: boolean;
@@ -31,4 +32,10 @@ export async function punchForSession(): Promise<PunchResult> {
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo registrar el movimiento." };
   }
+}
+
+/** Botón "Ya lo hice" dentro de la app (respaldo del botón que trae la notificación push). */
+export async function confirmTaskForSession(taskKey: string, checkDate: string): Promise<ConfirmTaskResult> {
+  const session = await requireSession();
+  return confirmOperationalTask(taskKey, checkDate, session.uid);
 }
