@@ -9,7 +9,7 @@ import { PunchPanel } from "@/components/admin/PunchPanel";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { PushNotificationSettings } from "@/components/admin/PushNotificationSettings";
 import { TaskChecklist } from "@/components/admin/TaskChecklist";
-import { OPERATIONAL_TASKS, getTaskChecksForDate } from "@/lib/operational-tasks";
+import { listActiveTaskDefsForShift, getTaskChecksForDate } from "@/lib/operational-tasks";
 
 export const metadata: Metadata = { title: "Reloj checador" };
 export const dynamic = "force-dynamic";
@@ -61,7 +61,8 @@ export default async function RelojPage() {
   ]);
   const punchDays = pairPunchesByDay(myPunches);
   const weeklyLateCount = last?.is_late ? await countLateEntriesThisWeek(session.uid) : null;
-  const taskStatus = profile?.shift === "Vespertino" ? await getTaskChecksForDate(today) : null;
+  const myTasks = await listActiveTaskDefsForShift(profile?.shift);
+  const taskStatus = myTasks.length > 0 ? await getTaskChecksForDate(today) : null;
 
   return (
     <AdminShell activeHref="/admin/reloj" userName={profile?.full_name ?? "Sin nombre"} userRole={session.role}>
@@ -110,7 +111,7 @@ export default async function RelojPage() {
           </div>
         </div>
 
-        {taskStatus && <TaskChecklist tasks={OPERATIONAL_TASKS} checkDate={today} initialStatus={taskStatus} />}
+        {taskStatus && <TaskChecklist tasks={myTasks} checkDate={today} initialStatus={taskStatus} />}
       </div>
 
       <h2 className="mt-8 font-display text-base text-admin-ink">Mi reloj checador</h2>

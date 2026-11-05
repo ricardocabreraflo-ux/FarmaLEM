@@ -17,6 +17,15 @@ import {
 } from "@/lib/stockout-categories";
 import { savePushSubscription, deletePushSubscription, hasPushSubscription, sendPushToEmployee, type PushSubscriptionInput } from "@/lib/push";
 import { createPromotion, setPromotionActive, deletePromotion, listPromotions, type Promotion } from "@/lib/promotions";
+import {
+  createOperationalTaskDef,
+  updateOperationalTaskDef,
+  setOperationalTaskDefActive,
+  deleteOperationalTaskDef,
+  listOperationalTaskDefs,
+  type SaveTaskDefInput,
+  type OperationalTaskDef,
+} from "@/lib/operational-tasks";
 
 export interface BreakevenMarginFormState {
   error?: string;
@@ -315,4 +324,58 @@ export async function deletePromotionAction(id: string): Promise<PromotionAction
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar la promoción." };
   }
   return afterPromotionChange(session, "Borró una promoción", id);
+}
+
+export interface OperationalTaskActionResult {
+  ok: boolean;
+  error?: string;
+  tasks?: OperationalTaskDef[];
+}
+
+async function afterTaskDefChange(session: Awaited<ReturnType<typeof requireAdminSession>>, action: string, detail: string): Promise<OperationalTaskActionResult> {
+  await logAction(session.uid, action, detail);
+  revalidatePath("/admin/configuracion");
+  revalidatePath("/admin/reloj");
+  const tasks = await listOperationalTaskDefs();
+  return { ok: true, tasks };
+}
+
+export async function createOperationalTaskDefAction(input: SaveTaskDefInput): Promise<OperationalTaskActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await createOperationalTaskDef(input, session.uid);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo crear la tarea." };
+  }
+  return afterTaskDefChange(session, "Creó tarea operativa", input.label);
+}
+
+export async function updateOperationalTaskDefAction(id: string, input: SaveTaskDefInput): Promise<OperationalTaskActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await updateOperationalTaskDef(id, input);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar la tarea." };
+  }
+  return afterTaskDefChange(session, "Editó tarea operativa", input.label);
+}
+
+export async function setOperationalTaskDefActiveAction(id: string, active: boolean): Promise<OperationalTaskActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await setOperationalTaskDefActive(id, active);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar la tarea." };
+  }
+  return afterTaskDefChange(session, "Activó/desactivó tarea operativa", `${id}: ${active ? "activa" : "inactiva"}`);
+}
+
+export async function deleteOperationalTaskDefAction(id: string): Promise<OperationalTaskActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await deleteOperationalTaskDef(id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar la tarea." };
+  }
+  return afterTaskDefChange(session, "Borró tarea operativa", id);
 }

@@ -3,6 +3,7 @@ import { listProfiles, getActiveEmployeeByShift } from "@/lib/profiles";
 import { mexicoCityToday, mondayOf, addDays } from "@/lib/dates";
 import { listBonusTiers, computeWeekFromRecords, tierProgress } from "@/lib/bonuses";
 import { sendPushToEmployee, sendPushToEmployees } from "@/lib/push";
+import { sendDueOperationalTaskPushes } from "@/lib/operational-tasks";
 
 /**
  * Lógica de los recordatorios programados (pg_cron → /api/cron/notificaciones,
@@ -16,30 +17,15 @@ export async function notifyToldoAbrir(): Promise<void> {
   await sendPushToEmployee(emp.id, { title: "☂️ Toldo", body: "Recuerda dejar el toldo a 45°.", url: "/admin/reloj" });
 }
 
-/** Lunes a viernes 6pm (el cron de pg_cron ya solo dispara esos días) — pide confirmación con un botón en la notificación. */
-export async function notifyToldoCerrar(): Promise<void> {
-  const emp = await getActiveEmployeeByShift("Vespertino");
-  if (!emp) return;
-  await sendPushToEmployee(emp.id, {
-    title: "☂️ Recoger el toldo",
-    body: "Es hora de recoger el toldo. Toca \"Ya lo hice\" en cuanto quede.",
-    url: "/admin/reloj",
-    taskKey: "toldo",
-    checkDate: mexicoCityToday(),
-  });
-}
-
-/** Todos los días 6pm — pide confirmación con un botón en la notificación. */
-export async function notifyLuces(): Promise<void> {
-  const emp = await getActiveEmployeeByShift("Vespertino");
-  if (!emp) return;
-  await sendPushToEmployee(emp.id, {
-    title: "💡 Encender las luces",
-    body: "Enciende las luces de afuera. Toca \"Ya lo hice\" en cuanto quede.",
-    url: "/admin/reloj",
-    taskKey: "luces",
-    checkDate: mexicoCityToday(),
-  });
+/**
+ * Corre cada 5 minutos: manda el push (con botón "Ya lo hice") a quien le
+ * toque cada tarea operativa configurada en Configuración → Tareas
+ * operativas (toldo, luces, o lo que administración vaya agregando), justo
+ * cuando le llega su hora. No depende de una hora fija en el código ni en
+ * pg_cron — ese vive en la tabla operational_task_defs.
+ */
+export async function notifyOperationalTasksDue(): Promise<void> {
+  await sendDueOperationalTaskPushes(5);
 }
 
 function money(n: number): string {

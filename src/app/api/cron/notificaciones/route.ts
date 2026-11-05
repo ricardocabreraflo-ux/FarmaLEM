@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { notifyToldoAbrir, notifyToldoCerrar, notifyLuces, notifyBonoSemanal, notifyCaducidadMensual } from "@/lib/cron-notifications";
+import { notifyToldoAbrir, notifyOperationalTasksDue, notifyBonoSemanal, notifyCaducidadMensual } from "@/lib/cron-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +13,7 @@ export const dynamic = "force-dynamic";
  */
 const HANDLERS: Record<string, () => Promise<void>> = {
   toldo_abrir: notifyToldoAbrir,
-  toldo_cerrar: notifyToldoCerrar,
-  luces: notifyLuces,
+  tareas_operativas: notifyOperationalTasksDue,
   bono_semanal: notifyBonoSemanal,
   caducidad_mensual: notifyCaducidadMensual,
 };

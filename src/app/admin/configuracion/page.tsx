@@ -6,6 +6,8 @@ import { hasDeletePin } from "@/lib/security-settings";
 import { getModuleEditorStructure } from "@/lib/panel-modules";
 import { listStockoutCategories } from "@/lib/stockout-categories";
 import { listPromotions } from "@/lib/promotions";
+import { listOperationalTaskDefs, getTaskChecksForDate } from "@/lib/operational-tasks";
+import { mexicoCityToday } from "@/lib/dates";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { BreakevenMarginForm } from "@/components/admin/BreakevenMarginForm";
 import { DeletePinForm } from "@/components/admin/DeletePinForm";
@@ -13,6 +15,7 @@ import { PanelModulesModal } from "@/components/admin/PanelModulesModal";
 import { RolesPanel } from "@/components/admin/RolesPanel";
 import { StockoutCategoriesPanel } from "@/components/admin/StockoutCategoriesPanel";
 import { PromotionsPanel } from "@/components/admin/PromotionsPanel";
+import { OperationalTasksPanel } from "@/components/admin/OperationalTasksPanel";
 import { PushNotificationSettings } from "@/components/admin/PushNotificationSettings";
 
 export const metadata: Metadata = { title: "Configuración" };
@@ -20,13 +23,15 @@ export const dynamic = "force-dynamic";
 
 export default async function ConfiguracionPage() {
   const session = await requireAdminSession();
-  const [profile, marginPercent, pinSet, moduleStructure, stockoutCategories, promotions] = await Promise.all([
+  const [profile, marginPercent, pinSet, moduleStructure, stockoutCategories, promotions, operationalTasks, taskChecksToday] = await Promise.all([
     getProfileById(session.uid),
     getBreakevenMargin(),
     hasDeletePin(),
     getModuleEditorStructure(),
     listStockoutCategories(),
     listPromotions(),
+    listOperationalTaskDefs(),
+    getTaskChecksForDate(mexicoCityToday()),
   ]);
   const { roles, entries: moduleEntries } = moduleStructure;
 
@@ -83,6 +88,15 @@ export default async function ConfiguracionPage() {
           estén &quot;Activa&quot; se mandan por notificación push a quien checa su entrada ese día.
         </p>
         <PromotionsPanel initialPromotions={promotions} />
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">
+        <h2 className="font-display text-base text-admin-ink">Tareas operativas</h2>
+        <p className="mt-1 text-[0.84rem] text-admin-ink-soft">
+          Recordatorios recurrentes (toldo, luces, lo que agregues) que le llegan por push a quien tenga ese turno, con un botón &quot;Ya lo
+          hice&quot; — en cuanto lo confirme, te avisa a ti también.
+        </p>
+        <OperationalTasksPanel initialTasks={operationalTasks} todayChecks={taskChecksToday} />
       </section>
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">
