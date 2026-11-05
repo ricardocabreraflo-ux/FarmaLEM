@@ -16,7 +16,15 @@ import {
   type StockoutCategory,
 } from "@/lib/stockout-categories";
 import { savePushSubscription, deletePushSubscription, hasPushSubscription, sendPushToEmployee, type PushSubscriptionInput } from "@/lib/push";
-import { createPromotion, setPromotionActive, deletePromotion, listPromotions, type Promotion } from "@/lib/promotions";
+import {
+  createPromotion,
+  setPromotionActive,
+  setPromotionImage,
+  deletePromotion,
+  listPromotionsWithImages,
+  uploadPromotionImage,
+  type PromotionWithImage,
+} from "@/lib/promotions";
 import {
   createOperationalTaskDef,
   updateOperationalTaskDef,
@@ -286,20 +294,23 @@ export async function sendTestPushAction(): Promise<PushActionResult> {
 export interface PromotionActionResult {
   ok: boolean;
   error?: string;
-  promotions?: Promotion[];
+  promotions?: PromotionWithImage[];
 }
 
 async function afterPromotionChange(session: Awaited<ReturnType<typeof requireAdminSession>>, action: string, detail: string): Promise<PromotionActionResult> {
   await logAction(session.uid, action, detail);
   revalidatePath("/admin/configuracion");
-  const promotions = await listPromotions();
+  revalidatePath("/admin/inicio");
+  const promotions = await listPromotionsWithImages();
   return { ok: true, promotions };
 }
 
-export async function createPromotionAction(title: string, description: string): Promise<PromotionActionResult> {
+export async function createPromotionAction(title: string, description: string, image: File | null): Promise<PromotionActionResult> {
   const session = await requireAdminSession();
   try {
-    await createPromotion(title, description.trim() || null, session.uid);
+    let imagePath: string | null = null;
+    if (image && image.size > 0) imagePath = await uploadPromotionImage(image);
+    await createPromotion(title, description.trim() || null, imagePath, session.uid);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo crear la promoción." };
   }
@@ -314,6 +325,17 @@ export async function setPromotionActiveAction(id: string, active: boolean): Pro
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar la promoción." };
   }
   return afterPromotionChange(session, "Activó/desactivó una promoción", `${id}: ${active ? "activa" : "inactiva"}`);
+}
+
+export async function setPromotionImageAction(id: string, image: File): Promise<PromotionActionResult> {
+  const session = await requireAdminSession();
+  try {
+    const imagePath = await uploadPromotionImage(image);
+    await setPromotionImage(id, imagePath);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo subir la imagen." };
+  }
+  return afterPromotionChange(session, "Cambió la imagen de una promoción", id);
 }
 
 export async function deletePromotionAction(id: string): Promise<PromotionActionResult> {

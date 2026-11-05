@@ -5,7 +5,7 @@ import { mexicoCityToday, mondayOf, addDays } from "@/lib/dates";
 import type { Profile } from "@/lib/profiles";
 import { sendPunchWhatsAppNotification } from "@/lib/whatsapp";
 import { sendPushToAdmins, sendPushToEmployee } from "@/lib/push";
-import { buildEntradaDailyBrief, buildEntradaPromoPush, buildSalidaStockoutSummary } from "@/lib/employee-notifications";
+import { buildEntradaDailyBrief, buildEntradaPromoPushes, buildSalidaStockoutSummary } from "@/lib/employee-notifications";
 
 export { mexicoCityToday };
 
@@ -176,9 +176,9 @@ export async function registerPunch(employee: Profile, createdBy: string): Promi
       createdBy,
     });
 
-    const [daily, promo] = await Promise.all([buildEntradaDailyBrief(employee, today), buildEntradaPromoPush()]);
+    const [daily, promoPushes] = await Promise.all([buildEntradaDailyBrief(employee, today), buildEntradaPromoPushes()]);
     await sendPushToEmployee(employee.id, daily);
-    if (promo) await sendPushToEmployee(employee.id, promo);
+    for (const promo of promoPushes) await sendPushToEmployee(employee.id, promo);
   } else {
     const stockoutSummary = await buildSalidaStockoutSummary(employee, today);
     if (stockoutSummary) await sendPushToAdmins(stockoutSummary);

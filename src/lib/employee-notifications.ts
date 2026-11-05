@@ -3,7 +3,7 @@ import type { Profile } from "@/lib/profiles";
 import type { PushPayload } from "@/lib/push";
 import { categoryForShift } from "@/lib/actividades";
 import { getWeeklyScheduleForMonth } from "@/lib/weekly-schedule";
-import { listActivePromotions } from "@/lib/promotions";
+import { listActivePromotionsWithImages } from "@/lib/promotions";
 import { listStockoutReportsForEmployeeOnDate } from "@/lib/stockout-reports";
 
 /** Mensajes motivacionales que acompañan el aviso de "tu plan de hoy" al checar Entrada — rotan según el día. */
@@ -46,12 +46,20 @@ export async function buildEntradaDailyBrief(employee: Profile, dateStr: string)
   return { title: "🌞 Buen día — tu plan de hoy", body: parts.join(" "), url: "/admin/actividades" };
 }
 
-/** Aviso al checar Entrada con las promociones activas que debe ofrecer en su turno (null si no hay ninguna activa). */
-export async function buildEntradaPromoPush(): Promise<PushPayload | null> {
-  const promos = await listActivePromotions();
-  if (promos.length === 0) return null;
-  const body = promos.map((p) => p.title).join(" · ");
-  return { title: "🏷️ Promociones de hoy", body: `Ofrécelas durante tu turno: ${body}`, url: "/admin/inicio" };
+/**
+ * Un aviso por cada promoción activa (en vez de uno combinado) para que la
+ * foto del producto se vea directo en la notificación — Web Push solo deja
+ * una imagen por aviso, así que si hay varias promociones, llegan varias
+ * notificaciones.
+ */
+export async function buildEntradaPromoPushes(): Promise<PushPayload[]> {
+  const promos = await listActivePromotionsWithImages();
+  return promos.map((p) => ({
+    title: `🏷️ ${p.title}`,
+    body: p.description ? p.description : "Ofrécela durante tu turno.",
+    url: "/admin/inicio",
+    image: p.imageUrl ?? undefined,
+  }));
 }
 
 /** Aviso a administración al checar Salida con lo que esa persona registró en Negados y faltantes ese día (null si no registró nada). */

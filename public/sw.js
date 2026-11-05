@@ -25,6 +25,10 @@ self.addEventListener("push", (event) => {
   if (taskKey) {
     options.actions = [{ action: "done", title: "✅ Ya lo hice" }];
   }
+  // Foto grande dentro de la notificación (p. ej. el producto de una promoción) — Chrome/Android la muestran, Safari/iOS la ignora sin romper nada.
+  if (data.image) {
+    options.image = data.image;
+  }
 
   event.waitUntil(self.registration.showNotification(title, options));
 });

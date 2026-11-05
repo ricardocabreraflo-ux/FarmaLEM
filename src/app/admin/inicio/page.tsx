@@ -9,6 +9,7 @@ import { listOrders } from "@/lib/orders";
 import { lastEventToday, mexicoCityToday, type TimeClockEvent } from "@/lib/time-clock";
 import { addDays, mondayOf } from "@/lib/dates";
 import { listActiveAnnouncements } from "@/lib/announcements";
+import { listActivePromotionsWithImages } from "@/lib/promotions";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AnnouncementAckButton } from "@/components/admin/AnnouncementAckButton";
 
@@ -222,7 +223,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
     listAttendanceForRange(monday, sunday),
     listCutsForRange(monday, sunday, uid),
   ]);
-  const announcements = await listActiveAnnouncements(profile?.role_id ?? null, uid);
+  const [announcements, promotions] = await Promise.all([listActiveAnnouncements(profile?.role_id ?? null, uid), listActivePromotionsWithImages()]);
 
   const shift = profile?.shift ?? "";
   const tiers = tierProgress(weekSales.sales, shift, bonusTiers);
@@ -275,6 +276,34 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
                 </div>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {promotions.length > 0 && (
+        <section className="mt-5">
+          <span className="text-[0.78rem] font-bold uppercase tracking-wide text-admin-ink-soft">Promociones de hoy</span>
+          <div className="mt-2 flex gap-3 overflow-x-auto pb-1">
+            {promotions.map((promo) => (
+              <div key={promo.id} className="w-[260px] max-w-[75vw] shrink-0 overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
+                <div className="aspect-square w-full bg-admin-bg">
+                  {promo.imageUrl ? (
+                    <img src={promo.imageUrl} alt={promo.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center text-[0.78rem] text-admin-ink-soft">Sin imagen</div>
+                  )}
+                </div>
+                <div className="p-3.5">
+                  <p className="font-semibold text-admin-ink">{promo.title}</p>
+                  {promo.description && <p className="mt-0.5 text-[0.8rem] text-admin-ink-soft">{promo.description}</p>}
+                  {promo.downloadUrl && (
+                    <a href={promo.downloadUrl} className="mt-2 block text-[0.8rem] font-semibold text-admin-primary hover:underline">
+                      Descargar para imprimir
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}

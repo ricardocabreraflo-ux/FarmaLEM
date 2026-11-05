@@ -21,6 +21,8 @@ export interface PushPayload {
   title: string;
   body: string;
   url?: string;
+  /** Si se manda, el service worker la muestra como imagen grande dentro de la notificación (p. ej. la foto de una promoción) — Chrome/Android la soportan, Safari/iOS la ignora sin romper nada. */
+  image?: string;
   /** Si se manda, el service worker le agrega un botón "Ya lo hice" a la notificación — ver sw.js y /api/tasks/confirmar. */
   taskKey?: string;
   /** Fecha (YYYY-MM-DD, hora de Ciudad de México) a la que corresponde ese taskKey — va fija desde el servidor, no se calcula en el navegador. */

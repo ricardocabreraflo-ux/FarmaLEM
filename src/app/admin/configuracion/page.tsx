@@ -5,7 +5,7 @@ import { getBreakevenMargin } from "@/lib/breakeven";
 import { hasDeletePin } from "@/lib/security-settings";
 import { getModuleEditorStructure } from "@/lib/panel-modules";
 import { listStockoutCategories } from "@/lib/stockout-categories";
-import { listPromotions } from "@/lib/promotions";
+import { listPromotionsWithImages } from "@/lib/promotions";
 import { listOperationalTaskDefs, getTaskChecksForDate } from "@/lib/operational-tasks";
 import { mexicoCityToday } from "@/lib/dates";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -29,7 +29,7 @@ export default async function ConfiguracionPage() {
     hasDeletePin(),
     getModuleEditorStructure(),
     listStockoutCategories(),
-    listPromotions(),
+    listPromotionsWithImages(),
     listOperationalTaskDefs(),
     getTaskChecksForDate(mexicoCityToday()),
   ]);
