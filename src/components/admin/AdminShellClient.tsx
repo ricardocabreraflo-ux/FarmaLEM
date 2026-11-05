@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { logout } from "@/app/admin/login/actions";
 import { ThemeToggle } from "@/components/admin/ThemeToggle";
+import { PendingTaskPopup } from "@/components/admin/PendingTaskPopup";
 import type { ProfileRole } from "@/lib/admin-auth";
 import type { ResolvedGroup, ResolvedNavEntry } from "@/lib/panel-modules";
 import {
@@ -88,12 +89,14 @@ export function AdminShellClient({
   activeHref,
   userName,
   userRole,
+  employeeShift,
   children,
 }: {
   navItems: ResolvedNavEntry[];
   activeHref: string;
   userName: string;
   userRole: ProfileRole;
+  employeeShift?: string | null;
   children: React.ReactNode;
 }) {
   const isAdmin = userRole === "admin";
@@ -138,6 +141,7 @@ export function AdminShellClient({
 
   return (
     <div className="min-h-screen bg-admin-bg text-admin-ink">
+      <PendingTaskPopup shift={employeeShift ?? null} />
       <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-admin-border bg-admin-surface px-5">
         <div className="flex items-center gap-3">
           <button

@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-server";
 import { sendPushToAdmins } from "@/lib/push";
 import { logAction } from "@/lib/history";
 import { getProfileById } from "@/lib/profiles";
+import { mexicoCityToday } from "@/lib/dates";
 
 export interface OperationalTaskDef {
   key: string;
@@ -48,6 +49,41 @@ export async function markTaskDone(taskKey: string, date: string, employeeId: st
   // Si alguien más lo marcó en el mismo instante, el índice único truena — no es un error real, solo ya no es "la primera vez".
   if (error) return false;
   return true;
+}
+
+function mexicoCityNow(): { hour: number; minute: number; weekday: number } {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now);
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0") % 24;
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  // 0 domingo ... 6 sábado, igual que Date.getDay(), pero anclado a la fecha de Ciudad de México.
+  const weekday = new Date(`${mexicoCityToday()}T12:00:00`).getDay();
+  return { hour, minute, weekday };
+}
+
+export interface PendingTask extends OperationalTaskDef {
+  checkDate: string;
+}
+
+/**
+ * Tareas vigentes ahora mismo para ese turno que todavía no se confirman —
+ * para el popup que se abre solo dentro de la app (ver PendingTaskPopup),
+ * de respaldo al push por si no les llegó o lo cerraron sin confirmar.
+ * "Vigente" = ya pasó su hora de inicio y sigue siendo el mismo día.
+ */
+export async function getPendingTasksNow(shift: string | null | undefined): Promise<PendingTask[]> {
+  if (shift !== "Vespertino") return [];
+  const { hour, weekday } = mexicoCityNow();
+  if (hour < 18) return [];
+
+  const today = mexicoCityToday();
+  const checks = await getTaskChecksForDate(today);
+  const isWeekday = weekday >= 1 && weekday <= 5;
+
+  const pending: PendingTask[] = [];
+  if (isWeekday && !checks.toldo?.done) pending.push({ key: "toldo", label: "Recoger el toldo", checkDate: today });
+  if (!checks.luces?.done) pending.push({ key: "luces", label: "Encender las luces de afuera", checkDate: today });
+  return pending;
 }
 
 export interface ConfirmTaskResult {

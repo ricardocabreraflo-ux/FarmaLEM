@@ -28,7 +28,7 @@ export async function AdminShell({
   const navItems = await getResolvedNav(userRole === "admin", profile?.role_id ?? null);
 
   return (
-    <AdminShellClient navItems={navItems} activeHref={activeHref} userName={userName} userRole={userRole}>
+    <AdminShellClient navItems={navItems} activeHref={activeHref} userName={userName} userRole={userRole} employeeShift={profile?.shift ?? null}>
       {children}
     </AdminShellClient>
   );
