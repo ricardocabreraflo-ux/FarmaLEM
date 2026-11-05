@@ -9,6 +9,8 @@ export interface Promotion {
   description: string | null;
   active: boolean;
   image_path: string | null;
+  valid_until: string | null;
+  recurring_popup: boolean;
   created_by: string;
   created_at: string;
 }
@@ -61,9 +63,40 @@ export async function listActivePromotions(): Promise<Promotion[]> {
   return data as Promotion[];
 }
 
-export async function createPromotion(title: string, description: string | null, imagePath: string | null, createdBy: string): Promise<void> {
-  const { error } = await supabaseAdmin().from("promotions").insert({ title, description, image_path: imagePath, created_by: createdBy });
+/** Para el popup que se abre solo cada rato (PromotionPopup) — solo las marcadas "Anunciar como popup". */
+export async function listRecurringPopupPromotionsWithImages(): Promise<PromotionWithImage[]> {
+  const { data, error } = await supabaseAdmin().from("promotions").select().eq("active", true).eq("recurring_popup", true).order("created_at", { ascending: false });
+  if (error) throw new Error(`No se pudieron leer las promociones: ${error.message}`);
+  return withImageUrls(data as Promotion[]);
+}
+
+export async function createPromotion(
+  title: string,
+  description: string | null,
+  imagePath: string | null,
+  validUntil: string | null,
+  recurringPopup: boolean,
+  createdBy: string
+): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from("promotions")
+    .insert({ title, description, image_path: imagePath, valid_until: validUntil, recurring_popup: recurringPopup, created_by: createdBy });
   if (error) throw new Error(`No se pudo guardar la promoción: ${error.message}`);
+}
+
+export interface UpdatePromotionInput {
+  title: string;
+  description: string | null;
+  validUntil: string | null;
+  recurringPopup: boolean;
+}
+
+export async function updatePromotion(id: string, input: UpdatePromotionInput): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from("promotions")
+    .update({ title: input.title, description: input.description, valid_until: input.validUntil, recurring_popup: input.recurringPopup })
+    .eq("id", id);
+  if (error) throw new Error(`No se pudo actualizar la promoción: ${error.message}`);
 }
 
 export async function setPromotionActive(id: string, active: boolean): Promise<void> {

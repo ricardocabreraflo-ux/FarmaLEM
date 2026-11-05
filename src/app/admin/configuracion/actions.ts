@@ -18,6 +18,7 @@ import {
 import { savePushSubscription, deletePushSubscription, hasPushSubscription, sendPushToEmployee, type PushSubscriptionInput } from "@/lib/push";
 import {
   createPromotion,
+  updatePromotion,
   setPromotionActive,
   setPromotionImage,
   deletePromotion,
@@ -305,16 +306,38 @@ async function afterPromotionChange(session: Awaited<ReturnType<typeof requireAd
   return { ok: true, promotions };
 }
 
-export async function createPromotionAction(title: string, description: string, image: File | null): Promise<PromotionActionResult> {
+export async function createPromotionAction(
+  title: string,
+  description: string,
+  image: File | null,
+  validUntil: string,
+  recurringPopup: boolean
+): Promise<PromotionActionResult> {
   const session = await requireAdminSession();
   try {
     let imagePath: string | null = null;
     if (image && image.size > 0) imagePath = await uploadPromotionImage(image);
-    await createPromotion(title, description.trim() || null, imagePath, session.uid);
+    await createPromotion(title, description.trim() || null, imagePath, validUntil.trim() || null, recurringPopup, session.uid);
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo crear la promoción." };
   }
   return afterPromotionChange(session, "Creó una promoción", title);
+}
+
+export async function updatePromotionAction(
+  id: string,
+  title: string,
+  description: string,
+  validUntil: string,
+  recurringPopup: boolean
+): Promise<PromotionActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await updatePromotion(id, { title, description: description.trim() || null, validUntil: validUntil.trim() || null, recurringPopup });
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo actualizar la promoción." };
+  }
+  return afterPromotionChange(session, "Editó una promoción", title);
 }
 
 export async function setPromotionActiveAction(id: string, active: boolean): Promise<PromotionActionResult> {

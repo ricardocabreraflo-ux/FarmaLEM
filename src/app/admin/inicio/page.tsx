@@ -28,6 +28,10 @@ function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" });
 }
 
+function fmtDate(v: string) {
+  return new Date(`${v}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 function rangeLabel(monday: string, sunday: string) {
   const start = new Date(`${monday}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
   const end = new Date(`${sunday}T12:00:00`).toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
@@ -296,6 +300,7 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
                 <div className="p-3.5">
                   <p className="font-semibold text-admin-ink">{promo.title}</p>
                   {promo.description && <p className="mt-0.5 text-[0.8rem] text-admin-ink-soft">{promo.description}</p>}
+                  {promo.valid_until && <p className="mt-0.5 text-[0.76rem] font-semibold text-admin-ink-soft">Vigente hasta {fmtDate(promo.valid_until)}</p>}
                   {promo.downloadUrl && (
                     <a href={promo.downloadUrl} className="mt-2 block text-[0.8rem] font-semibold text-admin-primary hover:underline">
                       Descargar para imprimir

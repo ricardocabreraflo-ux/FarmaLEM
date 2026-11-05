@@ -6,6 +6,7 @@ import Link from "next/link";
 import { logout } from "@/app/admin/login/actions";
 import { ThemeToggle } from "@/components/admin/ThemeToggle";
 import { PendingTaskPopup } from "@/components/admin/PendingTaskPopup";
+import { PromotionPopup } from "@/components/admin/PromotionPopup";
 import type { ProfileRole } from "@/lib/admin-auth";
 import type { ResolvedGroup, ResolvedNavEntry } from "@/lib/panel-modules";
 import {
@@ -142,6 +143,7 @@ export function AdminShellClient({
   return (
     <div className="min-h-screen bg-admin-bg text-admin-ink">
       <PendingTaskPopup shift={employeeShift ?? null} />
+      <PromotionPopup userRole={userRole} />
       <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-admin-border bg-admin-surface px-5">
         <div className="flex items-center gap-3">
           <button
