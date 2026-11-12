@@ -139,9 +139,16 @@ export default async function CortesPage({
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Venta total</p>
           <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalVentas)}</p>
-          <p className="mt-1.5 text-[0.72rem] leading-snug text-admin-ink-soft">
-            Matutino {fmtMoney(totalMatutino)} &middot; Vespertino {fmtMoney(totalVespertino)}
-          </p>
+          <div className="mt-2.5 flex flex-col gap-1 text-[0.82rem] text-admin-ink-soft">
+            <div className="flex items-center justify-between gap-2">
+              <span>Matutino</span>
+              <span className="font-data font-semibold tabular-nums text-admin-ink">{fmtMoney(totalMatutino)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span>Vespertino</span>
+              <span className="font-data font-semibold tabular-nums text-admin-ink">{fmtMoney(totalVespertino)}</span>
+            </div>
+          </div>
         </div>
         <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
           <p className="text-[0.78rem] text-admin-ink-soft">Efectivo</p>
