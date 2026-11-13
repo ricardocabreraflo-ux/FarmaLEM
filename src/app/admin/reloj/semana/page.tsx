@@ -42,7 +42,7 @@ export default async function ReporteSemanalRelojPage({ searchParams }: { search
   ).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}`;
 
   return (
-    <main className="mx-auto max-w-[900px] bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto w-full max-w-[900px] bg-white px-6 py-10 text-slate-900">
       <style>{`@media print { .print\\:hidden { display: none !important; } body { background: #fff; } }`}</style>
 
       <Link href="/admin/reloj/bitacora" className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">

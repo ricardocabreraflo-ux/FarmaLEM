@@ -39,7 +39,7 @@ export default async function PiramideMetasPage({ searchParams }: { searchParams
   const halfWidthAt = (y: number) => (HALF_BASE * (y - TOP_Y)) / (BAND_H * 4);
 
   return (
-    <main className="mx-auto max-w-[820px] bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto w-full max-w-[820px] bg-white px-6 py-10 text-slate-900">
       <style>{`@media print { .print\\:hidden { display: none !important; } body { background: #fff; } }`}</style>
 
       <Link href={`/admin/bonos/metas?mes=${month}`} className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">

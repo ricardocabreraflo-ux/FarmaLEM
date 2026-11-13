@@ -46,7 +46,7 @@ export default async function ReporteCortesPage({ searchParams }: { searchParams
   const totalSalidas = withdrawals.reduce((s, w) => s + w.amount, 0);
 
   return (
-    <main className="mx-auto max-w-[960px] bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto w-full max-w-[960px] bg-white px-6 py-10 text-slate-900">
       <style>{`@media print { .print\\:hidden { display: none !important; } @page { size: landscape; } body { background: #fff; } }`}</style>
 
       <Link href={`/admin/cortes?mes=${month}`} className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">

@@ -50,7 +50,7 @@ export function ShiftScheduleGrid({
                 {label}
               </th>
             ))}
-            <th className="w-14 px-2 py-2 text-left font-medium print:hidden"></th>
+            <th className="w-14 px-2 py-2 text-left font-medium print:py-0.5 print:text-[0.6rem]">Semana</th>
           </tr>
         </thead>
         <tbody>
@@ -85,11 +85,20 @@ export function ShiftScheduleGrid({
                     );
                   })}
                   {shiftIdx === 0 && (
-                    <td rowSpan={2} className="border-l border-admin-border px-1.5 py-2 align-middle print:hidden">
+                    <td rowSpan={2} className="border-l border-admin-border px-1.5 py-2 align-middle print:px-1 print:py-0.5">
                       {readOnly ? (
-                        <span className="block w-14 text-center text-[0.75rem] font-bold text-admin-primary-deep">{weekLabels[week.days[0].date] ?? ""}</span>
+                        <span className="block w-14 text-center text-[0.75rem] font-bold text-admin-primary-deep print:w-auto print:text-[0.6rem]">
+                          {weekLabels[week.days[0].date] ?? ""}
+                        </span>
                       ) : (
-                        <WeekLabelSelect weekStart={week.days[0].date} value={weekLabels[week.days[0].date] ?? ""} />
+                        <>
+                          <span className="hidden print:block print:text-center print:text-[0.6rem] print:font-bold print:text-admin-primary-deep">
+                            {weekLabels[week.days[0].date] ?? ""}
+                          </span>
+                          <span className="print:hidden">
+                            <WeekLabelSelect weekStart={week.days[0].date} value={weekLabels[week.days[0].date] ?? ""} />
+                          </span>
+                        </>
                       )}
                     </td>
                   )}

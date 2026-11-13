@@ -23,7 +23,7 @@ export default async function ImprimirAnaquelesPage({ searchParams }: { searchPa
   const assignment = await getShelfAssignment(month);
 
   return (
-    <main className="force-light-admin mx-auto max-w-[900px] px-6 py-10 print:px-0 print:py-1">
+    <main className="force-light-admin mx-auto w-full max-w-[900px] px-6 py-10 print:px-0 print:py-1">
       <style>{`
         @media print {
           .print\\:hidden { display: none !important; }

@@ -33,7 +33,7 @@ export default async function ReporteEntregaPage() {
   const total = cuts.reduce((s, c) => s + c.cash_delivered, 0);
 
   return (
-    <main className="mx-auto max-w-[760px] bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto w-full max-w-[760px] bg-white px-6 py-10 text-slate-900">
       <style>{`@media print { .print\\:hidden { display: none !important; } body { background: #fff; } }`}</style>
 
       <Link href="/admin/cortes" className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">

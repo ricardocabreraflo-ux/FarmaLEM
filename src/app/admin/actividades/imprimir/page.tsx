@@ -26,7 +26,7 @@ export default async function ImprimirActividadesPage({ searchParams }: { search
   const weeklySchedule = await getWeeklyScheduleForMonth(month);
 
   return (
-    <main className="force-light-admin mx-auto max-w-[1000px] px-6 py-10 print:px-0 print:py-1">
+    <main className="force-light-admin mx-auto w-full max-w-[1000px] px-6 py-10 print:px-0 print:py-1">
       <style>{`
         @media print {
           .print\\:hidden { display: none !important; }

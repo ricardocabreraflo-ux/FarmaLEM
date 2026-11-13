@@ -45,7 +45,7 @@ export default async function ComprobanteSemanalPage({ searchParams }: { searchP
   const tiersByMonth = new Map(await Promise.all(months.map(async (m) => [m, await listBonusTiers(m)] as const)));
 
   return (
-    <main className="mx-auto max-w-[760px] bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto w-full max-w-[760px] bg-white px-6 py-10 text-slate-900">
       <style>{`@media print { .print\\:hidden { display: none !important; } body { background: #fff; } }`}</style>
 
       <Link href="/admin/sueldos" className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">

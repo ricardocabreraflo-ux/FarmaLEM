@@ -37,7 +37,7 @@ export default async function ReporteBonosPage({ searchParams }: { searchParams:
   });
 
   return (
-    <main className="mx-auto max-w-[900px] bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto w-full max-w-[900px] bg-white px-6 py-10 text-slate-900">
       <style>{`@media print { .print\\:hidden { display: none !important; } body { background: #fff; } }`}</style>
 
       <Link href={`/admin/bonos?mes=${month}`} className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">

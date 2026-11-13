@@ -34,7 +34,7 @@ export default async function ReporteCaducidadCortaPage({ searchParams }: { sear
   const nameById = new Map(employees.map((e) => [e.id, e.full_name]));
 
   return (
-    <main className="mx-auto max-w-[1000px] bg-white px-6 py-10 text-slate-900">
+    <main className="mx-auto w-full max-w-[1000px] bg-white px-6 py-10 text-slate-900">
       <style>{`@media print { .print\\:hidden { display: none !important; } @page { size: landscape; } body { background: #fff; } }`}</style>
 
       <Link href={`/admin/caducidad-corta?mes=${month}`} className="text-[0.85rem] font-semibold text-emerald-700 print:hidden">
