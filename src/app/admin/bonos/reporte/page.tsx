@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import { requireAdminSession } from "@/lib/admin-auth";
 import { mexicoCityToday } from "@/lib/dates";
@@ -29,6 +30,11 @@ export default async function ReporteBonosPage({ searchParams }: { searchParams:
   const weeks = [...weeksDesc].sort((a, b) => a.week - b.week || a.employee_id.localeCompare(b.employee_id));
 
   const totalEarned = weeks.reduce((s, w) => s + earnedBonus(w, tiers), 0);
+
+  const shiftGroups = ["Matutino", "Vespertino"].map((shift) => {
+    const shiftWeeks = weeks.filter((w) => w.shift === shift);
+    return { shift, weeks: shiftWeeks, total: shiftWeeks.reduce((s, w) => s + earnedBonus(w, tiers), 0) };
+  });
 
   return (
     <main className="mx-auto max-w-[900px] bg-white px-6 py-10 text-slate-900">
@@ -62,18 +68,36 @@ export default async function ReporteBonosPage({ searchParams }: { searchParams:
               </td>
             </tr>
           ) : (
-            weeks.map((w) => {
-              const bonus = earnedBonus(w, tiers);
-              return (
-                <tr key={w.id} className="border-b border-slate-200">
-                  <td className="py-1.5 pr-3 text-slate-500">Semana {w.week}</td>
-                  <td className="py-1.5 pr-3 font-semibold text-slate-900">{nameById.get(w.employee_id) ?? "Desconocido"}</td>
-                  <td className="py-1.5 pr-3 text-right font-data tabular-nums text-slate-900">{fmtMoney(w.sales)}</td>
-                  <td className="py-1.5 pr-3 text-right font-data tabular-nums text-slate-600">{bonus > 0 ? fmtMoney(targetForWeek(w, tiers)) : "—"}</td>
-                  <td className="py-1.5 text-right font-data tabular-nums text-slate-900">{fmtMoney(bonus)}</td>
-                </tr>
-              );
-            })
+            shiftGroups.map(
+              (group) =>
+                group.weeks.length > 0 && (
+                  <Fragment key={group.shift}>
+                    <tr className="[break-inside:avoid]">
+                      <td colSpan={5} className="bg-slate-50 py-1.5 pr-3 font-semibold text-slate-700">
+                        Turno {group.shift}
+                      </td>
+                    </tr>
+                    {group.weeks.map((w) => {
+                      const bonus = earnedBonus(w, tiers);
+                      return (
+                        <tr key={w.id} className="border-b border-slate-200">
+                          <td className="py-1.5 pr-3 text-slate-500">Semana {w.week}</td>
+                          <td className="py-1.5 pr-3 font-semibold text-slate-900">{nameById.get(w.employee_id) ?? "Desconocido"}</td>
+                          <td className="py-1.5 pr-3 text-right font-data tabular-nums text-slate-900">{fmtMoney(w.sales)}</td>
+                          <td className="py-1.5 pr-3 text-right font-data tabular-nums text-slate-600">{bonus > 0 ? fmtMoney(targetForWeek(w, tiers)) : "—"}</td>
+                          <td className="py-1.5 text-right font-data tabular-nums text-slate-900">{fmtMoney(bonus)}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="border-b-2 border-slate-300 font-semibold text-slate-900">
+                      <td className="py-1.5 pr-3" colSpan={4}>
+                        Total turno {group.shift}
+                      </td>
+                      <td className="py-1.5 text-right font-data tabular-nums">{fmtMoney(group.total)}</td>
+                    </tr>
+                  </Fragment>
+                )
+            )
           )}
         </tbody>
         <tfoot>
