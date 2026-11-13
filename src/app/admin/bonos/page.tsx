@@ -142,37 +142,41 @@ export default async function BonosPage({ searchParams }: { searchParams: Promis
 
         <section className="overflow-hidden rounded-2xl border border-admin-border bg-admin-surface">
           <h2 className="border-b border-admin-border px-5 py-3 font-display text-base text-admin-ink">Pirámide de metas &middot; {month}</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full max-w-[560px] text-left text-[0.84rem]">
-              <thead>
-                <tr className="border-b border-admin-border text-admin-ink-soft">
-                  <th className="px-4 py-3 font-medium">Turno</th>
-                  <th className="px-4 py-3 font-medium">Nivel</th>
-                  <th className="px-4 py-3 text-right font-medium">Meta semanal</th>
-                  <th className="px-4 py-3 text-right font-medium">Promedio diario</th>
-                  <th className="px-4 py-3 text-right font-medium">Bono</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tiers.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-admin-ink-soft">
-                      Configura las metas de este mes
-                    </td>
-                  </tr>
-                )}
-                {tiers.map((t) => (
-                  <tr key={t.id} className="border-b border-admin-border last:border-0">
-                    <td className="px-4 py-3 whitespace-nowrap text-admin-ink-soft">{t.shift}</td>
-                    <td className="px-4 py-3 text-admin-ink-soft">{t.level}</td>
-                    <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(t.goal)}</td>
-                    <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink-soft">{fmtMoney(t.goal / 7)}</td>
-                    <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(t.bonus)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {tiers.length === 0 ? (
+            <p className="px-5 py-8 text-center text-[0.84rem] text-admin-ink-soft">Configura las metas de este mes</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 sm:divide-x sm:divide-admin-border">
+              {(["Matutino", "Vespertino"] as const).map((shift) => (
+                <div key={shift} className="border-t border-admin-border first:border-t-0 sm:border-t-0">
+                  <p className="px-4 py-2.5 text-[0.78rem] font-bold text-admin-ink-soft uppercase">{shift}</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-[0.84rem]">
+                      <thead>
+                        <tr className="border-y border-admin-border text-admin-ink-soft">
+                          <th className="px-4 py-2.5 font-medium">Nivel</th>
+                          <th className="px-4 py-2.5 text-right font-medium">Meta semanal</th>
+                          <th className="px-4 py-2.5 text-right font-medium">Promedio diario</th>
+                          <th className="px-4 py-2.5 text-right font-medium">Bono</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tiers
+                          .filter((t) => t.shift === shift)
+                          .map((t) => (
+                            <tr key={t.id} className="border-b border-admin-border last:border-0">
+                              <td className="px-4 py-3 text-admin-ink-soft">{t.level}</td>
+                              <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(t.goal)}</td>
+                              <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink-soft">{fmtMoney(t.goal / 7)}</td>
+                              <td className="px-4 py-3 text-right font-data tabular-nums whitespace-nowrap text-admin-ink">{fmtMoney(t.bonus)}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </AdminShell>
