@@ -112,19 +112,22 @@ export default async function ReporteBonosPage({ searchParams }: { searchParams:
 
       <section className="mt-10">
         <h2 className="font-display text-base text-slate-900">Firmas de recibido</h2>
-        <p className="mt-1 text-[0.82rem] text-slate-500">Solo semanas donde sí hubo bono.</p>
+        <p className="mt-1 text-[0.82rem] text-slate-500">Un total por turno con todas sus semanas del mes.</p>
         <div className="mt-4 flex flex-col gap-10">
-          {weeks
-            .filter((w) => earnedBonus(w, tiers) > 0)
-            .map((w) => (
-              <div key={w.id} className="flex items-end justify-between gap-8 [break-inside:avoid]">
-                <div className="text-[0.85rem] text-slate-700">
-                  Semana {w.week} &middot; {nameById.get(w.employee_id) ?? "Desconocido"} &middot; {fmtMoney(earnedBonus(w, tiers))}
+          {shiftGroups
+            .filter((g) => g.total > 0)
+            .map((g) => {
+              const names = [...new Set(g.weeks.map((w) => nameById.get(w.employee_id) ?? "Desconocido"))];
+              return (
+                <div key={g.shift} className="flex items-end justify-between gap-8 [break-inside:avoid]">
+                  <div className="text-[0.85rem] text-slate-700">
+                    Turno {g.shift} &middot; {names.join(", ")} &middot; {fmtMoney(g.total)}
+                  </div>
+                  <span className="w-2/5 border-t border-slate-400 pt-1.5 text-center text-[0.78rem] text-slate-500">Firma</span>
                 </div>
-                <span className="w-2/5 border-t border-slate-400 pt-1.5 text-center text-[0.78rem] text-slate-500">Firma</span>
-              </div>
-            ))}
-          {weeks.filter((w) => earnedBonus(w, tiers) > 0).length === 0 && <p className="text-[0.85rem] text-slate-500">Ninguna semana alcanzó bono este mes.</p>}
+              );
+            })}
+          {shiftGroups.filter((g) => g.total > 0).length === 0 && <p className="text-[0.85rem] text-slate-500">Ningún turno alcanzó bono este mes.</p>}
         </div>
       </section>
     </main>
