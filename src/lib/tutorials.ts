@@ -106,6 +106,10 @@ const TUTORIALS: TutorialContent[] = [
         body: "A veces, arriba de todo, aparecen una o varias tarjetas bajo “Novedades del panel” — avisos de administración sobre cambios o funciones nuevas en el panel. No siempre hay alguna: solo se ve cuando administración publicó un aviso vigente.",
       },
       {
+        title: "Promociones de hoy",
+        body: "Debajo, si administración dejó alguna promoción activa, ves sus tarjetas con foto, título y descripción — útil para ofrecerlas en el mostrador sin tener que memorizarlas. Si la promoción tiene fecha de vigencia, aquí mismo dice hasta cuándo. Algunas promociones además avisan con un popup cada hora, encima de cualquier pantalla donde estés, para recordarte ofrecerla — toca “Entendido” para cerrarlo.",
+      },
+      {
         title: "Meta de la semana",
         body: "Arriba de todo ves cuánto llevas vendido esta semana (de lunes a domingo) contra la meta, incluyendo los cortes que ya capturaste aunque administración todavía no los apruebe. Debajo, tu última marca del reloj checador y cuántos días has trabajado esta semana.",
         image: "/tutoriales/inicio-01-meta.png",
@@ -152,6 +156,11 @@ const TUTORIALS: TutorialContent[] = [
         imageDesktopWidth: 868,
         imageDesktopHeight: 169,
         imageAlt: "Sección Niveles de bono en Inicio",
+      },
+      {
+        title: "Aviso de tareas pendientes (toldo, luces…)",
+        body: "Si tienes turno Vespertino y queda una tarea del día sin confirmar (por ejemplo recoger el toldo o apagar las luces), un recordatorio con sonido se abre solo encima de la pantalla donde estés, cada hora y media mientras siga pendiente. Toca “Ya lo hice” para confirmarla, o “Más tarde” para que no te estorbe ahorita — vuelve a aparecer en el siguiente chequeo si sigue sin confirmarse.",
+        cue: "Suena solo si ya tocaste algo antes en esa pestaña — es una política del navegador, no un error",
       },
     ],
   },
@@ -205,6 +214,10 @@ const TUTORIALS: TutorialContent[] = [
       {
         title: "Filtrar la lista de Cortes por fechas",
         body: "En la lista de Cortes, además del selector de mes, hay “O filtra por un rango de fechas específico” — útil para revisar, por ejemplo, justo una quincena o una semana que cruza dos meses.",
+      },
+      {
+        title: "Venta total por turno",
+        body: "Si puedes ver el reporte completo, arriba de la lista está la tarjeta “Venta total” del mes (o del rango que filtraste); debajo del monto general ahora se ve el desglose Matutino / Vespertino, para saber de un vistazo cuánto vendió cada turno sin tener que sumar corte por corte.",
       },
     ],
   },
@@ -507,6 +520,10 @@ const TUTORIALS: TutorialContent[] = [
       {
         title: "Pirámide de metas",
         body: "Debajo de tus resultados está la pirámide de metas del mes para tu turno: cuánto hay que vender en la semana para cada nivel y cuánto es el bono de cada uno.",
+      },
+      {
+        title: "Para administración: el Reporte mensual",
+        body: "Administración ve además un botón “Reporte mensual” para imprimir o guardar en PDF las semanas y bonos de todo el equipo ese mes, con espacio para firma de recibido. La impresión agrupa primero por turno (Matutino y luego Vespertino), cada uno con su propio subtotal, en vez de solo ordenar todo por semana.",
       },
     ],
   },
@@ -984,19 +1001,27 @@ const TUTORIALS: TutorialContent[] = [
     title: "Cómo usar Configuración",
     section: "Administración general",
     audience: "Administración",
-    summary: "Margen de punto de equilibrio, PIN de eliminación, roles y sus permisos, categorías de Negados y faltantes, y el panel de navegación.",
-    minutes: 4,
+    summary: "Margen de punto de equilibrio, PIN, roles y permisos, promociones, tareas operativas, notificaciones y el panel de navegación.",
+    minutes: 5,
     steps: [
       {
-        title: "Las cinco secciones",
-        body: "Menú ☰ → “Configuración”. De arriba a abajo: el margen estimado que usa Punto de equilibrio; el PIN de eliminación (hace falta configurarlo antes de poder borrar un empleado o un rol); “Usuarios · Roles”, donde se dan de alta los roles de permisos y se accede a sus Permisos; las categorías de Negados y faltantes; y “Panel de navegación”, que abre aparte el editor de qué pantallas se muestran, para quién y en qué orden.",
+        title: "Las ocho secciones",
+        body: "Menú ☰ → “Configuración”. De arriba a abajo: el margen estimado que usa Punto de equilibrio; el PIN de eliminación (hace falta configurarlo antes de poder borrar un empleado o un rol); “Usuarios · Roles”, donde se dan de alta los roles de permisos y se accede a sus Permisos; las categorías de Negados y faltantes; “Promociones del día” y “Tareas operativas” (cada una se explica a detalle más abajo); “Notificaciones”, para activar el aviso en este dispositivo cuando alguien checa entrada o salida; y “Panel de navegación”, que abre aparte el editor de qué pantallas se muestran, para quién y en qué orden.",
         image: "/tutoriales/configuracion-01-general.png",
-        imageWidth: 352,
-        imageHeight: 2100,
+        imageWidth: 816,
+        imageHeight: 8562,
         imageDesktop: "/tutoriales/configuracion-01-general-desktop.png",
-        imageDesktopWidth: 1192,
-        imageDesktopHeight: 1456,
-        imageAlt: "Configuración: punto de equilibrio, PIN, roles, categorías y panel de navegación",
+        imageDesktopWidth: 1280,
+        imageDesktopHeight: 2734,
+        imageAlt: "Configuración: punto de equilibrio, PIN, roles, categorías, promociones, tareas operativas, notificaciones y panel de navegación",
+      },
+      {
+        title: "Promociones del día",
+        body: "Captura las promociones que quieres que el equipo ofrezca, con foto opcional y fecha de vigencia opcional. Las que dejes “Activa” se mandan por notificación push a quien checa su entrada ese día y aparecen en “Promociones de hoy” en el Inicio de cada empleada. Si además marcas “Anunciarla también con un popup cada hora”, se les recuerda con un aviso que se abre solo encima de cualquier pantalla, cada hora, mientras siga activa.",
+      },
+      {
+        title: "Tareas operativas",
+        body: "Recordatorios recurrentes (toldo, luces, lo que agregues) que le llegan por push y por un popup con sonido a quien tenga el turno asignado, con un botón “Ya lo hice” — en cuanto lo confirma, te avisa también a ti. Aquí das de alta cada tarea y a qué turno le corresponde.",
       },
       {
         title: "Permisos de un rol y Capacidades extra",

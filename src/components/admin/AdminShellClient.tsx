@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { logout } from "@/app/admin/login/actions";
@@ -126,6 +126,17 @@ export function AdminShellClient({
     return clearAutoCollapse;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [collapsed]);
+
+  // En celular/tablet arranca ya replegado (si no, el contenido se ve
+  // apachurrado los primeros 6s mientras corre el auto-oculto de arriba). No
+  // se puede decidir esto en el initializer de useState sin desincronizar el
+  // render de servidor y causar un mismatch de hidratación.
+  useLayoutEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCollapsed(true);
+    }
+  }, []);
 
   function expand() {
     setCollapsed(false);

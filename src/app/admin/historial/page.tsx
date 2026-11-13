@@ -7,6 +7,13 @@ import { AdminShell } from "@/components/admin/AdminShell";
 export const metadata: Metadata = { title: "Historial" };
 export const dynamic = "force-dynamic";
 
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("es-MX", { day: "2-digit", month: "short" });
+  const time = d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+  return `${date}, ${time}`;
+}
+
 export default async function HistorialPage() {
   const session = await requireAdminSession();
   const [profile, entries, employees] = await Promise.all([getProfileById(session.uid), listHistory(), listProfiles()]);
@@ -22,9 +29,9 @@ export default async function HistorialPage() {
           <table className="w-full text-left text-[0.86rem]">
             <thead>
               <tr className="border-b border-admin-border text-admin-ink-soft">
-                <th className="px-5 py-3 font-medium">Fecha y hora</th>
-                <th className="px-5 py-3 font-medium">Usuario</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Fecha y hora</th>
                 <th className="px-5 py-3 font-medium">Acción</th>
+                <th className="px-5 py-3 font-medium">Usuario</th>
                 <th className="px-5 py-3 font-medium">Detalle</th>
               </tr>
             </thead>
@@ -38,9 +45,9 @@ export default async function HistorialPage() {
               )}
               {entries.map((h) => (
                 <tr key={h.id} className="border-b border-admin-border last:border-0">
-                  <td className="px-5 py-3 text-admin-ink-soft">{new Date(h.created_at).toLocaleString("es-MX")}</td>
-                  <td className="px-5 py-3 font-semibold text-admin-ink">{h.user_id ? nameById.get(h.user_id) ?? "Desconocido" : "—"}</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-admin-ink-soft">{fmtDateTime(h.created_at)}</td>
                   <td className="px-5 py-3 text-admin-ink">{h.action}</td>
+                  <td className="px-5 py-3 font-semibold text-admin-ink">{h.user_id ? nameById.get(h.user_id) ?? "Desconocido" : "—"}</td>
                   <td className="px-5 py-3 text-admin-ink-soft">{h.detail}</td>
                 </tr>
               ))}
