@@ -140,7 +140,7 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
       )}
 
       <div className="mt-6">
-        <AttendanceList key={month} rows={rows} isAdmin={isAdmin} />
+        <AttendanceList key={month} rows={rows} isAdmin={isAdmin} employees={activeEmployees} />
       </div>
     </AdminShell>
   );

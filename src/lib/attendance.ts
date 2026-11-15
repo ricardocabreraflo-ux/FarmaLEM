@@ -93,6 +93,15 @@ export async function deleteAttendance(id: string): Promise<void> {
   if (error) throw new Error(`No se pudo quitar el registro: ${error.message}`);
 }
 
+/** Cambia quién cubrió un turno ya capturado (acuerdo entre compañeras) sin tener que quitarlo y volver a capturarlo. */
+export async function reassignAttendance(id: string, employeeId: string, rate: number): Promise<void> {
+  const { error } = await supabaseAdmin()
+    .from("attendance")
+    .update({ employee_id: employeeId, rate, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(`No se pudo cambiar quién cubrió el turno: ${error.message}`);
+}
+
 export interface GenerateAttendanceResult {
   created: number;
   weekendPending: string[];

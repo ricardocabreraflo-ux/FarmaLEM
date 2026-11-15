@@ -6,6 +6,7 @@ import { requireAdminSession } from "@/lib/admin-auth";
 import {
   upsertAttendance,
   deleteAttendance,
+  reassignAttendance,
   generateAttendanceFromCuts,
   planAttendanceFromCuts,
   getAttendanceCalendar,
@@ -59,6 +60,23 @@ export async function deleteAttendanceAction(id: string) {
   await deleteAttendance(id);
   await logAction(session.uid, "Quitó asistencia", `#${id.slice(0, 8).toUpperCase()}`);
   revalidatePath("/admin/asistencia");
+}
+
+export interface ReassignAttendanceState {
+  error?: string;
+}
+
+/** Cambia quién cubrió un turno ya capturado, por un acuerdo entre compañeras, sin quitarlo y volver a capturarlo. */
+export async function reassignAttendanceAction(id: string, employeeId: string, rate: number): Promise<ReassignAttendanceState> {
+  const session = await requireAdminSession();
+  try {
+    await reassignAttendance(id, employeeId, rate);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "No se pudo cambiar quién cubrió el turno." };
+  }
+  await logAction(session.uid, "Cambió quién cubrió un turno", `#${id.slice(0, 8).toUpperCase()}`);
+  revalidatePath("/admin/asistencia");
+  return {};
 }
 
 export interface PlanAttendanceActionResult {
