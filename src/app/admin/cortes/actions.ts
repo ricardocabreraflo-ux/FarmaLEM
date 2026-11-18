@@ -18,7 +18,7 @@ import {
   type CutStatus,
 } from "@/lib/cuts";
 import { recalculateBonusWeekCovering } from "@/lib/bonuses";
-import { createWithdrawal } from "@/lib/withdrawals";
+import { createWithdrawal, findNominaWithdrawal, updateWithdrawalAmount } from "@/lib/withdrawals";
 import { getProfileById } from "@/lib/profiles";
 import { hasCapability } from "@/lib/panel-modules";
 import { logAction } from "@/lib/history";
@@ -157,6 +157,7 @@ export async function updateCutForm(_prevState: CutFormState | undefined, formDa
   const cash = Math.max(total - card, 0);
   const cashDelivered = Number(formData.get("cashDelivered") ?? 0);
   const status = String(formData.get("status") ?? "Aprobado") as CutStatus;
+  const nomina = Number(formData.get("nomina") ?? 0);
 
   if (!id || !cutDate || !shift || !employeeId) return { error: "Fecha, turno y empleado son obligatorios." };
 
@@ -166,6 +167,27 @@ export async function updateCutForm(_prevState: CutFormState | undefined, formDa
     await updateCut(id, { cutDate, shift, employeeId, total, cash, card, cashDelivered, status });
   } catch (err) {
     return { error: err instanceof Error ? err.message : "No se pudo actualizar el corte." };
+  }
+
+  // Si ya se había registrado la salida de nómina de este corte, se corrige el monto en vez de
+  // duplicarla; si no existía y ahora sí se captura, se registra por primera vez.
+  const existingWithdrawal = await findNominaWithdrawal(cutDate, shift, employeeId);
+  if (existingWithdrawal) {
+    if (nomina > 0 && nomina !== existingWithdrawal.amount) await updateWithdrawalAmount(existingWithdrawal.id, nomina);
+  } else if (nomina > 0) {
+    await createWithdrawal({
+      withdrawalDate: cutDate,
+      shift,
+      type: "Nómina",
+      amount: nomina,
+      concept: "Pago de nómina desde corte",
+      invoice: null,
+      recipient: null,
+      supplierId: null,
+      employeeId,
+      createdBy: session.uid,
+      authorizedBy: session.uid,
+    });
   }
 
   await logAction(session.uid, "Editó corte", `${cutDate} · ${shift} · $${total.toFixed(2)}`);

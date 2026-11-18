@@ -80,3 +80,22 @@ export async function authorizeWithdrawal(id: string, authorizedBy: string): Pro
     .eq("id", id);
   if (error) throw new Error(`No se pudo autorizar la salida: ${error.message}`);
 }
+
+/** Busca la salida de nómina ya registrada desde este corte (mismo día/turno/empleada), si la hay — para no duplicarla al editar. */
+export async function findNominaWithdrawal(workDate: string, shift: string, employeeId: string): Promise<Withdrawal | null> {
+  const { data, error } = await supabaseAdmin()
+    .from("withdrawals")
+    .select()
+    .eq("withdrawal_date", workDate)
+    .eq("shift", shift)
+    .eq("employee_id", employeeId)
+    .eq("type", "Nómina")
+    .maybeSingle();
+  if (error) throw new Error(`No se pudo leer la salida de nómina: ${error.message}`);
+  return data as Withdrawal | null;
+}
+
+export async function updateWithdrawalAmount(id: string, amount: number): Promise<void> {
+  const { error } = await supabaseAdmin().from("withdrawals").update({ amount }).eq("id", id);
+  if (error) throw new Error(`No se pudo actualizar la salida: ${error.message}`);
+}

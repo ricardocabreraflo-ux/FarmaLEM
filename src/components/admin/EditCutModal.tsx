@@ -10,10 +10,15 @@ const inputClass =
 
 const STATUSES: CutStatus[] = ["Por revisar", "Aprobado", "Rechazado"];
 
+function fmtCapturedAt(iso: string) {
+  return new Date(iso).toLocaleString("es-MX", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 export function EditCutModal({ cut, employees, onClose }: { cut: Cut; employees: Profile[]; onClose: () => void }) {
   const [state, formAction, pending] = useActionState<CutFormState | undefined, FormData>(updateCutForm, undefined);
   const [total, setTotal] = useState(String(cut.total));
   const [card, setCard] = useState(String(cut.card));
+  const [nomina, setNomina] = useState("");
 
   const totalNum = Number(total || 0);
   const cardNum = Number(card || 0);
@@ -29,6 +34,7 @@ export function EditCutModal({ cut, employees, onClose }: { cut: Cut; employees:
         className="max-h-[90vh] w-full max-w-[560px] overflow-y-auto rounded-2xl bg-admin-surface p-6 shadow-lg"
       >
         <h2 className="font-display text-lg text-admin-ink">Editar corte</h2>
+        <p className="mt-1 text-[0.8rem] text-admin-ink-soft">Capturado el {fmtCapturedAt(cut.created_at)}</p>
 
         <form action={formAction} className="mt-4 flex flex-col gap-4">
           <input type="hidden" name="id" value={cut.id} />
@@ -87,6 +93,12 @@ export function EditCutModal({ cut, employees, onClose }: { cut: Cut; employees:
             <label className="block text-[0.85rem] font-semibold text-admin-ink">
               Efectivo entregado <span className="font-normal text-admin-ink-soft">(cuenta física)</span>
               <input name="cashDelivered" type="number" min="0" step="0.01" required defaultValue={cut.cash_delivered} className={inputClass} />
+            </label>
+
+            <label className="block text-[0.85rem] font-semibold text-admin-ink sm:col-span-2">
+              Pago de nómina de esta semana <span className="font-normal text-admin-ink-soft">(si se pagó de este corte)</span>
+              <input name="nomina" type="number" min="0" step="0.01" placeholder="0.00" value={nomina} onChange={(e) => setNomina(e.target.value)} className={inputClass} />
+              <span className="mt-1 block font-normal text-admin-ink-soft">Se registra como salida de nómina en Salidas de efectivo.</span>
             </label>
           </div>
 
