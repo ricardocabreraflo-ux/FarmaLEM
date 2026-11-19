@@ -5,6 +5,7 @@ import { getProfileById } from "@/lib/profiles";
 import { registerPunch } from "@/lib/time-clock";
 import { logAction } from "@/lib/history";
 import { confirmOperationalTask, type ConfirmTaskResult } from "@/lib/operational-tasks";
+import { confirmActivity, isActivityKey } from "@/lib/activity-reminders";
 
 export interface PunchResult {
   ok: boolean;
@@ -37,5 +38,6 @@ export async function punchForSession(): Promise<PunchResult> {
 /** Botón "Ya lo hice" dentro de la app (respaldo del botón que trae la notificación push). */
 export async function confirmTaskForSession(taskKey: string, checkDate: string): Promise<ConfirmTaskResult> {
   const session = await requireSession();
+  if (isActivityKey(taskKey)) return confirmActivity(taskKey, checkDate, session.uid);
   return confirmOperationalTask(taskKey, checkDate, session.uid);
 }

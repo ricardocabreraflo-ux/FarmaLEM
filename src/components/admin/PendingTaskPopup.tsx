@@ -45,10 +45,12 @@ function playAlertSound() {
 
 /**
  * Popup que se abre solo, encima de cualquier pantalla del panel, si quien
- * tiene turno Vespertino tiene una tarea vigente sin confirmar (toldo/luces)
- * — de respaldo al push, por si no llegó o lo cerraron sin querer. Se
- * dismissa con "Más tarde" sin perder la tarea: vuelve a aparecer en el
- * siguiente chequeo si sigue sin confirmarse.
+ * tiene turno hoy tiene algo vigente sin confirmar: una tarea operativa
+ * (toldo/luces, por ahora solo Vespertino) o la actividad del día del
+ * Calendario de actividades (limpieza semanal + inventario, Matutino y
+ * Vespertino) — de respaldo al push, por si no llegó o lo cerraron sin
+ * querer. Se dismissa con "Más tarde" sin perder la tarea: vuelve a
+ * aparecer en el siguiente chequeo si sigue sin confirmarse.
  */
 export function PendingTaskPopup({ shift }: { shift: string | null }) {
   const [pending, setPending] = useState<PendingTask[]>([]);
@@ -57,7 +59,7 @@ export function PendingTaskPopup({ shift }: { shift: string | null }) {
   const [, startTransition] = useTransition();
 
   useEffect(() => {
-    if (shift !== "Vespertino") return;
+    if (shift !== "Matutino" && shift !== "Vespertino") return;
 
     let cancelled = false;
     async function check() {
