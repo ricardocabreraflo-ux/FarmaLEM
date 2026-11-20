@@ -9,6 +9,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { CutsList } from "@/components/admin/CutsList";
 import { MonthPicker } from "@/components/admin/MonthPicker";
 import { DateRangeFilter } from "@/components/admin/DateRangeFilter";
+import { InfoTooltip } from "@/components/admin/InfoTooltip";
 
 export const metadata: Metadata = { title: "Cortes" };
 export const dynamic = "force-dynamic";
@@ -159,25 +160,37 @@ export default async function CortesPage({
           <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalTarjeta)}</p>
         </div>
         <div className="rounded-2xl border border-admin-primary bg-admin-primary-soft p-5">
-          <p className="text-[0.78rem] font-semibold text-admin-primary-deep">Efectivo entregado</p>
-          <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalEntregado)}</p>
-          <p className="mt-1.5 text-[0.72rem] leading-snug text-admin-ink-soft">
-            Lo que debería haber físico en caja de estos cortes (ya con sueldo descontado si se pagó ahí) — súmalo con lo que
-            tengas de antes de retirar y así sabes cuánto puedes sacar en{" "}
-            <Link href="/admin/salidas/nuevo" className="font-semibold text-admin-primary hover:underline">
-              Salidas de efectivo
-            </Link>
-            .
+          <p className="flex items-center gap-1.5 text-[0.78rem] font-semibold text-admin-primary-deep">
+            Efectivo entregado
+            <InfoTooltip
+              content={
+                <>
+                  Lo que debería haber físico en caja de estos cortes (ya con sueldo descontado si se pagó ahí) — súmalo con lo
+                  que tengas de antes de retirar y así sabes cuánto puedes sacar en{" "}
+                  <Link href="/admin/salidas/nuevo" className="font-semibold text-admin-primary hover:underline">
+                    Salidas de efectivo
+                  </Link>
+                  .
+                </>
+              }
+            />
           </p>
+          <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(totalEntregado)}</p>
         </div>
         {isAdmin && pendingCash && (
           <div className="rounded-2xl border border-admin-pending-text bg-admin-pending-bg p-5">
-            <p className="text-[0.78rem] font-semibold text-admin-pending-text">Efectivo pendiente de recoger</p>
-            <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(pendingCash.total)}</p>
-            <p className="mt-1.5 text-[0.72rem] leading-snug text-admin-ink-soft">
-              Suma de todos los cortes ya Aprobados que faltan por marcar &ldquo;Recogido&rdquo; ({pendingCash.count}) — sin importar el mes, es lo que
-              debería seguir físicamente en la caja ahorita.
+            <p className="flex items-center gap-1.5 text-[0.78rem] font-semibold text-admin-pending-text">
+              Efectivo pendiente de recoger
+              <InfoTooltip
+                content={
+                  <>
+                    Suma de todos los cortes ya Aprobados que faltan por marcar &ldquo;Recogido&rdquo; ({pendingCash.count}) — sin
+                    importar el mes, es lo que debería seguir físicamente en la caja ahorita.
+                  </>
+                }
+              />
             </p>
+            <p className="mt-1.5 font-data text-xl font-bold tabular-nums text-admin-ink">{fmtMoney(pendingCash.total)}</p>
           </div>
         )}
       </section>

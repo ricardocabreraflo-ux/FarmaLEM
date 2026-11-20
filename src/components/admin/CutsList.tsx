@@ -152,7 +152,7 @@ export function CutsList({ cuts, isAdmin, canReview, employees }: { cuts: Row[];
       <div className="overflow-x-auto">
         <table className="w-full text-left text-[0.86rem]">
           <thead>
-            <tr className="border-b border-admin-border text-admin-ink-soft">
+            <tr className="sticky top-16 z-10 border-b border-admin-border bg-admin-surface text-admin-ink-soft [&>th]:bg-admin-surface">
               {isAdmin && (
                 <th className="px-2 py-2.5">
                   <input
@@ -172,7 +172,7 @@ export function CutsList({ cuts, isAdmin, canReview, employees }: { cuts: Row[];
               <th className="px-3 py-2.5 text-right font-medium">Tarjeta</th>
               <th className="px-3 py-2.5 text-right font-medium">Efectivo entregado</th>
               <th className="px-3 py-2.5 font-medium">Estado</th>
-              {canReview && <th className="sticky right-0 border-l border-admin-border bg-admin-surface px-2 py-2.5"></th>}
+              {canReview && <th className="sticky right-0 z-20 border-l border-admin-border px-2 py-2.5"></th>}
               {isAdmin && <th className="px-2 py-2.5 font-medium">Nota</th>}
               {isAdmin && <th className="px-2 py-2.5 text-center font-medium">Recogido</th>}
               <th className="px-2 py-2.5"></th>
