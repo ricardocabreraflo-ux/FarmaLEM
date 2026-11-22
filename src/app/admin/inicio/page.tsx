@@ -12,6 +12,7 @@ import { listActiveAnnouncements } from "@/lib/announcements";
 import { listActivePromotionsWithImages } from "@/lib/promotions";
 import { getTaskChecksForDate, getTodayTasksForShift } from "@/lib/operational-tasks";
 import { getTodayActivities } from "@/lib/activity-reminders";
+import { getTodayDeepCleanActivity } from "@/lib/deep-clean";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AnnouncementAckButton } from "@/components/admin/AnnouncementAckButton";
 
@@ -435,8 +436,12 @@ async function loadShiftSnapshot(
   today: string,
   taskChecks: Record<string, { done: boolean }>,
 ): Promise<ShiftSnapshot> {
-  const [scheduledTasks, todaysActivities] = await Promise.all([getTodayTasksForShift(shift), getTodayActivities(shift, today)]);
-  const activities: ShiftActivity[] = [...scheduledTasks, ...todaysActivities].map((a) => ({
+  const [scheduledTasks, todaysActivities, deepClean] = await Promise.all([
+    getTodayTasksForShift(shift),
+    getTodayActivities(shift, today),
+    getTodayDeepCleanActivity(shift, today),
+  ]);
+  const activities: ShiftActivity[] = [...scheduledTasks, ...todaysActivities, ...(deepClean ? [deepClean] : [])].map((a) => ({
     key: a.key,
     label: a.label,
     done: !!taskChecks[a.key]?.done,

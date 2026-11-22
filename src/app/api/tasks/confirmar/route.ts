@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 import { confirmOperationalTask } from "@/lib/operational-tasks";
 import { confirmActivity, isActivityKey } from "@/lib/activity-reminders";
+import { confirmDeepClean, isDeepCleanKey } from "@/lib/deep-clean";
 import { mexicoCityToday } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const result = isActivityKey(taskKey)
     ? await confirmActivity(taskKey, checkDate, session.uid)
-    : await confirmOperationalTask(taskKey, checkDate, session.uid);
+    : isDeepCleanKey(taskKey)
+      ? await confirmDeepClean(taskKey, checkDate, session.uid)
+      : await confirmOperationalTask(taskKey, checkDate, session.uid);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
   return NextResponse.json({ ok: true });
 }

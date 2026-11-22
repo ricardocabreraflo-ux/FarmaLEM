@@ -7,6 +7,7 @@ import { getModuleEditorStructure } from "@/lib/panel-modules";
 import { listStockoutCategories } from "@/lib/stockout-categories";
 import { listPromotionsWithImages } from "@/lib/promotions";
 import { listOperationalTaskDefs, getTaskChecksForDate } from "@/lib/operational-tasks";
+import { listRecentDeepCleanOccurrences } from "@/lib/deep-clean";
 import { mexicoCityToday } from "@/lib/dates";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { BreakevenMarginForm } from "@/components/admin/BreakevenMarginForm";
@@ -16,6 +17,7 @@ import { RolesPanel } from "@/components/admin/RolesPanel";
 import { StockoutCategoriesPanel } from "@/components/admin/StockoutCategoriesPanel";
 import { PromotionsPanel } from "@/components/admin/PromotionsPanel";
 import { OperationalTasksPanel } from "@/components/admin/OperationalTasksPanel";
+import { DeepCleanPanel } from "@/components/admin/DeepCleanPanel";
 import { PushNotificationSettings } from "@/components/admin/PushNotificationSettings";
 
 export const metadata: Metadata = { title: "Configuración" };
@@ -23,16 +25,18 @@ export const dynamic = "force-dynamic";
 
 export default async function ConfiguracionPage() {
   const session = await requireAdminSession();
-  const [profile, marginPercent, pinSet, moduleStructure, stockoutCategories, promotions, operationalTasks, taskChecksToday] = await Promise.all([
-    getProfileById(session.uid),
-    getBreakevenMargin(),
-    hasDeletePin(),
-    getModuleEditorStructure(),
-    listStockoutCategories(),
-    listPromotionsWithImages(),
-    listOperationalTaskDefs(),
-    getTaskChecksForDate(mexicoCityToday()),
-  ]);
+  const [profile, marginPercent, pinSet, moduleStructure, stockoutCategories, promotions, operationalTasks, taskChecksToday, deepCleanOccurrences] =
+    await Promise.all([
+      getProfileById(session.uid),
+      getBreakevenMargin(),
+      hasDeletePin(),
+      getModuleEditorStructure(),
+      listStockoutCategories(),
+      listPromotionsWithImages(),
+      listOperationalTaskDefs(),
+      getTaskChecksForDate(mexicoCityToday()),
+      listRecentDeepCleanOccurrences(),
+    ]);
   const { roles, entries: moduleEntries } = moduleStructure;
 
   return (
@@ -97,6 +101,15 @@ export default async function ConfiguracionPage() {
           hice&quot; — en cuanto lo confirme, te avisa a ti también.
         </p>
         <OperationalTasksPanel initialTasks={operationalTasks} todayChecks={taskChecksToday} />
+      </section>
+
+      <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">
+        <h2 className="font-display text-base text-admin-ink">Limpieza profunda</h2>
+        <p className="mt-1 text-[0.84rem] text-admin-ink-soft">
+          Se hace dos veces al mes — registra aquí la fecha cada vez que toque. Se divide en Mitad 1 y Mitad 2, alternando entre Matutino y
+          Vespertino: tú eliges quién hace la Mitad 1 esa vez y el otro turno hace la Mitad 2 el mismo día.
+        </p>
+        <DeepCleanPanel initialOccurrences={deepCleanOccurrences} />
       </section>
 
       <section className="mt-5 rounded-2xl border border-admin-border bg-admin-surface p-6">

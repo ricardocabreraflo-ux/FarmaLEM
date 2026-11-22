@@ -35,6 +35,13 @@ import {
   type SaveTaskDefInput,
   type OperationalTaskDef,
 } from "@/lib/operational-tasks";
+import {
+  createDeepCleanOccurrence,
+  deleteDeepCleanOccurrence,
+  listRecentDeepCleanOccurrences,
+  type DeepCleanShift,
+  type DeepCleanOccurrence,
+} from "@/lib/deep-clean";
 
 export interface BreakevenMarginFormState {
   error?: string;
@@ -423,4 +430,38 @@ export async function deleteOperationalTaskDefAction(id: string): Promise<Operat
     return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar la tarea." };
   }
   return afterTaskDefChange(session, "Borró tarea operativa", id);
+}
+
+export interface DeepCleanActionResult {
+  ok: boolean;
+  error?: string;
+  occurrences?: DeepCleanOccurrence[];
+}
+
+async function afterDeepCleanChange(session: Awaited<ReturnType<typeof requireAdminSession>>, action: string, detail: string): Promise<DeepCleanActionResult> {
+  await logAction(session.uid, action, detail);
+  revalidatePath("/admin/configuracion");
+  revalidatePath("/admin/inicio");
+  const occurrences = await listRecentDeepCleanOccurrences();
+  return { ok: true, occurrences };
+}
+
+export async function createDeepCleanOccurrenceAction(date: string, firstHalfShift: DeepCleanShift): Promise<DeepCleanActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await createDeepCleanOccurrence(date, firstHalfShift, session.uid);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo registrar la limpieza profunda." };
+  }
+  return afterDeepCleanChange(session, "Registró limpieza profunda", `${date} · Mitad 1: ${firstHalfShift}`);
+}
+
+export async function deleteDeepCleanOccurrenceAction(id: string): Promise<DeepCleanActionResult> {
+  const session = await requireAdminSession();
+  try {
+    await deleteDeepCleanOccurrence(id);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "No se pudo borrar." };
+  }
+  return afterDeepCleanChange(session, "Borró limpieza profunda", id);
 }

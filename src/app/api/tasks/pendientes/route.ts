@@ -4,6 +4,7 @@ import { ADMIN_COOKIE_NAME, verifySessionToken } from "@/lib/admin-auth";
 import { getProfileById } from "@/lib/profiles";
 import { getPendingTasksNow } from "@/lib/operational-tasks";
 import { getPendingActivityNow } from "@/lib/activity-reminders";
+import { getPendingDeepCleanNow } from "@/lib/deep-clean";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,10 @@ export async function GET(): Promise<NextResponse> {
   if (!session) return NextResponse.json({ pending: [] });
 
   const profile = await getProfileById(session.uid);
-  const [tasks, activities] = await Promise.all([getPendingTasksNow(profile?.shift), getPendingActivityNow(profile?.shift)]);
-  return NextResponse.json({ pending: [...tasks, ...activities] });
+  const [tasks, activities, deepClean] = await Promise.all([
+    getPendingTasksNow(profile?.shift),
+    getPendingActivityNow(profile?.shift),
+    getPendingDeepCleanNow(profile?.shift),
+  ]);
+  return NextResponse.json({ pending: [...tasks, ...activities, ...deepClean] });
 }

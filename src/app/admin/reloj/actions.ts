@@ -6,6 +6,7 @@ import { registerPunch } from "@/lib/time-clock";
 import { logAction } from "@/lib/history";
 import { confirmOperationalTask, type ConfirmTaskResult } from "@/lib/operational-tasks";
 import { confirmActivity, isActivityKey } from "@/lib/activity-reminders";
+import { confirmDeepClean, isDeepCleanKey } from "@/lib/deep-clean";
 
 export interface PunchResult {
   ok: boolean;
@@ -39,5 +40,6 @@ export async function punchForSession(): Promise<PunchResult> {
 export async function confirmTaskForSession(taskKey: string, checkDate: string): Promise<ConfirmTaskResult> {
   const session = await requireSession();
   if (isActivityKey(taskKey)) return confirmActivity(taskKey, checkDate, session.uid);
+  if (isDeepCleanKey(taskKey)) return confirmDeepClean(taskKey, checkDate, session.uid);
   return confirmOperationalTask(taskKey, checkDate, session.uid);
 }
