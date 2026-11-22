@@ -10,6 +10,8 @@ import { lastEventToday, mexicoCityToday, type TimeClockEvent } from "@/lib/time
 import { addDays, mondayOf } from "@/lib/dates";
 import { listActiveAnnouncements } from "@/lib/announcements";
 import { listActivePromotionsWithImages } from "@/lib/promotions";
+import { getTaskChecksForDate, getTodayTasksForShift } from "@/lib/operational-tasks";
+import { getTodayActivities } from "@/lib/activity-reminders";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AnnouncementAckButton } from "@/components/admin/AnnouncementAckButton";
 
@@ -408,6 +410,12 @@ async function EmployeeInicio({ uid, role }: { uid: string; role: "admin" | "emp
   );
 }
 
+interface ShiftActivity {
+  key: string;
+  label: string;
+  done: boolean;
+}
+
 interface ShiftSnapshot {
   shift: string;
   employee: Profile | null;
@@ -415,25 +423,65 @@ interface ShiftSnapshot {
   tiers: Tiers;
   last: TimeClockEvent | null;
   todaysCut: Cut | null;
+  activities: ShiftActivity[];
 }
 
-async function loadShiftSnapshot(shift: string, monday: string, sunday: string, bonusTiers: BonusTier[], todaysCuts: Cut[]): Promise<ShiftSnapshot> {
+async function loadShiftSnapshot(
+  shift: "Matutino" | "Vespertino",
+  monday: string,
+  sunday: string,
+  bonusTiers: BonusTier[],
+  todaysCuts: Cut[],
+  today: string,
+  taskChecks: Record<string, { done: boolean }>,
+): Promise<ShiftSnapshot> {
+  const [scheduledTasks, todaysActivities] = await Promise.all([getTodayTasksForShift(shift), getTodayActivities(shift, today)]);
+  const activities: ShiftActivity[] = [...scheduledTasks, ...todaysActivities].map((a) => ({
+    key: a.key,
+    label: a.label,
+    done: !!taskChecks[a.key]?.done,
+  }));
+
   const employee = await getActiveEmployeeByShift(shift);
-  if (!employee) return { shift, employee: null, sales: 0, tiers: { ordered: [], currentTier: null, nextTier: null }, last: null, todaysCut: null };
+  if (!employee) {
+    return { shift, employee: null, sales: 0, tiers: { ordered: [], currentTier: null, nextTier: null }, last: null, todaysCut: null, activities };
+  }
 
   const [weekSales, last] = await Promise.all([computeWeekFromRecords(employee.id, monday, sunday, { includePending: true }), lastEventToday(employee.id)]);
   const tiers = tierProgress(weekSales.sales, shift, bonusTiers);
   const todaysCut = todaysCuts.find((c) => c.shift === shift) ?? null;
-  return { shift, employee, sales: weekSales.sales, tiers, last, todaysCut };
+  return { shift, employee, sales: weekSales.sales, tiers, last, todaysCut, activities };
+}
+
+function ShiftActivities({ activities }: { activities: ShiftActivity[] }) {
+  if (activities.length === 0) return null;
+  return (
+    <div className="mt-3 rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
+      <span className="text-[0.78rem] text-admin-ink-soft">Actividades de hoy</span>
+      <ul className="mt-1.5 flex flex-col gap-1.5">
+        {activities.map((a) => (
+          <li key={a.key} className="flex items-center justify-between gap-2 text-[0.82rem]">
+            <span className="text-admin-ink">{a.label}</span>
+            {a.done ? (
+              <span className="shrink-0 rounded-full bg-admin-ok-bg px-2 py-0.5 text-[0.7rem] font-bold text-admin-ok-text">Hecho</span>
+            ) : (
+              <span className="shrink-0 rounded-full bg-admin-pending-bg px-2 py-0.5 text-[0.7rem] font-bold text-admin-pending-text">Pendiente</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function ShiftCard({ snapshot }: { snapshot: ShiftSnapshot }) {
-  const { shift, employee, sales, tiers, last, todaysCut } = snapshot;
+  const { shift, employee, sales, tiers, last, todaysCut, activities } = snapshot;
   if (!employee) {
     return (
       <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
         <span className="text-[0.78rem] font-bold uppercase tracking-wide text-admin-ink-soft">{shift}</span>
         <p className="mt-2 text-[0.86rem] text-admin-ink-soft">Sin empleada asignada a este turno.</p>
+        <ShiftActivities activities={activities} />
       </div>
     );
   }
@@ -489,6 +537,8 @@ function ShiftCard({ snapshot }: { snapshot: ShiftSnapshot }) {
         {todaysCut?.status === "Rechazado" && <span className="rounded-full bg-admin-bad-bg px-2.5 py-1 font-semibold text-admin-bad-text">Corte de hoy rechazado</span>}
       </div>
 
+      <ShiftActivities activities={activities} />
+
       <Ladder sales={sales} tiers={tiers} />
     </div>
   );
@@ -506,7 +556,10 @@ async function AdminInicio({ uid, role }: { uid: string; role: "admin" | "employ
   const ventasHoy = todaysCuts.filter((c) => c.status !== "Rechazado").reduce((sum, c) => sum + c.total, 0);
   const ventasHoySinAprobar = todaysCuts.filter((c) => c.status === "Por revisar").reduce((sum, c) => sum + c.total, 0);
 
-  const [matutino, vespertino] = await Promise.all(SHIFTS.map((shift) => loadShiftSnapshot(shift, monday, sunday, bonusTiers, todaysCuts)));
+  const taskChecks = await getTaskChecksForDate(today);
+  const [matutino, vespertino] = await Promise.all(
+    SHIFTS.map((shift) => loadShiftSnapshot(shift, monday, sunday, bonusTiers, todaysCuts, today, taskChecks)),
+  );
 
   return (
     <AdminShell activeHref="/admin/inicio" userName={profile?.full_name ?? "Sin nombre"} userRole={role}>

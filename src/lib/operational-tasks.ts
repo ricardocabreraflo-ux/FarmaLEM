@@ -148,6 +148,19 @@ export interface PendingTask {
   checkDate: string;
 }
 
+export interface ScheduledTask {
+  key: string;
+  label: string;
+}
+
+/** Tareas operativas programadas para hoy en ese turno (toldo/luces, etc.), estén o no ya confirmadas — para mostrarlas en Inicio. */
+export async function getTodayTasksForShift(shift: string | null | undefined): Promise<ScheduledTask[]> {
+  const defs = await listActiveTaskDefsForShift(shift);
+  if (defs.length === 0) return [];
+  const { weekday } = mexicoCityNow();
+  return defs.filter((d) => d.weekdays.includes(weekday)).map((d) => ({ key: d.key, label: d.label }));
+}
+
 /**
  * Tareas vigentes ahora mismo para ese turno que todavía no se confirman —
  * para el popup que se abre solo dentro de la app (PendingTaskPopup), de
