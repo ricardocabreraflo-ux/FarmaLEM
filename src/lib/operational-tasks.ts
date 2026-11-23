@@ -132,6 +132,12 @@ export async function markTaskDone(taskKey: string, date: string, employeeId: st
   return true;
 }
 
+/** Quita la confirmación de ese día (si alguien marcó "Ya lo hice" por error) — vuelve a aparecer como pendiente en su pantalla. */
+export async function unmarkTaskDone(taskKey: string, date: string): Promise<void> {
+  const { error } = await supabaseAdmin().from("operational_task_checks").delete().eq("task_key", taskKey).eq("check_date", date);
+  if (error) throw new Error(error.message);
+}
+
 function mexicoCityNow(): { hour: number; minute: number; weekday: number } {
   const now = new Date();
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Mexico_City", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(now);

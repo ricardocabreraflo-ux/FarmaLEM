@@ -13,6 +13,7 @@ import { listActivePromotionsWithImages } from "@/lib/promotions";
 import { getTaskChecksForDate, getTodayTasksForShift } from "@/lib/operational-tasks";
 import { getTodayActivities } from "@/lib/activity-reminders";
 import { getTodayDeepCleanActivity } from "@/lib/deep-clean";
+import { UnmarkActivityButton } from "@/components/admin/UnmarkActivityButton";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AnnouncementAckButton } from "@/components/admin/AnnouncementAckButton";
 
@@ -458,7 +459,7 @@ async function loadShiftSnapshot(
   return { shift, employee, sales: weekSales.sales, tiers, last, todaysCut, activities };
 }
 
-function ShiftActivities({ activities }: { activities: ShiftActivity[] }) {
+function ShiftActivities({ activities, today }: { activities: ShiftActivity[]; today: string }) {
   if (activities.length === 0) return null;
   return (
     <div className="mt-3 rounded-xl border border-admin-border bg-admin-bg/60 px-4 py-3">
@@ -468,7 +469,10 @@ function ShiftActivities({ activities }: { activities: ShiftActivity[] }) {
           <li key={a.key} className="flex items-center justify-between gap-2 text-[0.82rem]">
             <span className="text-admin-ink">{a.label}</span>
             {a.done ? (
-              <span className="shrink-0 rounded-full bg-admin-ok-bg px-2 py-0.5 text-[0.7rem] font-bold text-admin-ok-text">Hecho</span>
+              <div className="flex shrink-0 items-center gap-1">
+                <span className="rounded-full bg-admin-ok-bg px-2 py-0.5 text-[0.7rem] font-bold text-admin-ok-text">Hecho</span>
+                <UnmarkActivityButton taskKey={a.key} checkDate={today} label={a.label} />
+              </div>
             ) : (
               <span className="shrink-0 rounded-full bg-admin-pending-bg px-2 py-0.5 text-[0.7rem] font-bold text-admin-pending-text">Pendiente</span>
             )}
@@ -479,14 +483,14 @@ function ShiftActivities({ activities }: { activities: ShiftActivity[] }) {
   );
 }
 
-function ShiftCard({ snapshot }: { snapshot: ShiftSnapshot }) {
+function ShiftCard({ snapshot, today }: { snapshot: ShiftSnapshot; today: string }) {
   const { shift, employee, sales, tiers, last, todaysCut, activities } = snapshot;
   if (!employee) {
     return (
       <div className="rounded-2xl border border-admin-border bg-admin-surface p-5">
         <span className="text-[0.78rem] font-bold uppercase tracking-wide text-admin-ink-soft">{shift}</span>
         <p className="mt-2 text-[0.86rem] text-admin-ink-soft">Sin empleada asignada a este turno.</p>
-        <ShiftActivities activities={activities} />
+        <ShiftActivities activities={activities} today={today} />
       </div>
     );
   }
@@ -542,7 +546,7 @@ function ShiftCard({ snapshot }: { snapshot: ShiftSnapshot }) {
         {todaysCut?.status === "Rechazado" && <span className="rounded-full bg-admin-bad-bg px-2.5 py-1 font-semibold text-admin-bad-text">Corte de hoy rechazado</span>}
       </div>
 
-      <ShiftActivities activities={activities} />
+      <ShiftActivities activities={activities} today={today} />
 
       <Ladder sales={sales} tiers={tiers} />
     </div>
@@ -592,8 +596,8 @@ async function AdminInicio({ uid, role }: { uid: string; role: "admin" | "employ
       </section>
 
       <section className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
-        <ShiftCard snapshot={matutino} />
-        <ShiftCard snapshot={vespertino} />
+        <ShiftCard snapshot={matutino} today={today} />
+        <ShiftCard snapshot={vespertino} today={today} />
       </section>
 
       <section className="mt-4 rounded-2xl border border-admin-border bg-admin-surface p-5">
