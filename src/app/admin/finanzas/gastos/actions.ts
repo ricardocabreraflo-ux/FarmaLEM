@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/lib/admin-auth";
-import { createExpenseTemplate, setExpenseTemplateActive, type ExpenseTemplateType } from "@/lib/expense-templates";
+import { createExpenseTemplate, setExpenseTemplateActive, updateExpenseTemplateAmount, type ExpenseTemplateType } from "@/lib/expense-templates";
 import { createFinanceMovement } from "@/lib/finance-movements";
 import { logAction } from "@/lib/history";
 
@@ -38,6 +38,21 @@ export async function toggleExpenseTemplateAction(id: string, name: string, acti
   await setExpenseTemplateActive(id, active);
   await logAction(session.uid, active ? "Reactivó gasto recurrente" : "Desactivó gasto recurrente", name);
   revalidatePath("/admin/finanzas/gastos");
+}
+
+export async function updateExpenseTemplateAmountAction(id: string, name: string, amount: number): Promise<{ error?: string }> {
+  const session = await requireAdminSession();
+  if (!(amount >= 0)) return { error: "El monto no puede ser negativo." };
+
+  try {
+    await updateExpenseTemplateAmount(id, amount);
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "No se pudo actualizar el monto." };
+  }
+
+  await logAction(session.uid, "Actualizó monto de gasto recurrente", `${name} · $${amount.toFixed(2)}`);
+  revalidatePath("/admin/finanzas/gastos");
+  return {};
 }
 
 export async function captureExpenseTemplateAction(

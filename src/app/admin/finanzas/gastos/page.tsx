@@ -8,6 +8,7 @@ import { listFinanceMovementsForMonth } from "@/lib/finance-movements";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { MonthPicker } from "@/components/admin/MonthPicker";
 import { CaptureExpenseButton } from "@/components/admin/CaptureExpenseButton";
+import { EditExpenseTemplateAmount } from "@/components/admin/EditExpenseTemplateAmount";
 
 export const metadata: Metadata = { title: "Gastos fijos y variables" };
 export const dynamic = "force-dynamic";
@@ -77,7 +78,9 @@ export default async function GastosPage({ searchParams }: { searchParams: Promi
                     <td className="px-5 py-3 font-semibold text-admin-ink">{t.name}</td>
                     <td className="px-5 py-3 text-admin-ink-soft">{t.type}</td>
                     <td className="px-5 py-3 text-admin-ink-soft">{t.category}</td>
-                    <td className="px-5 py-3 text-right font-data tabular-nums text-admin-ink">{fmtMoney(t.amount)}</td>
+                    <td className="px-5 py-3 text-right">
+                      <EditExpenseTemplateAmount templateId={t.id} name={t.name} amount={t.amount} />
+                    </td>
                     <td className="px-5 py-3">
                       <span
                         className={`rounded-full px-2.5 py-1 text-[0.76rem] font-semibold ${
@@ -105,6 +108,12 @@ export default async function GastosPage({ searchParams }: { searchParams: Promi
               </tbody>
             </table>
           </div>
+        )}
+        {templates.length > 0 && (
+          <p className="border-t border-admin-border px-5 py-3 text-[0.78rem] text-admin-ink-soft">
+            Editar el monto solo cambia con qué se precarga &quot;Registrar este mes&quot; de ahí en adelante — los meses que ya registraste no
+            cambian.
+          </p>
         )}
       </section>
 

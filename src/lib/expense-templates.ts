@@ -39,3 +39,14 @@ export async function setExpenseTemplateActive(id: string, active: boolean): Pro
   const { error } = await supabaseAdmin().from("expense_templates").update({ active }).eq("id", id);
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Cambia el monto de referencia del catálogo (ej. subió la renta) — solo
+ * afecta con qué monto se precarga "Registrar este mes" de ahí en adelante.
+ * Los meses ya registrados quedan como finance_movements independientes con
+ * su propio monto guardado, así que esto nunca los modifica.
+ */
+export async function updateExpenseTemplateAmount(id: string, amount: number): Promise<void> {
+  const { error } = await supabaseAdmin().from("expense_templates").update({ amount }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
