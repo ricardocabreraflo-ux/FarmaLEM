@@ -71,7 +71,7 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
           + Movimiento financiero
         </Link>
       </div>
-      <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Resumen mensual alimentado por cortes, mercancía, asistencia, bonos y gastos.</p>
+      <p className="mt-1.5 text-[0.86rem] text-admin-ink-soft">Resumen mensual alimentado por cortes, asistencia, bonos y gastos.</p>
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
         <Link href="/admin/finanzas/historico" className="inline-block text-[0.82rem] font-semibold text-admin-primary hover:underline">
           Estados de resultados de meses anteriores (enero–mayo 2026) &rarr;
@@ -158,7 +158,9 @@ export default async function FinanzasPage({ searchParams }: { searchParams: Pro
       </div>
 
       <p className="mt-5 text-[0.8rem] text-admin-ink-soft">
-        Los pagos a proveedores son movimientos de efectivo; el costo se toma de Recepción de mercancía para evitar duplicarlo.
+        Los pagos a proveedores son movimientos de efectivo y no se cuentan aquí como gasto; el costo de la mercancía se captura a mano en
+        &quot;Otros costos de venta&quot; para evitar duplicarlo. Recepción de mercancía (tickets subidos) todavía no se usa aquí porque ese
+        proceso no está completo.
       </p>
 
       <section className="mt-8">

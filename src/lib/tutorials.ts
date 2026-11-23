@@ -872,7 +872,7 @@ const TUTORIALS: TutorialContent[] = [
     steps: [
       {
         title: "El estado de resultados del mes",
-        body: "Menú ☰ → Finanzas → “Estado de resultados”. Se arma solo, jalando datos de otras pantallas: las ventas de los cortes aprobados, el costo de lo recibido en Recepción de mercancía (no de los pagos a proveedores en Salidas, para no contar el costo dos veces), los sueldos calculados y bonos, y los gastos fijos/variables capturados en Gastos. La tabla “Movimientos manuales” son los ingresos, costos, gastos y mermas que se capturan aparte con “+ Movimiento financiero”.",
+        body: "Menú ☰ → Finanzas → “Estado de resultados”. Se arma solo, jalando datos de otras pantallas: las ventas de los cortes aprobados, los sueldos calculados y bonos, y los gastos fijos/variables capturados en Gastos. El costo de la mercancía todavía no se jala de Recepción de mercancía (ese proceso no está completo) — captúralo a mano como “Costo de venta” con “+ Movimiento financiero”. La tabla “Movimientos manuales” son los ingresos, costos, gastos y mermas que se capturan aparte ahí.",
         image: "/tutoriales/finanzas-01-resultados.png",
         imageWidth: 352,
         imageHeight: 3086,
@@ -880,7 +880,7 @@ const TUTORIALS: TutorialContent[] = [
         imageDesktopWidth: 1192,
         imageDesktopHeight: 1734,
         imageAlt: "Estado de resultados con las tarjetas de resumen, el detalle y el comparativo anual",
-        cue: "“Gastos desde caja” solo cuenta las Salidas de tipo Gasto u Otro — Nómina y Proveedor ya se cuentan en Sueldos y en Mercancía recibida",
+        cue: "“Gastos desde caja” solo cuenta las Salidas de tipo Gasto u Otro — Nómina ya se cuenta en Sueldos y Proveedor no se cuenta aquí (el costo se captura a mano en “Otros costos de venta”)",
       },
     ],
   },

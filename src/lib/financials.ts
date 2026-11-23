@@ -1,7 +1,6 @@
 import "server-only";
 import { listCuts } from "@/lib/cuts";
 import { listWithdrawals } from "@/lib/withdrawals";
-import { listPurchases } from "@/lib/purchases";
 import { listFinanceMovementsForMonth } from "@/lib/finance-movements";
 import { listAttendanceForMonth } from "@/lib/attendance";
 import { listBonusWeeks, listBonusTiers, earnedBonus } from "@/lib/bonuses";
@@ -73,11 +72,10 @@ export async function getMonthlyFinancials(month: string): Promise<MonthlyFinanc
   const historical = (await listHistoricalIncomeStatements([month])).get(month);
   if (historical?.approved) return fromHistorical(historical);
 
-  const [employees, allCuts, allWithdrawals, allPurchases, movements, attendance, weeks, tiers, extraBonuses] = await Promise.all([
+  const [employees, allCuts, allWithdrawals, movements, attendance, weeks, tiers, extraBonuses] = await Promise.all([
     listProfiles(),
     listCuts(),
     listWithdrawals(),
-    listPurchases(),
     listFinanceMovementsForMonth(month),
     listAttendanceForMonth(month),
     listBonusWeeks(month),
@@ -88,12 +86,13 @@ export async function getMonthlyFinancials(month: string): Promise<MonthlyFinanc
 
   const approvedCuts = allCuts.filter((c) => c.status === "Aprobado" && c.cut_date.startsWith(month));
   const authorizedWithdrawals = allWithdrawals.filter((w) => w.authorized_by && w.withdrawal_date.startsWith(month));
-  const monthPurchases = allPurchases.filter((p) => p.purchase_date.startsWith(month));
   const activeEmployees = employees.filter((e) => e.role === "employee" && e.active);
 
   const sales = approvedCuts.reduce((sum, c) => sum + c.total, 0);
   const otherIncome = movements.filter((m) => m.type === "Ingreso").reduce((sum, m) => sum + m.amount, 0);
-  const purchaseCosts = monthPurchases.reduce((sum, p) => sum + p.quantity * p.cost, 0);
+  // La recepción de mercancía (tickets subidos) todavía no es un proceso confiable/completo,
+  // así que por ahora no se cuenta como costo real aquí — solo "Otros costos de venta" (captura manual).
+  const purchaseCosts = 0;
   const manualCosts = movements.filter((m) => m.type === "Costo de venta").reduce((sum, m) => sum + m.amount, 0);
   const cogs = purchaseCosts + manualCosts;
   const cashExpenses = authorizedWithdrawals.filter((w) => w.type === "Gasto" || w.type === "Otro").reduce((sum, w) => sum + w.amount, 0);
