@@ -10,6 +10,25 @@ interface PendingTask {
 }
 
 const POLL_MS = 90_000;
+const SNOOZE_MS = 60 * 60_000; // 1 hora
+const SNOOZE_KEY = "farmalem_tasks_snooze_until";
+
+/** Guardado en localStorage (no en estado del componente) porque el popup se vuelve a montar en cada navegación entre pantallas del panel. */
+function getSnoozeUntil(): number {
+  try {
+    return Number(localStorage.getItem(SNOOZE_KEY) ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+function setSnoozeUntil(ts: number) {
+  try {
+    localStorage.setItem(SNOOZE_KEY, String(ts));
+  } catch {
+    // localStorage no disponible (modo privado, etc.): "Más tarde" solo tapa el popup hasta el siguiente chequeo.
+  }
+}
 
 /**
  * Tono de alerta de dos notas, generado con Web Audio (sin depender de un
@@ -49,12 +68,13 @@ function playAlertSound() {
  * (toldo/luces, por ahora solo Vespertino) o la actividad del día del
  * Calendario de actividades (limpieza semanal + inventario, Matutino y
  * Vespertino) — de respaldo al push, por si no llegó o lo cerraron sin
- * querer. Se dismissa con "Más tarde" sin perder la tarea: vuelve a
- * aparecer en el siguiente chequeo si sigue sin confirmarse.
+ * querer. Se dismissa con "Más tarde" sin perder la tarea: deja de
+ * aparecer durante SNOOZE_MS (1 hora) por si quieren seguir usando la app
+ * sin que les estorbe, y después de esa hora vuelve a aparecer solo.
  */
 export function PendingTaskPopup({ shift }: { shift: string | null }) {
   const [pending, setPending] = useState<PendingTask[]>([]);
-  const [dismissed, setDismissed] = useState(false);
+  const [snoozed, setSnoozed] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -68,10 +88,10 @@ export function PendingTaskPopup({ shift }: { shift: string | null }) {
         const data = await res.json();
         if (!cancelled) {
           const tasks: PendingTask[] = data.pending ?? [];
+          const stillSnoozed = Date.now() < getSnoozeUntil();
           setPending(tasks);
-          // Cada chequeo (cada POLL_MS, o al volver a la pestaña) vuelve a mostrarlo si "Más tarde" lo había tapado.
-          setDismissed(false);
-          if (tasks.length > 0) playAlertSound();
+          setSnoozed(stillSnoozed);
+          if (tasks.length > 0 && !stillSnoozed) playAlertSound();
         }
       } catch {
         // sin red por un momento: no pasa nada, se vuelve a intentar en el siguiente chequeo
@@ -102,7 +122,7 @@ export function PendingTaskPopup({ shift }: { shift: string | null }) {
     });
   }
 
-  if (pending.length === 0 || dismissed) return null;
+  if (pending.length === 0 || snoozed) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
@@ -126,7 +146,10 @@ export function PendingTaskPopup({ shift }: { shift: string | null }) {
         </div>
         <button
           type="button"
-          onClick={() => setDismissed(true)}
+          onClick={() => {
+            setSnoozeUntil(Date.now() + SNOOZE_MS);
+            setSnoozed(true);
+          }}
           className="mt-4 text-[0.82rem] font-semibold text-admin-ink-soft underline decoration-dotted"
         >
           Más tarde
