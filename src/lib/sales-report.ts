@@ -73,6 +73,48 @@ export async function dailySalesForCurrentMonth(): Promise<{ month: string; labe
   return { month, label: monthLabel(month), days };
 }
 
+export interface WeekdaySales {
+  weekday: string;
+  total: number;
+  days: number;
+  average: number;
+}
+
+const WEEKDAY_NAMES_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+/** Lunes primero — más natural para leer que empezar en domingo (que es como lo da Date.getDay()). */
+const WEEKDAY_DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+/**
+ * Ventas por día de la semana, con los cortes aprobados que se han subido —
+ * para ver qué día vende más (o menos) y decidir en cuál conviene reforzar
+ * promociones. El promedio (total ÷ fechas con corte ese día de la semana)
+ * es la comparación justa, ya que no todos los días de la semana han
+ * caído el mismo número de veces en el rango de datos capturado.
+ */
+export async function salesByWeekday(): Promise<WeekdaySales[]> {
+  const cuts = await listCuts();
+  const totalsByDate = new Map<string, number>();
+  for (const c of cuts) {
+    if (c.status !== "Aprobado") continue;
+    totalsByDate.set(c.cut_date, (totalsByDate.get(c.cut_date) ?? 0) + c.total);
+  }
+
+  const totals = new Array(7).fill(0);
+  const counts = new Array(7).fill(0);
+  for (const [dateStr, total] of totalsByDate) {
+    const weekday = new Date(`${dateStr}T12:00:00`).getDay();
+    totals[weekday] += total;
+    counts[weekday] += 1;
+  }
+
+  return WEEKDAY_DISPLAY_ORDER.map((idx) => ({
+    weekday: WEEKDAY_NAMES_ES[idx],
+    total: totals[idx],
+    days: counts[idx],
+    average: counts[idx] > 0 ? totals[idx] / counts[idx] : 0,
+  }));
+}
+
 /** Pivote año contra año: una fila por mes del calendario, una columna por cada año con datos. */
 export async function yearlySalesGrid(): Promise<{ years: string[]; rows: YearlyRow[]; totalsByYear: Record<string, number> }> {
   const months = await monthlySales();
